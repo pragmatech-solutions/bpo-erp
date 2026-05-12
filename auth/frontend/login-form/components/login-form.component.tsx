@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useLoginFormHook } from '@/auth/frontend/login-form/hooks/login-form-hook.hook';
 import { Button } from '@/components/ui/button';
 import {
 	Card,
@@ -13,6 +14,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export function LoginForm() {
+	const {
+		email,
+		setEmail,
+		password,
+		setPassword,
+		isPasswordVisible,
+		togglePasswordVisibility,
+		errorMessage,
+		isLoading,
+		handleSubmit,
+	} = useLoginFormHook();
+
 	return (
 		<div className="flex flex-col gap-6">
 			<Card>
@@ -23,10 +36,10 @@ export function LoginForm() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form>
+					<form onSubmit={handleSubmit}>
 						<div className="grid gap-6">
 							<div className="flex flex-col gap-4">
-								<Button variant="outline" className="w-full">
+								<Button type="button" variant="outline" className="w-full">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
@@ -50,6 +63,8 @@ export function LoginForm() {
 									<Label htmlFor="email">Email</Label>
 									<Input
 										id="email"
+										value={email}
+										onChange={(event) => setEmail(event.target.value)}
 										type="email"
 										placeholder="burhan@example.com"
 										required
@@ -65,10 +80,30 @@ export function LoginForm() {
 											Forgot password?
 										</Link>
 									</div>
-									<Input id="password" type="password" required />
+									<div className="relative">
+										<Input
+											id="password"
+											value={password}
+											onChange={(event) => setPassword(event.target.value)}
+											type={isPasswordVisible ? 'text' : 'password'}
+											className="pr-20"
+											required
+										/>
+										<Button
+											type="button"
+											variant="ghost"
+											onClick={togglePasswordVisibility}
+											className="absolute right-1 top-1/2 h-7 -translate-y-1/2 px-2 text-xs"
+										>
+											{isPasswordVisible ? 'Hide' : 'Show'}
+										</Button>
+									</div>
 								</div>
+								{errorMessage ? (
+									<p className="text-sm text-red-500">{errorMessage}</p>
+								) : null}
 								<Button type="submit" className="w-full">
-									Login
+									{isLoading ? 'Logging in...' : 'Login'}
 								</Button>
 							</div>
 							<div className="text-center text-sm">

@@ -21,7 +21,8 @@ export async function loginUser(credentials: LoginCredentials) {
 		throw new Error('Invalid credentials');
 	}
 
-	const { _id, password: _, ...rest } = user._doc;
+	const { _id, password: _password, ...rest } = user._doc;
+	void _password;
 
 	const userResponse: UserResponse = {
 		id: _id.toString(),
