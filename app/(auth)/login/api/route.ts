@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { loginUser } from '@/auth/backend/functions/login.function';
-import { loginInputSchema } from '@/auth/backend/input-schemas/login.input-schema';
+import loginUser from '@/auth/backend/login';
+import { loginInputSchema } from '@/auth/backend/login/login.input-schema';
 
 export async function POST(req: Request) {
 	try {
