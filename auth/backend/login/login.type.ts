@@ -4,8 +4,8 @@ export type LoginCredentials = {
 };
 
 export type UserResponse = {
-	id: string;
 	email: string;
-	name?: string;
-	status: 'active' | 'inactive' | 'pending';
+	name: string;
+	status: 'active' | 'inactive' | 'blocked';
+	role: 'agent' | 'team_lead' | 'admin';
 };

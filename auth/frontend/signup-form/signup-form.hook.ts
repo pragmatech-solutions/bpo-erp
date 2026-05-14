@@ -2,20 +2,23 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginApi } from './login.api';
+import { signupApi } from './signup.api';
+import { signupInputSchema } from '@/auth/backend/signup/signup.input-schema';
 
-type LoginError = string | Record<string, string[]>;
+type SignupError = string | Record<string, string[]>;
 
-export function useLoginFormHook() {
+export function useSignupFormHook() {
 	const router = useRouter();
+	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
+	const [agreed, setAgreed] = useState(false);
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-	const [error, setError] = useState<LoginError>('');
+	const [error, setError] = useState<SignupError>('');
 	const [isLoading, setIsLoading] = useState(false);
 
 	function togglePasswordVisibility() {
-		setIsPasswordVisible((state) => !state);
+		setIsPasswordVisible((s) => !s);
 	}
 
 	const errorMessage = useMemo(() => {
@@ -29,15 +32,31 @@ export function useLoginFormHook() {
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setError('');
+
+		if (!agreed) {
+			setError('You must agree to the Terms of Service and Privacy Policy');
+			return;
+		}
+
 		setIsLoading(true);
 
 		try {
-			const response = await loginApi({ email, password });
+			const payload = { name, email, password };
+			const validated = signupInputSchema.safeParse(payload);
+
+			if (!validated.success) {
+				const fieldErrors = validated.error.flatten().fieldErrors;
+				setError(fieldErrors as Record<string, string[]>);
+				setIsLoading(false);
+				return;
+			}
+
+			const response = await signupApi(payload);
 
 			if (response.success) {
-				router.push('/');
+				router.push('/login');
 			} else {
-				setError(response.error || 'Login failed');
+				setError(response.error || 'Signup failed');
 			}
 		} catch {
 			setError('An unexpected error occurred');
@@ -47,10 +66,14 @@ export function useLoginFormHook() {
 	}
 
 	return {
+		name,
+		setName,
 		email,
 		setEmail,
 		password,
 		setPassword,
+		agreed,
+		setAgreed,
 		isPasswordVisible,
 		togglePasswordVisibility,
 		errorMessage,

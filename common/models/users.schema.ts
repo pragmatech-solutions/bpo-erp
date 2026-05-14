@@ -2,9 +2,14 @@ import { Schema, model, models } from 'mongoose';
 
 const UserSchema = new Schema(
 	{
+		name: { type: String, required: true },
 		email: { type: String, required: true, unique: true },
 		password: { type: String, required: true },
-		status: { type: String, default: 'active' },
+		status: {
+			type: String,
+			default: 'inactive',
+			enum: ['active', 'inactive', 'blocked'],
+		},
 		role: {
 			type: String,
 			enum: ['agent', 'team_lead', 'admin'],

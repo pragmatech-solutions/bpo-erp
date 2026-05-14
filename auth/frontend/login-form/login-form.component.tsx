@@ -116,7 +116,7 @@ export function LoginForm() {
 							</Button>
 							<p className="text-[14px] text-[#313957] md:text-[16px]">
 								Don&apos;t you have an account?{' '}
-								<Link href="#" className="text-[#1E4AE9]">
+								<Link href="/signup" className="text-[#1E4AE9]">
 									Sign up
 								</Link>
 							</p>

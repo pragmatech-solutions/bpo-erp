@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/common/database';
 import { Users } from '@/common/models/users.schema';
 import type { LoginCredentials, UserResponse } from './login.type';
@@ -16,15 +17,17 @@ export async function loginUser(credentials: LoginCredentials) {
 		throw new Error('Account is inactive. Please contact your admin.');
 	}
 
-	if (user.password !== password) {
+	const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+	if (!isPasswordMatch) {
 		throw new Error('Invalid credentials');
 	}
 
 	const { _id, password: _password, ...rest } = user._doc;
 	void _password;
+	void _id;
 
 	const userResponse: UserResponse = {
-		id: _id.toString(),
 		...rest,
 	};
 
