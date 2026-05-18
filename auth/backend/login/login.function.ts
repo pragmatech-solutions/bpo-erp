@@ -14,7 +14,7 @@ export async function loginUser(credentials: LoginCredentials) {
 	}
 
 	if (user.status !== 'active') {
-		throw new Error('Account is inactive. Please contact your admin.');
+		throw new Error(`Account is ${user.status}. Please contact your admin.`);
 	}
 
 	const isPasswordMatch = await bcrypt.compare(password, user.password);
