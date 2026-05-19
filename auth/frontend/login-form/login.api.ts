@@ -1,6 +1,7 @@
 'use client';
 
 import { apiClient, setToken } from '@/lib/api-client';
+import { saveCurrentLoggedInUserInformation } from './get-current-logged-in-user-information.function';
 
 type LoginPayload = {
 	email: string;
@@ -28,6 +29,9 @@ export async function loginApi(
 
 		if (data.success && data.user?.token) {
 			setToken(data.user.token);
+			if (typeof data.user.name === 'string') {
+				saveCurrentLoggedInUserInformation(data.user.name);
+			}
 		}
 
 		return data;
