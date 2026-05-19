@@ -5,8 +5,8 @@ const LeadSchema = new Schema(
 		created_by: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 		status: {
 			type: String,
-			enum: ['billable', 'non billable'],
-			required: true,
+			enum: ['billable', 'non billable', 'pending'],
+			default: 'pending',
 		},
 		status_reason: {
 			type: String,
@@ -16,7 +16,13 @@ const LeadSchema = new Schema(
 		},
 		customer_number: { type: String, required: true },
 		customer_name: { type: String, required: true },
-		loan_type: { type: String, required: true },
+		loan_type: {
+			type: String,
+			enum: ['Conventional', 'FHA', 'VA', 'VA eligible'],
+			required: true,
+		},
+		loan_balance: { type: Number, required: false },
+		home_value: { type: Number, required: false },
 	},
 	{
 		timestamps: {

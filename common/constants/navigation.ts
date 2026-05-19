@@ -19,7 +19,7 @@ export const NAVIGATION_LINKS = [
 	},
 	{
 		label: 'Create Lead',
-		href: '/create-lead',
+		href: '/leads/create',
 		icon: UserPlus,
 	},
 ];
