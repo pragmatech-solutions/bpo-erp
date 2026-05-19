@@ -16,10 +16,13 @@ export async function signupApi(payload: SignupInput): Promise<SignupResponse> {
 		}
 
 		return data;
-	} catch (error: any) {
+	} catch (error: unknown) {
+		const message =
+			error instanceof Error ? error.message : 'Unable to create account';
+
 		return {
 			success: false,
-			error: error.message || 'Unable to create account',
+			error: message,
 		};
 	}
 }

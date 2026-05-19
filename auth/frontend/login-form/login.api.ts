@@ -13,7 +13,7 @@ type LoginApiResponse = {
 	message?: string;
 	user?: {
 		token?: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	};
 };
 
@@ -31,10 +31,12 @@ export async function loginApi(
 		}
 
 		return data;
-	} catch (error: any) {
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : 'Unable to login';
+
 		return {
 			success: false,
-			error: error.message || 'Unable to login',
+			error: message,
 		};
 	}
 }
