@@ -2,24 +2,24 @@
 
 import { SignupInput } from '@/auth/backend/signup/signup.input-schema';
 import { SignupResponse } from '@/auth/backend/signup/signup.type';
+import { apiClient, setToken } from '@/lib/api-client';
 
 export async function signupApi(payload: SignupInput): Promise<SignupResponse> {
-	const response = await fetch('/signup/api', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(payload),
-	});
+	try {
+		const data = await apiClient<SignupResponse>('/signup/api', {
+			method: 'POST',
+			body: JSON.stringify(payload),
+		});
 
-	const data = (await response.json()) as SignupResponse;
+		if (data.success && data.user?.token) {
+			setToken(data.user.token);
+		}
 
-	if (!response.ok) {
+		return data;
+	} catch (error: any) {
 		return {
 			success: false,
-			error: data.error || data.message || 'Unable to create account',
+			error: error.message || 'Unable to create account',
 		};
 	}
-
-	return data;
 }

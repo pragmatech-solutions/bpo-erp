@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/common/database';
 import { Users } from '@/common/models/users.schema';
 import type { LoginCredentials, UserResponse } from './login.type';
+import { createSession } from './create-session.function';
 
 export async function loginUser(credentials: LoginCredentials) {
 	await connectToDatabase();
@@ -25,10 +26,12 @@ export async function loginUser(credentials: LoginCredentials) {
 
 	const { _id, password: _password, ...rest } = user._doc;
 	void _password;
-	void _id;
+
+	const token = await createSession(_id.toString());
 
 	const userResponse: UserResponse = {
 		...rest,
+		token,
 	};
 
 	return userResponse;

@@ -8,4 +8,5 @@ export type UserResponse = {
 	name: string;
 	status: 'active' | 'inactive' | 'blocked';
 	role: 'agent' | 'team_lead' | 'admin';
+	token?: string;
 };

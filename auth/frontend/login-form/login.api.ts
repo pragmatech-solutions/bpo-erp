@@ -1,5 +1,7 @@
 'use client';
 
+import { apiClient, setToken } from '@/lib/api-client';
+
 type LoginPayload = {
 	email: string;
 	password: string;
@@ -9,28 +11,30 @@ type LoginApiResponse = {
 	success: boolean;
 	error?: string | Record<string, string[]>;
 	message?: string;
-	user?: unknown;
+	user?: {
+		token?: string;
+		[key: string]: any;
+	};
 };
 
 export async function loginApi(
 	payload: LoginPayload,
 ): Promise<LoginApiResponse> {
-	const response = await fetch('/login/api', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(payload),
-	});
+	try {
+		const data = await apiClient<LoginApiResponse>('/login/api', {
+			method: 'POST',
+			body: JSON.stringify(payload),
+		});
 
-	const data = (await response.json()) as LoginApiResponse;
+		if (data.success && data.user?.token) {
+			setToken(data.user.token);
+		}
 
-	if (!response.ok) {
+		return data;
+	} catch (error: any) {
 		return {
 			success: false,
-			error: data.error || data.message || 'Unable to login',
+			error: error.message || 'Unable to login',
 		};
 	}
-
-	return data;
 }
