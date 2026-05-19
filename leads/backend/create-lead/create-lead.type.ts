@@ -1,0 +1,19 @@
+export interface LeadResponse {
+	_id: string;
+	customer_name: string;
+	customer_number: string;
+	loan_type: 'Conventional' | 'FHA' | 'VA' | 'VA eligible';
+	loan_balance?: number;
+	home_value?: number;
+	status: string;
+	created_by: string;
+	created_at: Date;
+	updated_at: Date;
+}
+
+export interface CreateLeadResponse {
+	success: boolean;
+	message: string;
+	data?: LeadResponse;
+	error?: string;
+}
