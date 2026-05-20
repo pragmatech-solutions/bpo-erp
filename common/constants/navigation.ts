@@ -14,7 +14,7 @@ export const NAVIGATION_LINKS = [
 	},
 	{
 		label: 'Lead List',
-		href: '/lead-list',
+		href: '/leads/list',
 		icon: Users,
 	},
 	{

@@ -29,6 +29,18 @@ export async function listLeads(
 		matchStage.created_by = new Types.ObjectId(currentUserId);
 	}
 
+	if (validatedInput.status) {
+		matchStage.status = validatedInput.status;
+	}
+
+	if (validatedInput.search) {
+		const searchRegex = new RegExp(validatedInput.search, 'i');
+		matchStage.$or = [
+			{ customer_name: { $regex: searchRegex } },
+			{ customer_number: { $regex: searchRegex } },
+		];
+	}
+
 	if (Object.keys(dateFilter).length > 0) {
 		matchStage.updated_at = dateFilter;
 	}

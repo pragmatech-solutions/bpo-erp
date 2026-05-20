@@ -2,6 +2,8 @@ export type ListLeadsInput = {
 	limit?: number;
 	startDate?: Date;
 	endDate?: Date;
+	status?: 'billable' | 'non billable' | 'pending';
+	search?: string;
 };
 
 export type ListedLead = {

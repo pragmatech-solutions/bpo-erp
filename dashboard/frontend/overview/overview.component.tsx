@@ -1,21 +1,9 @@
 'use client';
 
-import {
-	AlertCircle,
-	CheckCircle2,
-	Clock3,
-	Phone,
-	User,
-	Wallet,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock3, User } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { LeadCard } from '@/common/components/lead-card';
 import { useOverviewHook } from './overview.hook';
-
-function statusPill(status: 'billable' | 'non billable' | 'pending') {
-	if (status === 'billable') return 'bg-[#D1FAE5] text-[#10B981]';
-	if (status === 'non billable') return 'bg-[#FFE4E6] text-[#F43F5E]';
-	return 'bg-[#FEF3C7] text-[#F59E0B]';
-}
 
 export function Overview() {
 	const { data, currentUserName, isLoading, errorMessage } = useOverviewHook();
@@ -93,40 +81,7 @@ export function Overview() {
 			</h2>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{data.recentLeads.map((lead) => (
-					<Card key={lead.id} className="rounded-[19px] border-none p-6">
-						<div className="mb-4 flex items-center justify-between">
-							<div>
-								<div className="text-sm text-black">Customer Name</div>
-								<div className="text-xl font-semibold text-[#313957]">
-									{lead.customerName}
-								</div>
-							</div>
-							<span
-								className={`rounded-full px-3 py-1 text-xs ${statusPill(lead.status)}`}
-							>
-								{lead.status}
-							</span>
-						</div>
-						<div className="grid grid-cols-2 gap-3 text-[#313957]">
-							<div className="flex items-center gap-2 text-sm">
-								<Phone size={14} /> {lead.customerNumber}
-							</div>
-							<div className="flex items-center gap-2 text-sm">
-								<Wallet size={14} /> {lead.loanType}
-							</div>
-							<div className="flex items-center gap-2 text-sm">
-								<User size={14} /> {lead.created_by.name}
-							</div>
-							<div className="text-sm">
-								{new Date(lead.updatedAt).toLocaleDateString()}
-							</div>
-						</div>
-						{lead.status === 'non billable' && lead.statusReason && (
-							<div className="mt-4 bg-[#FFF1F2] px-3 py-2 text-sm text-[#F43F5E]">
-								Reason: {lead.statusReason}
-							</div>
-						)}
-					</Card>
+					<LeadCard key={lead.id} lead={lead} />
 				))}
 			</div>
 		</div>
