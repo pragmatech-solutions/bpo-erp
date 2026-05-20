@@ -5,6 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { useCreateLeadFormHook } from './create-lead-form.hook';
 
 export function CreateLeadForm() {
@@ -97,31 +104,21 @@ export function CreateLeadForm() {
 							Loan Type *
 						</Label>
 						<div className="relative">
-							<Briefcase className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#26395C]" />
-							<select
-								id="loanType"
-								value={loanType}
-								onChange={(e) => setLoanType(e.target.value)}
-								required
-								className="h-[58px] w-full appearance-none rounded-[12px] border border-[#D4D7E3] bg-white pl-12 pr-4 text-[16px] text-[#313957] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-							>
-								<option value="" disabled>
-									Select Loan Type
-								</option>
-								<option value="Conventional">Conventional</option>
-								<option value="FHA">FHA</option>
-								<option value="VA">VA</option>
-								<option value="VA eligible">VA eligible</option>
-							</select>
-							<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#26395C]">
-								<svg
-									className="h-4 w-4 fill-current"
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 20 20"
+							<Briefcase className="absolute left-4 top-1/2 z-10 size-5 -translate-y-1/2 text-[#26395C]" />
+							<Select value={loanType} onValueChange={setLoanType}>
+								<SelectTrigger
+									id="loanType"
+									className="h-[58px] w-full rounded-[12px] border border-[#D4D7E3] bg-white pl-12 pr-4 text-[16px] text-[#313957] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 data-[placeholder]:text-[#8897AD]"
 								>
-									<path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-								</svg>
-							</div>
+									<SelectValue placeholder="Select Loan Type" />
+								</SelectTrigger>
+								<SelectContent position="popper">
+									<SelectItem value="Conventional">Conventional</SelectItem>
+									<SelectItem value="FHA">FHA</SelectItem>
+									<SelectItem value="VA">VA</SelectItem>
+									<SelectItem value="VA eligible">VA eligible</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 					</div>
 
