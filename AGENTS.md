@@ -10,3 +10,4 @@ It currently handles the leads by agents, and other informations. This file is j
 3. When referring to technical details of the project, refer to this document /agent-docs/TECHNICAL_DETAILS.md
 4. When making database changes, refer to this document /agent-docs/DATABASE_DETAILS.md before making any changes
 5. When implementing new modules to the project, read the relevant file to make sure you are not breaking previous funcitonality. Semantic informarion is in the agent docs folder, refer to this document /agent-docs/FEATURE_DETAILS.md file
+6. When handling git and other source code management work, refer to this document /agent-docs/SOURCE_CODE_MANAGEMENT.md
