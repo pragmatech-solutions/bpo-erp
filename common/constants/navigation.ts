@@ -24,7 +24,7 @@ export const NAVIGATION_LINKS = [
 	},
 ];
 
-export const BOTTOM_NAVIGATION_LINKS = [
+export const BOTTOM_NAVIGATION_OPTIONS = [
 	{
 		label: 'Setting',
 		href: '/settings',
@@ -32,7 +32,6 @@ export const BOTTOM_NAVIGATION_LINKS = [
 	},
 	{
 		label: 'Logout',
-		href: '/logout',
 		icon: LogOut,
 	},
 ];

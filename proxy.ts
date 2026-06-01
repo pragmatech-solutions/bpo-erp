@@ -8,30 +8,40 @@ const secret = new TextEncoder().encode(
 
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
+	const token = request.cookies.get('token')?.value;
 
-	// Define protected routes
+	const isAuthRoute = ['/login', '/signup'].includes(pathname);
 	const isProtectedRoute =
 		pathname.startsWith('/dashboard') || pathname.startsWith('/leads');
 
-	if (isProtectedRoute) {
-		const token = request.cookies.get('token')?.value;
-
-		if (!token) {
-			return NextResponse.redirect(new URL('/login', request.url));
-		}
-
+	// Scenario 1: User is logged in
+	if (token) {
 		try {
+			// Verify session validity
 			await jwtVerify(token, secret);
+
+			// Redirect away from auth pages or root to dashboard
+			if (isAuthRoute || pathname === '/') {
+				return NextResponse.redirect(new URL('/dashboard', request.url));
+			}
+
 			return NextResponse.next();
 		} catch (error) {
-			console.error('Middleware: JWT verification failed:', error);
-			return NextResponse.redirect(new URL('/login', request.url));
+			console.error('Proxy: Session invalid, clearing token.', error);
+			const response = NextResponse.redirect(new URL('/login', request.url));
+			response.cookies.delete('token');
+			return response;
 		}
+	}
+
+	// Scenario 2: User is NOT logged in
+	if (isProtectedRoute) {
+		return NextResponse.redirect(new URL('/login', request.url));
 	}
 
 	return NextResponse.next();
 }
 
 export const config = {
-	matcher: ['/dashboard/:path*', '/leads/:path*'],
+	matcher: ['/dashboard/:path*', '/leads/:path*', '/login', '/signup', '/'],
 };
