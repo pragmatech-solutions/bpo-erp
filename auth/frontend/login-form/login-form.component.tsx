@@ -25,7 +25,7 @@ export function LoginForm() {
 		<div className="min-h-screen w-full bg-[#D4E8F8]">
 			<div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col items-center px-[38px] pb-10 pt-[118px] md:max-w-[410px] md:justify-center md:px-0 md:pb-0 md:pt-0">
 				<Image
-					src="/next.svg"
+					src="/logo.png"
 					alt="Logo"
 					width={116}
 					height={116}

@@ -26,7 +26,7 @@ export function Header() {
 
 				{/* Mobile Center: Logo */}
 				<div className="lg:hidden">
-					<Image src="/next.svg" alt="Logo" width={58} height={58} />
+					<Image src="/logo.png" alt="Logo" width={58} height={58} />
 				</div>
 
 				{/* Desktop & Mobile Right: Theme & Profile */}

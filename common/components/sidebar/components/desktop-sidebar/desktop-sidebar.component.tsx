@@ -16,7 +16,7 @@ export function DesktopSidebar() {
 		<aside className="fixed left-0 top-0 z-40 hidden h-screen w-[20%] flex-col bg-[#FEFEFE] lg:flex">
 			<div className="flex h-[145px] items-center justify-center">
 				<Image
-					src="/next.svg"
+					src="/logo.png"
 					alt="Mavrix Logo"
 					width={70}
 					height={70}

@@ -29,7 +29,7 @@ export function MobileSidebar({
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className="flex items-center justify-between px-6 py-8">
-					<Image src="/next.svg" alt="Mavrix Logo" width={40} height={40} />
+					<Image src="/logo.png" alt="Mavrix Logo" width={60} height={60} />
 					<Button variant="ghost" size="icon" onClick={onClose}>
 						<X className="size-6 text-[#26395C]" />
 					</Button>
