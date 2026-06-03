@@ -3,16 +3,17 @@
 type CurrentUserInformation = {
 	currentUser: {
 		name: string;
+		role: string;
 	};
 };
 
-export function saveCurrentLoggedInUserInformation(name: string) {
+export function saveCurrentLoggedInUserInformation(name: string, role: string) {
 	if (typeof window === 'undefined') {
 		return;
 	}
 
 	const userInformation: CurrentUserInformation = {
-		currentUser: { name },
+		currentUser: { name, role },
 	};
 
 	localStorage.setItem(

@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/common/backend/get-current-user.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { Users } from '@/common/models/users.schema';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { LeadStatus } from '@/common/constants/lead-status.enum';
 import listLeads from '@/leads/backend/list-leads';
 import type { DashboardData } from './lead-analytics.type';
 
@@ -20,7 +22,7 @@ export async function getLeadAnalytics(): Promise<DashboardData> {
 		updated_at: { $gte: startDate },
 	};
 
-	if (currentUser.role !== 'admin') {
+	if (currentUser.role !== UserRole.ADMIN) {
 		matchStage.created_by = new Types.ObjectId(currentUserId);
 	}
 
@@ -31,13 +33,15 @@ export async function getLeadAnalytics(): Promise<DashboardData> {
 				_id: null,
 				total: { $sum: 1 },
 				pending: {
-					$sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] },
+					$sum: { $cond: [{ $eq: ['$status', LeadStatus.PENDING] }, 1, 0] },
 				},
 				billable: {
-					$sum: { $cond: [{ $eq: ['$status', 'billable'] }, 1, 0] },
+					$sum: { $cond: [{ $eq: ['$status', LeadStatus.BILLABLE] }, 1, 0] },
 				},
 				nonBillable: {
-					$sum: { $cond: [{ $eq: ['$status', 'non billable'] }, 1, 0] },
+					$sum: {
+						$cond: [{ $eq: ['$status', LeadStatus.NON_BILLABLE] }, 1, 0],
+					},
 				},
 			},
 		},

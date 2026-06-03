@@ -29,8 +29,11 @@ export async function loginApi(
 
 		if (data.success && data.user?.token) {
 			setToken(data.user.token);
-			if (typeof data.user.name === 'string') {
-				saveCurrentLoggedInUserInformation(data.user.name);
+			if (
+				typeof data.user.name === 'string' &&
+				typeof data.user.role === 'string'
+			) {
+				saveCurrentLoggedInUserInformation(data.user.name, data.user.role);
 			}
 		}
 

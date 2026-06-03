@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { LoanType } from '@/common/constants/loan-type.enum';
 import { useCreateLeadFormHook } from './create-lead-form.hook';
 
 export function CreateLeadForm() {
@@ -113,10 +114,11 @@ export function CreateLeadForm() {
 									<SelectValue placeholder="Select Loan Type" />
 								</SelectTrigger>
 								<SelectContent position="popper">
-									<SelectItem value="Conventional">Conventional</SelectItem>
-									<SelectItem value="FHA">FHA</SelectItem>
-									<SelectItem value="VA">VA</SelectItem>
-									<SelectItem value="VA eligible">VA eligible</SelectItem>
+									{Object.values(LoanType).map((type) => (
+										<SelectItem key={type} value={type}>
+											{type}
+										</SelectItem>
+									))}
 								</SelectContent>
 							</Select>
 						</div>

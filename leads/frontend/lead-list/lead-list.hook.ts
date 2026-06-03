@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 import { getLeadsApi } from './lead-list.api';
+import { LeadStatus } from '@/common/constants/lead-status.enum';
+import { LoanType } from '@/common/constants/loan-type.enum';
 
 export type DurationPreset =
 	| 'Today'
@@ -14,7 +16,7 @@ export type DurationPreset =
 	| 'All'
 	| 'Custom Range';
 
-export type LeadStatus = 'billable' | 'non billable' | 'pending' | 'All Status';
+export type LeadStatusFilter = LeadStatus | 'All Status';
 
 export function useLeadListHook() {
 	const [leads, setLeads] = useState<ListedLead[]>([]);
@@ -22,7 +24,7 @@ export function useLeadListHook() {
 	const [errorMessage, setErrorMessage] = useState('');
 
 	const [search, setSearch] = useState('');
-	const [status, setStatus] = useState<LeadStatus>('All Status');
+	const [status, setStatus] = useState<LeadStatusFilter>('All Status');
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;

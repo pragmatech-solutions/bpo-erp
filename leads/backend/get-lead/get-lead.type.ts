@@ -1,23 +1,20 @@
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import { LoanType } from '@/common/constants/loan-type.enum';
 
-export type ListLeadsInput = {
-	limit?: number;
-	startDate?: Date;
-	endDate?: Date;
-	status?: LeadStatus;
-	search?: string;
+export type GetLeadInput = {
+	id: string;
 };
 
-export type ListedLead = {
+export type LeadDetails = {
 	id: string;
 	customerName: string;
 	customerNumber: string;
-	loanType: string;
+	loanType: LoanType;
 	status: LeadStatus;
 	statusReason?: string;
-	updatedAt: string;
 	created_by: {
 		id: string;
 		name: string;
 	};
+	updatedAt: string;
 };

@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/common/backend/get-current-user.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { Users } from '@/common/models/users.schema';
+import { UserRole } from '@/common/constants/user-roles.enum';
 import { listLeadsInputSchema } from './list-leads.input-schema';
 import type { ListedLead, ListLeadsInput } from './list-leads.type';
 
@@ -25,7 +26,7 @@ export async function listLeads(
 
 	const matchStage: Record<string, unknown> = {};
 
-	if (currentUser.role !== 'admin') {
+	if (currentUser.role !== UserRole.ADMIN) {
 		matchStage.created_by = new Types.ObjectId(currentUserId);
 	}
 

@@ -12,10 +12,11 @@ import {
 } from '@/components/ui/select';
 import { LeadCard } from '@/common/components/lead-card';
 import { DatePickerWithRange } from './components/date-range-picker.component';
+import { LeadStatus } from '@/common/constants/lead-status.enum';
 import {
 	useLeadListHook,
 	type DurationPreset,
-	type LeadStatus,
+	type LeadStatusFilter,
 } from './lead-list.hook';
 
 const DURATIONS: DurationPreset[] = [
@@ -29,11 +30,11 @@ const DURATIONS: DurationPreset[] = [
 	'Custom Range',
 ];
 
-const STATUSES: LeadStatus[] = [
+const STATUSES: LeadStatusFilter[] = [
 	'All Status',
-	'billable',
-	'non billable',
-	'pending',
+	LeadStatus.BILLABLE,
+	LeadStatus.NON_BILLABLE,
+	LeadStatus.PENDING,
 ];
 
 export function LeadList() {

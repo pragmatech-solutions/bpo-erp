@@ -1,8 +1,10 @@
+import { LoanType } from '@/common/constants/loan-type.enum';
+
 export interface LeadResponse {
 	_id: string;
 	customer_name: string;
 	customer_number: string;
-	loan_type: 'Conventional' | 'FHA' | 'VA' | 'VA eligible';
+	loan_type: LoanType;
 	loan_balance?: number;
 	home_value?: number;
 	status: string;

@@ -1,24 +1,26 @@
 import { Schema, model, models } from 'mongoose';
+import { LeadStatus } from '../constants/lead-status.enum';
+import { LoanType } from '../constants/loan-type.enum';
 
 const LeadSchema = new Schema(
 	{
-		created_by: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+		created_by: { type: Schema.Types.ObjectId, ref: 'users', required: true },
 		status: {
 			type: String,
-			enum: ['billable', 'non billable', 'pending'],
-			default: 'pending',
+			enum: Object.values(LeadStatus),
+			default: LeadStatus.PENDING,
 		},
 		status_reason: {
 			type: String,
 			required: function () {
-				return this.status === 'non billable';
+				return this.status === LeadStatus.NON_BILLABLE;
 			},
 		},
 		customer_number: { type: String, required: true },
 		customer_name: { type: String, required: true },
 		loan_type: {
 			type: String,
-			enum: ['Conventional', 'FHA', 'VA', 'VA eligible'],
+			enum: Object.values(LoanType),
 			required: true,
 		},
 		loan_balance: { type: Number, required: false },
