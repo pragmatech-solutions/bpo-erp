@@ -3,7 +3,6 @@ import { connectToDatabase } from '@/common/database';
 import { Users } from '@/common/models/users.schema';
 import { SignupInput } from './signup.input-schema';
 import { UserResponse } from '../login/login.type';
-import { createSession } from '../login/create-session.function';
 
 export async function signupUser(input: SignupInput): Promise<UserResponse> {
 	await connectToDatabase();
@@ -28,12 +27,10 @@ export async function signupUser(input: SignupInput): Promise<UserResponse> {
 	await newUser.save();
 
 	const { _id, password: _password, ...rest } = newUser._doc;
+	void _id;
 	void _password;
-
-	const token = await createSession(_id.toString());
 
 	return {
 		...rest,
-		token,
 	};
 }

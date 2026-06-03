@@ -27,25 +27,17 @@ export function SignupForm() {
 
 	return (
 		<div className="min-h-screen w-full bg-[#D4E8F8]">
-			<div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col items-center px-[38px] pb-10 pt-[118px] md:max-w-[1440px] md:justify-center md:px-0 md:pb-0 md:pt-0">
+			<div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col items-center px-[38px] pb-10 pt-[118px] md:max-w-[410px] md:justify-center md:px-0 md:pb-0 md:pt-0">
 				<Image
 					src="/logo.png"
 					alt="Logo"
 					width={116}
 					height={116}
-					className="mb-9 md:hidden"
-				/>
-				<Image
-					src="/logo.png"
-					alt="Logo"
-					width={97}
-					height={97}
-					className="hidden md:absolute md:top-[107px] md:left-[calc(50%-97px/2+0.5px)] md:block"
-					style={{ visibility: 'hidden' }} // Matching CSS "visibility: hidden" for desktop logo?
+					className="mb-9 md:mb-[30px] md:h-[97px] md:w-[97px]"
 				/>
 
-				<section className="w-full md:max-w-[410px]">
-					<div className="mb-[10px] flex flex-col items-start gap-[10px] md:relative md:top-[-40px]">
+				<section className="w-full">
+					<div className="mb-4 flex flex-col items-start gap-2">
 						<h1 className="font-[var(--font-poppins)] text-[30px] leading-[100%] font-semibold tracking-[0.01em] text-[#161750] md:text-[36px]">
 							Create your account
 						</h1>
