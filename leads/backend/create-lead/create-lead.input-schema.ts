@@ -7,6 +7,7 @@ export const createLeadInputSchema = z.object({
 		.string()
 		.min(1, 'Customer number is required')
 		.regex(/^[0-9\s()+-]+$/, 'Invalid number format'),
+	campaign: z.string().min(1, 'Campaign is required'),
 	loan_type: z.nativeEnum(LoanType).refine((value) => !!value, {
 		message: 'Invalid loan type',
 	}),
