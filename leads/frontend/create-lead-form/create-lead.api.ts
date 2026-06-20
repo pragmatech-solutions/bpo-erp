@@ -9,6 +9,7 @@ export type CreateLeadPayload = {
 	loan_type: string;
 	loan_balance?: number;
 	home_value?: number;
+	loan_officer_name?: string;
 };
 
 export type CreateLeadApiResponse = {

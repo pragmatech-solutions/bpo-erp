@@ -19,6 +19,7 @@ const LeadSchema = new Schema(
 		customer_number: { type: String, required: true },
 		customer_name: { type: String, required: true },
 		campaign: { type: String, required: true },
+		loan_officer_name: { type: String, required: false },
 		loan_type: {
 			type: String,
 			enum: Object.values(LoanType),

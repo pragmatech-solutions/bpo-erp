@@ -12,6 +12,7 @@ export function useCreateLeadFormHook() {
 	const [customerNumber, setCustomerNumber] = useState('');
 	const [campaign, setCampaign] = useState('');
 	const [loanType, setLoanType] = useState('');
+	const [loanOfficerName, setLoanOfficerName] = useState('');
 	const [loanBalance, setLoanBalance] = useState('');
 	const [homeValue, setHomeValue] = useState('');
 	const [error, setError] = useState<CreateLeadError>('');
@@ -40,6 +41,7 @@ export function useCreateLeadFormHook() {
 				loan_type: loanType,
 				loan_balance: loanBalance ? Number(loanBalance) : undefined,
 				home_value: homeValue ? Number(homeValue) : undefined,
+				loan_officer_name: loanOfficerName || undefined,
 			});
 
 			if (response.success) {
@@ -50,6 +52,7 @@ export function useCreateLeadFormHook() {
 				setLoanType('');
 				setLoanBalance('');
 				setHomeValue('');
+				setLoanOfficerName('');
 			} else {
 				setError(response.error || 'Failed to create lead');
 			}
@@ -77,6 +80,8 @@ export function useCreateLeadFormHook() {
 		setLoanBalance,
 		homeValue,
 		setHomeValue,
+		loanOfficerName,
+		setLoanOfficerName,
 		errorMessage,
 		isLoading,
 		success,
