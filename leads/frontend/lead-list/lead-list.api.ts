@@ -21,6 +21,7 @@ export async function getLeadsApi(
 		if (input.endDate) query.append('endDate', input.endDate.toISOString());
 		if (input.status) query.append('status', input.status);
 		if (input.search) query.append('search', input.search);
+		if (input.campaign) query.append('campaign', input.campaign);
 
 		// apiClient is a function in this project, not an object with a .get method
 		return await apiClient<LeadListApiResponse>(

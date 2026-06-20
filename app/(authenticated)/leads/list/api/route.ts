@@ -12,6 +12,7 @@ export async function GET(req: Request) {
 		const endDate = searchParams.get('endDate') || undefined;
 		const status = searchParams.get('status') || undefined;
 		const search = searchParams.get('search') || undefined;
+		const campaign = searchParams.get('campaign') || undefined;
 
 		const validatedInput = listLeadsInputSchema.parse({
 			limit,
@@ -19,6 +20,7 @@ export async function GET(req: Request) {
 			endDate,
 			status,
 			search,
+			campaign,
 		});
 
 		const leads = await listLeads(validatedInput);

@@ -26,6 +26,7 @@ export function useLeadListHook() {
 	const [search, setSearch] = useState('');
 	const [status, setStatus] = useState<LeadStatusFilter>('All Status');
 	const [duration, setDuration] = useState<DurationPreset>('All');
+	const [campaign, setCampaign] = useState<string>('All Campaigns');
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;
 		end?: Date;
@@ -80,6 +81,7 @@ export function useLeadListHook() {
 			status: status === 'All Status' ? undefined : status,
 			startDate,
 			endDate,
+			campaign: campaign === 'All Campaigns' ? undefined : campaign,
 		});
 
 		if (!response.success || !response.data) {
@@ -92,7 +94,7 @@ export function useLeadListHook() {
 		setLeads(response.data);
 		setErrorMessage('');
 		setIsLoading(false);
-	}, [search, status, duration, customDateRange]);
+	}, [search, status, duration, customDateRange, campaign]);
 
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
@@ -105,6 +107,7 @@ export function useLeadListHook() {
 		setSearch('');
 		setStatus('All Status');
 		setDuration('All');
+		setCampaign('All Campaigns');
 		setCustomDateRange(null);
 	};
 
@@ -119,6 +122,8 @@ export function useLeadListHook() {
 			setStatus,
 			duration,
 			setDuration,
+			campaign,
+			setCampaign,
 			customDateRange,
 			setCustomDateRange,
 		},
