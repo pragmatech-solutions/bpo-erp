@@ -92,7 +92,7 @@ export function CreateLeadForm() {
 								<Input
 									id="customerNumber"
 									type="text"
-									placeholder="e.g. +92 3123214145"
+									placeholder="e.g. +1 (555) 000-0000"
 									value={customerNumber}
 									onChange={(e) => setCustomerNumber(e.target.value)}
 									required
