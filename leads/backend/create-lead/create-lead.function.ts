@@ -17,6 +17,7 @@ export async function createLead(input: CreateLeadInput) {
 		...validatedData,
 		created_by: currentUserId,
 		status: 'pending',
+		paymentStatus: 'unpaid',
 	});
 
 	await newLead.save();

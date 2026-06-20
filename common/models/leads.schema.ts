@@ -27,6 +27,11 @@ const LeadSchema = new Schema(
 		},
 		loan_balance: { type: Number, required: false },
 		home_value: { type: Number, required: false },
+		paymentStatus: {
+			type: String,
+			enum: ['paid', 'unpaid'],
+			default: 'unpaid',
+		},
 	},
 	{
 		timestamps: {
