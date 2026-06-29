@@ -1,6 +1,6 @@
 'use client';
 
-import { Phone, User, Wallet, Calendar } from 'lucide-react';
+import { Phone, User, Wallet, Calendar, Megaphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
@@ -114,6 +114,16 @@ export function LeadCard({ lead }: LeadCardProps) {
 					</div>
 					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
 						{new Date(lead.updatedAt).toLocaleDateString('en-GB')}
+					</div>
+				</div>
+
+				<div className="flex flex-col gap-1">
+					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
+						<Megaphone size={14} className="text-[#26395C]" />
+						<span>Campaign</span>
+					</div>
+					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
+						{lead.campaign}
 					</div>
 				</div>
 			</div>

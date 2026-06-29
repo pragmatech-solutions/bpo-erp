@@ -6,6 +6,7 @@ export type ListLeadsInput = {
 	endDate?: Date;
 	status?: LeadStatus;
 	search?: string;
+	campaign?: string;
 };
 
 export type ListedLead = {
@@ -16,6 +17,7 @@ export type ListedLead = {
 	status: LeadStatus;
 	statusReason?: string;
 	updatedAt: string;
+	campaign: string;
 	created_by: {
 		id: string;
 		name: string;

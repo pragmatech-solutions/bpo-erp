@@ -31,13 +31,9 @@ export function Header() {
 
 				{/* Desktop & Mobile Right: Theme & Profile */}
 				<div className="flex items-center gap-4">
-					<Button variant="ghost" size="icon" className="text-[#26395C]">
-						<Moon className="size-[26px]" />
-					</Button>
-
 					<div className="flex size-[49px] items-center justify-center rounded-full bg-[#D9D9D9] lg:bg-transparent">
 						<Image
-							src="/vercel.svg"
+							src="/generic-user.svg"
 							alt="Profile"
 							width={49}
 							height={49}

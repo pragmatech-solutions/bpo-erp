@@ -13,6 +13,7 @@ import {
 import { LeadCard } from '@/common/components/lead-card';
 import { DatePickerWithRange } from './components/date-range-picker.component';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import { CAMPAIGNS } from '@/common/constants/campaigns';
 import {
 	useLeadListHook,
 	type DurationPreset,
@@ -125,6 +126,23 @@ export function LeadList() {
 													.split(' ')
 													.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
 													.join(' ')}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+
+						<Select
+							value={filters.campaign}
+							onValueChange={filters.setCampaign}
+						>
+							<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
+								<SelectValue placeholder="All Campaigns" />
+							</SelectTrigger>
+							<SelectContent className="rounded-[19px] border-none shadow-xl">
+								<SelectItem value="All Campaigns">All Campaigns</SelectItem>
+								{CAMPAIGNS.map((c) => (
+									<SelectItem key={c} value={c}>
+										{c}
 									</SelectItem>
 								))}
 							</SelectContent>

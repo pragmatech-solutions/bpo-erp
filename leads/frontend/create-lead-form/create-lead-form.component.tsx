@@ -1,6 +1,6 @@
 'use client';
 
-import { User, Phone, Briefcase, DollarSign, Home } from 'lucide-react';
+import { User, Phone, Briefcase, DollarSign, Home, Target } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { LoanType } from '@/common/constants/loan-type.enum';
+import { CAMPAIGNS } from '@/common/constants/campaigns';
 import { useCreateLeadFormHook } from './create-lead-form.hook';
 
 export function CreateLeadForm() {
@@ -21,12 +22,16 @@ export function CreateLeadForm() {
 		setCustomerName,
 		customerNumber,
 		setCustomerNumber,
+		campaign,
+		setCampaign,
 		loanType,
 		setLoanType,
 		loanBalance,
 		setLoanBalance,
 		homeValue,
 		setHomeValue,
+		loanOfficerName,
+		setLoanOfficerName,
 		errorMessage,
 		isLoading,
 		success,
@@ -87,13 +92,60 @@ export function CreateLeadForm() {
 								<Input
 									id="customerNumber"
 									type="text"
-									placeholder="e.g. +92 3123214145"
+									placeholder="e.g. +1 (555) 000-0000"
 									value={customerNumber}
 									onChange={(e) => setCustomerNumber(e.target.value)}
 									required
 									className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white pl-12 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-blue-500"
 								/>
 							</div>
+						</div>
+					</div>
+
+					<div className="flex flex-col gap-3">
+						<Label
+							htmlFor="campaign"
+							className="text-[16px] font-medium text-[#313957]"
+						>
+							Campaign *
+						</Label>
+						<div className="relative">
+							<Target className="absolute left-4 top-1/2 z-10 size-5 -translate-y-1/2 text-[#26395C]" />
+							<Select value={campaign} onValueChange={setCampaign}>
+								<SelectTrigger
+									id="campaign"
+									className="h-[58px] w-full rounded-[12px] border border-[#D4D7E3] bg-white pl-12 pr-4 text-[16px] text-[#313957] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 data-[placeholder]:text-[#8897AD]"
+								>
+									<SelectValue placeholder="Select Campaign" />
+								</SelectTrigger>
+								<SelectContent position="popper">
+									{CAMPAIGNS.map((campaign) => (
+										<SelectItem key={campaign} value={campaign}>
+											{campaign}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+					</div>
+
+					<div className="flex flex-col gap-3">
+						<Label
+							htmlFor="loanOfficerName"
+							className="text-[16px] font-medium text-[#313957]"
+						>
+							Loan Officer Name (optional)
+						</Label>
+						<div className="relative">
+							<User className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#26395C]" />
+							<Input
+								id="loanOfficerName"
+								type="text"
+								placeholder="e.g. John Doe"
+								value={loanOfficerName}
+								onChange={(e) => setLoanOfficerName(e.target.value)}
+								className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white pl-12 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-blue-500"
+							/>
 						</div>
 					</div>
 

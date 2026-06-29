@@ -18,6 +18,8 @@ const LeadSchema = new Schema(
 		},
 		customer_number: { type: String, required: true },
 		customer_name: { type: String, required: true },
+		campaign: { type: String, required: true },
+		loan_officer_name: { type: String, required: false },
 		loan_type: {
 			type: String,
 			enum: Object.values(LoanType),
@@ -25,6 +27,11 @@ const LeadSchema = new Schema(
 		},
 		loan_balance: { type: Number, required: false },
 		home_value: { type: Number, required: false },
+		paymentStatus: {
+			type: String,
+			enum: ['paid', 'unpaid'],
+			default: 'unpaid',
+		},
 	},
 	{
 		timestamps: {

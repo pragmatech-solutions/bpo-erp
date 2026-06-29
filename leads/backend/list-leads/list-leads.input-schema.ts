@@ -7,4 +7,5 @@ export const listLeadsInputSchema = z.object({
 	endDate: z.coerce.date().optional(),
 	status: z.nativeEnum(LeadStatus).optional(),
 	search: z.string().optional(),
+	campaign: z.string().optional(),
 });

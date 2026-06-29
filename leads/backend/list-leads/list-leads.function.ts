@@ -34,6 +34,10 @@ export async function listLeads(
 		matchStage.status = validatedInput.status;
 	}
 
+	if (validatedInput.campaign) {
+		matchStage.campaign = validatedInput.campaign;
+	}
+
 	if (validatedInput.search) {
 		const searchRegex = new RegExp(validatedInput.search, 'i');
 		matchStage.$or = [
@@ -67,6 +71,7 @@ export async function listLeads(
 				loanType: '$loan_type',
 				status: '$status',
 				statusReason: '$status_reason',
+				campaign: '$campaign',
 				updatedAt: {
 					$dateToString: {
 						date: '$updated_at',

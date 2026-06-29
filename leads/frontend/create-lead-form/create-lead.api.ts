@@ -5,9 +5,11 @@ import { apiClient } from '@/lib/api-client';
 export type CreateLeadPayload = {
 	customer_name: string;
 	customer_number: string;
+	campaign: string;
 	loan_type: string;
 	loan_balance?: number;
 	home_value?: number;
+	loan_officer_name?: string;
 };
 
 export type CreateLeadApiResponse = {

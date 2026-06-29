@@ -9,6 +9,7 @@ export interface LeadResponse {
 	home_value?: number;
 	status: string;
 	created_by: string;
+	paymentStatus?: 'paid' | 'unpaid';
 	created_at: Date;
 	updated_at: Date;
 }
