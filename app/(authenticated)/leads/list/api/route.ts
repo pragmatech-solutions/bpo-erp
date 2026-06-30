@@ -13,6 +13,7 @@ export async function GET(req: Request) {
 		const status = searchParams.get('status') || undefined;
 		const search = searchParams.get('search') || undefined;
 		const campaign = searchParams.get('campaign') || undefined;
+		const agentId = searchParams.get('agentId') || undefined;
 
 		const validatedInput = listLeadsInputSchema.parse({
 			limit,
@@ -21,6 +22,7 @@ export async function GET(req: Request) {
 			status,
 			search,
 			campaign,
+			agentId,
 		});
 
 		const leads = await listLeads(validatedInput);

@@ -8,4 +8,5 @@ export const listLeadsInputSchema = z.object({
 	status: z.nativeEnum(LeadStatus).optional(),
 	search: z.string().optional(),
 	campaign: z.string().optional(),
+	agentId: z.string().optional(),
 });

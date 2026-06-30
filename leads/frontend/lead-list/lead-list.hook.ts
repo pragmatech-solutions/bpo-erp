@@ -5,6 +5,10 @@ import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 import { getLeadsApi } from './lead-list.api';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { LoanType } from '@/common/constants/loan-type.enum';
+import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { getAgentsApi } from '@/agents/frontend/list-agents';
+import type { AgentListItem } from '@/agents/backend/list-agents/list-agents.type';
 
 export type DurationPreset =
 	| 'Today'
@@ -27,10 +31,28 @@ export function useLeadListHook() {
 	const [status, setStatus] = useState<LeadStatusFilter>('All Status');
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [campaign, setCampaign] = useState<string>('All Campaigns');
+	const [agentId, setAgentId] = useState<string>('All Agents');
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;
 		end?: Date;
 	} | null>(null);
+
+	const [isAdmin, setIsAdmin] = useState(false);
+	const [agents, setAgents] = useState<AgentListItem[]>([]);
+
+	useEffect(() => {
+		const userInfo = getCurrentLoggedInUserInformation();
+		if (userInfo?.currentUser?.role === UserRole.ADMIN) {
+			setIsAdmin(true);
+			const fetchAgents = async () => {
+				const response = await getAgentsApi();
+				if (response.success && response.data) {
+					setAgents(response.data);
+				}
+			};
+			fetchAgents();
+		}
+	}, []);
 
 	const fetchLeads = useCallback(async () => {
 		setIsLoading(true);
@@ -82,6 +104,7 @@ export function useLeadListHook() {
 			startDate,
 			endDate,
 			campaign: campaign === 'All Campaigns' ? undefined : campaign,
+			agentId: agentId === 'All Agents' ? undefined : agentId,
 		});
 
 		if (!response.success || !response.data) {
@@ -94,7 +117,7 @@ export function useLeadListHook() {
 		setLeads(response.data);
 		setErrorMessage('');
 		setIsLoading(false);
-	}, [search, status, duration, customDateRange, campaign]);
+	}, [search, status, duration, customDateRange, campaign, agentId]);
 
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
@@ -108,6 +131,7 @@ export function useLeadListHook() {
 		setStatus('All Status');
 		setDuration('All');
 		setCampaign('All Campaigns');
+		setAgentId('All Agents');
 		setCustomDateRange(null);
 	};
 
@@ -115,6 +139,8 @@ export function useLeadListHook() {
 		leads,
 		isLoading,
 		errorMessage,
+		isAdmin,
+		agents,
 		filters: {
 			search,
 			setSearch,
@@ -124,6 +150,8 @@ export function useLeadListHook() {
 			setDuration,
 			campaign,
 			setCampaign,
+			agentId,
+			setAgentId,
 			customDateRange,
 			setCustomDateRange,
 		},

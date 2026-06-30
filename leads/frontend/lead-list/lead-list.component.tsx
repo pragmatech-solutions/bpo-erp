@@ -39,8 +39,15 @@ const STATUSES: LeadStatusFilter[] = [
 ];
 
 export function LeadList() {
-	const { leads, isLoading, errorMessage, filters, resetFilters } =
-		useLeadListHook();
+	const {
+		leads,
+		isLoading,
+		errorMessage,
+		filters,
+		resetFilters,
+		isAdmin,
+		agents,
+	} = useLeadListHook();
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -147,6 +154,25 @@ export function LeadList() {
 								))}
 							</SelectContent>
 						</Select>
+
+						{isAdmin && (
+							<Select
+								value={filters.agentId}
+								onValueChange={filters.setAgentId}
+							>
+								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
+									<SelectValue placeholder="All Agents" />
+								</SelectTrigger>
+								<SelectContent className="rounded-[19px] border-none shadow-xl">
+									<SelectItem value="All Agents">All Agents</SelectItem>
+									{agents.map((a) => (
+										<SelectItem key={a.id} value={a.id}>
+											{a.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
 					</div>
 				</div>
 
