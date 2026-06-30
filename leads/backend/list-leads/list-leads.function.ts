@@ -28,6 +28,11 @@ export async function listLeads(
 
 	if (currentUser.role !== UserRole.ADMIN) {
 		matchStage.created_by = new Types.ObjectId(currentUserId);
+	} else if (
+		validatedInput.agentId &&
+		validatedInput.agentId !== 'All Agents'
+	) {
+		matchStage.created_by = new Types.ObjectId(validatedInput.agentId);
 	}
 
 	if (validatedInput.status) {

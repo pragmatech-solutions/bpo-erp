@@ -7,6 +7,7 @@ export type ListLeadsInput = {
 	status?: LeadStatus;
 	search?: string;
 	campaign?: string;
+	agentId?: string;
 };
 
 export type ListedLead = {
