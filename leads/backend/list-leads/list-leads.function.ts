@@ -39,6 +39,10 @@ export async function listLeads(
 		matchStage.status = validatedInput.status;
 	}
 
+	if (validatedInput.paymentStatus) {
+		matchStage.payment_status = validatedInput.paymentStatus;
+	}
+
 	if (validatedInput.campaign) {
 		matchStage.campaign = validatedInput.campaign;
 	}
@@ -76,6 +80,7 @@ export async function listLeads(
 				loanType: '$loan_type',
 				status: '$status',
 				statusReason: '$status_reason',
+				paymentStatus: '$payment_status',
 				campaign: '$campaign',
 				updatedAt: {
 					$dateToString: {

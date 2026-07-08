@@ -6,6 +6,7 @@ export const listLeadsInputSchema = z.object({
 	startDate: z.coerce.date().optional(),
 	endDate: z.coerce.date().optional(),
 	status: z.nativeEnum(LeadStatus).optional(),
+	paymentStatus: z.enum(['paid', 'unpaid']).optional(),
 	search: z.string().optional(),
 	campaign: z.string().optional(),
 	agentId: z.string().optional(),

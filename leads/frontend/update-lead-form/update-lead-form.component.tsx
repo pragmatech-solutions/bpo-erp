@@ -112,6 +112,33 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 						</div>
 					)}
 
+					{form.status === LeadStatus.BILLABLE && (
+						<div className="flex flex-col gap-4">
+							<label className="text-[16px] font-medium text-[#313957]">
+								Payment Status
+							</label>
+							<div className="grid grid-cols-2 gap-3 lg:w-[966px]">
+								{(['unpaid', 'paid'] as const).map((p) => (
+									<button
+										key={p}
+										type="button"
+										onClick={() => form.setPaymentStatus(p)}
+										className={cn(
+											'flex h-[58px] items-center justify-center rounded-[12px] border border-[#D4D7E3] text-[16px] transition-all',
+											form.paymentStatus === p
+												? p === 'paid'
+													? 'bg-[#D1FAE5] border-[#10B981]'
+													: 'bg-[#FFE4E6] border-[#F43F5E]'
+												: 'bg-white',
+										)}
+									>
+										{p.charAt(0).toUpperCase() + p.slice(1)}
+									</button>
+								))}
+							</div>
+						</div>
+					)}
+
 					{/* Error/Success Messages */}
 					{errorMessage && (
 						<div className="flex items-center gap-2 text-red-500">

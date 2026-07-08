@@ -18,6 +18,7 @@ import {
 	useLeadListHook,
 	type DurationPreset,
 	type LeadStatusFilter,
+	type PaymentStatusFilter,
 } from './lead-list.hook';
 
 const DURATIONS: DurationPreset[] = [
@@ -36,6 +37,12 @@ const STATUSES: LeadStatusFilter[] = [
 	LeadStatus.BILLABLE,
 	LeadStatus.NON_BILLABLE,
 	LeadStatus.PENDING,
+];
+
+const PAYMENT_STATUSES: PaymentStatusFilter[] = [
+	'All Payment Status',
+	'paid',
+	'unpaid',
 ];
 
 export function LeadList() {
@@ -67,7 +74,6 @@ export function LeadList() {
 				</div>
 			</div>
 
-			{/* Filters Row */}
 			<div className="flex flex-col gap-4 rounded-[19px] bg-white p-4 lg:min-h-[65px] lg:flex-row lg:items-center lg:justify-between lg:p-0 lg:px-6">
 				<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
 					<div className="flex items-center gap-2 text-[#313957]">
@@ -137,6 +143,28 @@ export function LeadList() {
 								))}
 							</SelectContent>
 						</Select>
+
+						{filters.status === LeadStatus.BILLABLE && (
+							<Select
+								value={filters.paymentStatus}
+								onValueChange={(val) =>
+									filters.setPaymentStatus(val as PaymentStatusFilter)
+								}
+							>
+								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
+									<SelectValue placeholder="All Payment Status" />
+								</SelectTrigger>
+								<SelectContent className="rounded-[19px] border-none shadow-xl">
+									{PAYMENT_STATUSES.map((s) => (
+										<SelectItem key={s} value={s}>
+											{s === 'All Payment Status'
+												? s
+												: s.charAt(0).toUpperCase() + s.slice(1)}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
 
 						<Select
 							value={filters.campaign}

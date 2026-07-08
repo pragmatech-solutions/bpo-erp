@@ -21,6 +21,7 @@ export type DurationPreset =
 	| 'Custom Range';
 
 export type LeadStatusFilter = LeadStatus | 'All Status';
+export type PaymentStatusFilter = 'paid' | 'unpaid' | 'All Payment Status';
 
 export function useLeadListHook() {
 	const [leads, setLeads] = useState<ListedLead[]>([]);
@@ -29,6 +30,8 @@ export function useLeadListHook() {
 
 	const [search, setSearch] = useState('');
 	const [status, setStatus] = useState<LeadStatusFilter>('All Status');
+	const [paymentStatus, setPaymentStatus] =
+		useState<PaymentStatusFilter>('All Payment Status');
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [campaign, setCampaign] = useState<string>('All Campaigns');
 	const [agentId, setAgentId] = useState<string>('All Agents');
@@ -101,6 +104,8 @@ export function useLeadListHook() {
 			limit: 50,
 			search: search || undefined,
 			status: status === 'All Status' ? undefined : status,
+			paymentStatus:
+				paymentStatus === 'All Payment Status' ? undefined : paymentStatus,
 			startDate,
 			endDate,
 			campaign: campaign === 'All Campaigns' ? undefined : campaign,
@@ -117,7 +122,15 @@ export function useLeadListHook() {
 		setLeads(response.data);
 		setErrorMessage('');
 		setIsLoading(false);
-	}, [search, status, duration, customDateRange, campaign, agentId]);
+	}, [
+		search,
+		status,
+		paymentStatus,
+		duration,
+		customDateRange,
+		campaign,
+		agentId,
+	]);
 
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
@@ -129,6 +142,7 @@ export function useLeadListHook() {
 	const resetFilters = () => {
 		setSearch('');
 		setStatus('All Status');
+		setPaymentStatus('All Payment Status');
 		setDuration('All');
 		setCampaign('All Campaigns');
 		setAgentId('All Agents');
@@ -146,6 +160,8 @@ export function useLeadListHook() {
 			setSearch,
 			status,
 			setStatus,
+			paymentStatus,
+			setPaymentStatus,
 			duration,
 			setDuration,
 			campaign,

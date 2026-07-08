@@ -29,6 +29,7 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		loanType: lead.loan_type,
 		status: lead.status,
 		statusReason: lead.status_reason,
+		paymentStatus: lead.payment_status,
 		updatedAt: lead.updated_at.toISOString(),
 		created_by: {
 			id: lead.created_by._id.toString(),

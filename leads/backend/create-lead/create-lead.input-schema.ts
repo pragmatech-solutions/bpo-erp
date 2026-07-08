@@ -13,7 +13,6 @@ export const createLeadInputSchema = z.object({
 		message: 'Invalid loan type',
 	}),
 	loan_balance: z.number().optional(),
-	paymentStatus: z.enum(['paid', 'unpaid']).default('unpaid'),
 	home_value: z.number().optional(),
 });
 

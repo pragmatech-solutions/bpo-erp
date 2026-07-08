@@ -1,6 +1,13 @@
 'use client';
 
-import { Phone, User, Wallet, Calendar, Megaphone } from 'lucide-react';
+import {
+	Phone,
+	User,
+	Wallet,
+	Calendar,
+	Megaphone,
+	DollarSign,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
@@ -13,9 +20,12 @@ interface LeadCardProps {
 	lead: ListedLead;
 }
 
-function statusPill(status: LeadStatus) {
-	if (status === LeadStatus.BILLABLE) return 'bg-[#D1FAE5] text-[#10B981]';
+function getStatusPill(status: LeadStatus) {
 	if (status === LeadStatus.NON_BILLABLE) return 'bg-[#FFE4E6] text-[#F43F5E]';
+	if (status === LeadStatus.PENDING) return 'bg-[#FEF3C7] text-[#F59E0B]';
+	if (status === LeadStatus.BILLABLE) return 'bg-[#D1FAE5] text-[#10B981]';
+
+	// Fallback (should not reach here)
 	return 'bg-[#FEF3C7] text-[#F59E0B]';
 }
 
@@ -63,17 +73,34 @@ export function LeadCard({ lead }: LeadCardProps) {
 						</div>
 					</div>
 				</div>
-				<span
-					className={cn(
-						'rounded-full px-3 py-1 text-[10px] lg:text-[12px]',
-						statusPill(lead.status),
-					)}
-				>
-					{lead.status
-						.split(' ')
-						.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-						.join('-')}
-				</span>
+
+				{lead.status === LeadStatus.BILLABLE ? (
+					<span className="inline-flex overflow-hidden rounded-full text-[10px] lg:text-[12px]">
+						<span className="bg-[#D1FAE5] px-3 py-1 text-[#10B981]">
+							Billable
+						</span>
+						<span
+							className={cn(
+								'px-3 py-1 text-white',
+								lead.paymentStatus === 'paid' ? 'bg-[#10B981]' : 'bg-[#F43F5E]',
+							)}
+						>
+							{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
+						</span>
+					</span>
+				) : (
+					<span
+						className={cn(
+							'rounded-full px-3 py-1 text-[10px] lg:text-[12px]',
+							getStatusPill(lead.status),
+						)}
+					>
+						{lead.status
+							.split(' ')
+							.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+							.join('-')}
+					</span>
+				)}
 			</div>
 
 			<div className="grid grid-cols-2 gap-y-4 text-[#313957]">
@@ -126,6 +153,18 @@ export function LeadCard({ lead }: LeadCardProps) {
 						{lead.campaign}
 					</div>
 				</div>
+
+				{lead.status === LeadStatus.BILLABLE && (
+					<div className="flex flex-col gap-1">
+						<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
+							<DollarSign size={14} className="text-[#26395C]" />
+							<span>Payment Status</span>
+						</div>
+						<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
+							{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
+						</div>
+					</div>
+				)}
 			</div>
 
 			{lead.status === LeadStatus.NON_BILLABLE && lead.statusReason && (

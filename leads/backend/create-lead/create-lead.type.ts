@@ -9,9 +9,18 @@ export interface LeadResponse {
 	home_value?: number;
 	status: string;
 	created_by: string;
-	paymentStatus?: 'paid' | 'unpaid';
+	payment_status?: 'paid' | 'unpaid';
 	created_at: Date;
 	updated_at: Date;
+}
+
+export interface CreateLeadInput {
+	customer_name: string;
+	customer_number: string;
+	loan_type: LoanType;
+	loan_balance?: number;
+	home_value?: number;
+	status?: string;
 }
 
 export interface CreateLeadResponse {
