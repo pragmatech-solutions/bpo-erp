@@ -11,6 +11,7 @@ export async function GET(req: Request) {
 		const startDate = searchParams.get('startDate') || undefined;
 		const endDate = searchParams.get('endDate') || undefined;
 		const status = searchParams.get('status') || undefined;
+		const paymentStatus = searchParams.get('paymentStatus') || undefined;
 		const search = searchParams.get('search') || undefined;
 		const campaign = searchParams.get('campaign') || undefined;
 		const agentId = searchParams.get('agentId') || undefined;
@@ -20,6 +21,7 @@ export async function GET(req: Request) {
 			startDate,
 			endDate,
 			status,
+			paymentStatus,
 			search,
 			campaign,
 			agentId,

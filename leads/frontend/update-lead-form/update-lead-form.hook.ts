@@ -31,6 +31,9 @@ export function useUpdateLeadFormHook(id: string) {
 	const [loanType, setLoanType] = useState('');
 	const [status, setStatus] = useState<LeadStatus>(LeadStatus.PENDING);
 	const [statusReason, setStatusReason] = useState('');
+	const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid'>(
+		'unpaid',
+	);
 
 	const fetchLead = useCallback(async () => {
 		setIsLoading(true);
@@ -43,6 +46,7 @@ export function useUpdateLeadFormHook(id: string) {
 			setLoanType(data.loanType);
 			setStatus(data.status);
 			setStatusReason(data.statusReason || '');
+			setPaymentStatus(data.paymentStatus || 'unpaid');
 		} else {
 			setErrorMessage(
 				formatErrorMessage(response.error || 'Failed to fetch lead'),
@@ -66,6 +70,7 @@ export function useUpdateLeadFormHook(id: string) {
 			status,
 			statusReason:
 				status === LeadStatus.NON_BILLABLE ? statusReason : undefined,
+			paymentStatus,
 		});
 
 		if (response.success) {
@@ -96,6 +101,8 @@ export function useUpdateLeadFormHook(id: string) {
 			setStatus,
 			statusReason,
 			setStatusReason,
+			paymentStatus,
+			setPaymentStatus,
 		},
 		handleSubmit,
 		handleCancel,

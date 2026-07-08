@@ -20,6 +20,7 @@ export async function getLeadsApi(
 			query.append('startDate', input.startDate.toISOString());
 		if (input.endDate) query.append('endDate', input.endDate.toISOString());
 		if (input.status) query.append('status', input.status);
+		if (input.paymentStatus) query.append('paymentStatus', input.paymentStatus);
 		if (input.search) query.append('search', input.search);
 		if (input.campaign) query.append('campaign', input.campaign);
 		if (input.agentId) query.append('agentId', input.agentId);

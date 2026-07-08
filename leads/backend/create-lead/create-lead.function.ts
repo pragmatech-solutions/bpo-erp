@@ -1,10 +1,8 @@
 import { connectToDatabase } from '@/common/database';
 import { getCurrentUser } from '@/common/backend/get-current-user.function';
 import { Leads } from '@/common/models/leads.schema';
-import {
-	createLeadInputSchema,
-	type CreateLeadInput,
-} from './create-lead.input-schema';
+import type { CreateLeadInput } from './create-lead.type';
+import { createLeadInputSchema } from './create-lead.input-schema';
 
 export async function createLead(input: CreateLeadInput) {
 	await connectToDatabase();
@@ -17,7 +15,6 @@ export async function createLead(input: CreateLeadInput) {
 		...validatedData,
 		created_by: currentUserId,
 		status: 'pending',
-		paymentStatus: 'unpaid',
 	});
 
 	await newLead.save();

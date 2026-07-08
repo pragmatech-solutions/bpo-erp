@@ -12,6 +12,7 @@ export type LeadDetails = {
 	loanType: LoanType;
 	status: LeadStatus;
 	statusReason?: string;
+	paymentStatus?: 'paid' | 'unpaid';
 	created_by: {
 		id: string;
 		name: string;

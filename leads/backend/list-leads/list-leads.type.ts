@@ -8,6 +8,7 @@ export type ListLeadsInput = {
 	search?: string;
 	campaign?: string;
 	agentId?: string;
+	paymentStatus?: 'paid' | 'unpaid';
 };
 
 export type ListedLead = {
@@ -17,6 +18,7 @@ export type ListedLead = {
 	loanType: string;
 	status: LeadStatus;
 	statusReason?: string;
+	paymentStatus?: 'paid' | 'unpaid';
 	updatedAt: string;
 	campaign: string;
 	created_by: {
