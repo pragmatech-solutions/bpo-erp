@@ -4,6 +4,7 @@ import { apiClient } from '@/lib/api-client';
 
 export type CreateLeadPayload = {
 	customer_name: string;
+	username: string;
 	customer_number: string;
 	campaign: string;
 	loan_type: string;

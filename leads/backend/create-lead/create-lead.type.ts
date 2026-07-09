@@ -3,6 +3,7 @@ import { LoanType } from '@/common/constants/loan-type.enum';
 export interface LeadResponse {
 	_id: string;
 	customer_name: string;
+	username: string;
 	customer_number: string;
 	loan_type: LoanType;
 	loan_balance?: number;
@@ -16,6 +17,7 @@ export interface LeadResponse {
 
 export interface CreateLeadInput {
 	customer_name: string;
+	username: string;
 	customer_number: string;
 	loan_type: LoanType;
 	loan_balance?: number;

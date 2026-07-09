@@ -14,8 +14,10 @@ export type ListLeadsInput = {
 export type ListedLead = {
 	id: string;
 	customerName: string;
+	username?: string;
 	customerNumber: string;
 	loanType: string;
+	loanOfficerName?: string;
 	status: LeadStatus;
 	statusReason?: string;
 	paymentStatus?: 'paid' | 'unpaid';

@@ -3,6 +3,7 @@ import { LoanType } from '@/common/constants/loan-type.enum';
 
 export const createLeadInputSchema = z.object({
 	customer_name: z.string().min(1, 'Customer name is required'),
+	username: z.string().min(1, 'Username is required'),
 	customer_number: z
 		.string()
 		.min(1, 'Customer number is required')

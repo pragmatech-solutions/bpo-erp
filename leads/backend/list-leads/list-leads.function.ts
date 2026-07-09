@@ -52,6 +52,7 @@ export async function listLeads(
 		matchStage.$or = [
 			{ customer_name: { $regex: searchRegex } },
 			{ customer_number: { $regex: searchRegex } },
+			{ username: { $regex: searchRegex } },
 		];
 	}
 
@@ -76,8 +77,10 @@ export async function listLeads(
 			$project: {
 				id: { $toString: '$_id' },
 				customerName: '$customer_name',
+				username: '$username',
 				customerNumber: '$customer_number',
 				loanType: '$loan_type',
+				loanOfficerName: '$loan_officer_name',
 				status: '$status',
 				statusReason: '$status_reason',
 				paymentStatus: '$payment_status',

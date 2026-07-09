@@ -60,6 +60,17 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 						</div>
 					</div>
 
+					{/* Username Row - READ ONLY */}
+					<div className="flex flex-col gap-2">
+						<label className="text-[16px] font-medium text-[#313957]">
+							Username
+						</label>
+						<div className="relative flex h-[58px] items-center rounded-[12px] border border-[#D4D7E3] bg-gray-50 pl-11 text-[16px] text-[#313957]">
+							<User className="absolute left-4 size-4 text-[#26395C]" />
+							{form.username}
+						</div>
+					</div>
+
 					{/* Loan Type Row - READ ONLY */}
 					<div className="flex flex-col gap-2">
 						<label className="text-[16px] font-medium text-[#313957]">
