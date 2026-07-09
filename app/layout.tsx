@@ -1,5 +1,6 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist_Mono, Inter, Poppins } from 'next/font/google';
+import { SerwistProvider } from '@serwist/next/react';
 import './globals.css';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,23 @@ export const metadata: Metadata = {
 	title: 'Lead Management System - Mavrix Communications',
 	description:
 		'This is a lead management software, created for Mavrix Communications. It is an internal use for company use',
+	manifest: '/manifest.webmanifest',
+	icons: {
+		icon: [
+			{ url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+			{ url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+		],
+		apple: '/icons/apple-touch-icon.png',
+	},
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: 'default',
+		title: 'Mavrix',
+	},
+};
+
+export const viewport: Viewport = {
+	themeColor: '#ffffff',
 };
 
 export default function RootLayout({
@@ -31,7 +49,11 @@ export default function RootLayout({
 			lang="en"
 			className={cn('font-sans', inter.variable, poppins.variable)}
 		>
-			<body className={`${geistMono.variable} antialiased`}>{children}</body>
+			<body className={`${geistMono.variable} antialiased`}>
+				<SerwistProvider swUrl="/sw.js" cacheOnNavigation={false}>
+					{children}
+				</SerwistProvider>
+			</body>
 		</html>
 	);
 }
