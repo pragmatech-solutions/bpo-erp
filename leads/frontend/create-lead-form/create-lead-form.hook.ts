@@ -9,6 +9,7 @@ type CreateLeadError = string | Record<string, string[]>;
 export function useCreateLeadFormHook() {
 	const router = useRouter();
 	const [customerName, setCustomerName] = useState('');
+	const [username, setUsername] = useState('');
 	const [customerNumber, setCustomerNumber] = useState('');
 	const [campaign, setCampaign] = useState('');
 	const [loanType, setLoanType] = useState('');
@@ -36,6 +37,7 @@ export function useCreateLeadFormHook() {
 		try {
 			const response = await createLeadApi({
 				customer_name: customerName,
+				username: username,
 				customer_number: customerNumber,
 				campaign: campaign,
 				loan_type: loanType,
@@ -47,6 +49,7 @@ export function useCreateLeadFormHook() {
 			if (response.success) {
 				setSuccess(true);
 				setCustomerName('');
+				setUsername('');
 				setCustomerNumber('');
 				setCampaign('');
 				setLoanType('');
@@ -70,6 +73,8 @@ export function useCreateLeadFormHook() {
 	return {
 		customerName,
 		setCustomerName,
+		username,
+		setUsername,
 		customerNumber,
 		setCustomerNumber,
 		campaign,

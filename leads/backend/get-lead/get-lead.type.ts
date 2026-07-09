@@ -8,6 +8,7 @@ export type GetLeadInput = {
 export type LeadDetails = {
 	id: string;
 	customerName: string;
+	username: string;
 	customerNumber: string;
 	loanType: LoanType;
 	status: LeadStatus;

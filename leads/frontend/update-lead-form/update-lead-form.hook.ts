@@ -27,6 +27,7 @@ export function useUpdateLeadFormHook(id: string) {
 	const [successMessage, setSuccessMessage] = useState('');
 
 	const [customerName, setCustomerName] = useState('');
+	const [username, setUsername] = useState('');
 	const [customerNumber, setCustomerNumber] = useState('');
 	const [loanType, setLoanType] = useState('');
 	const [status, setStatus] = useState<LeadStatus>(LeadStatus.PENDING);
@@ -42,6 +43,7 @@ export function useUpdateLeadFormHook(id: string) {
 		if (response.success && response.data) {
 			const { data } = response;
 			setCustomerName(data.customerName);
+			setUsername(data.username);
 			setCustomerNumber(data.customerNumber);
 			setLoanType(data.loanType);
 			setStatus(data.status);
@@ -95,6 +97,7 @@ export function useUpdateLeadFormHook(id: string) {
 		successMessage,
 		form: {
 			customerName,
+			username,
 			customerNumber,
 			loanType,
 			status,

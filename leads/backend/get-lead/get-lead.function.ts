@@ -25,6 +25,7 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 	return {
 		id: lead._id.toString(),
 		customerName: lead.customer_name,
+		username: lead.username,
 		customerNumber: lead.customer_number,
 		loanType: lead.loan_type,
 		status: lead.status,

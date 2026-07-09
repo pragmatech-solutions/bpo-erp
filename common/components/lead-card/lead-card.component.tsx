@@ -6,7 +6,7 @@ import {
 	Wallet,
 	Calendar,
 	Megaphone,
-	DollarSign,
+	Briefcase,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
@@ -116,16 +116,6 @@ export function LeadCard({ lead }: LeadCardProps) {
 
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
-						<Wallet size={14} className="text-[#26395C]" />
-						<span>Loan Type</span>
-					</div>
-					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
-						{lead.loanType}
-					</div>
-				</div>
-
-				<div className="flex flex-col gap-1">
-					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
 						<User size={14} className="text-[#26395C]" />
 						<span>Created By</span>
 					</div>
@@ -136,11 +126,11 @@ export function LeadCard({ lead }: LeadCardProps) {
 
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
-						<Calendar size={14} className="text-[#26395C]" />
-						<span>Updated At</span>
+						<Wallet size={14} className="text-[#26395C]" />
+						<span>Loan Type</span>
 					</div>
 					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
-						{new Date(lead.updatedAt).toLocaleDateString('en-GB')}
+						{lead.loanType}
 					</div>
 				</div>
 
@@ -154,17 +144,35 @@ export function LeadCard({ lead }: LeadCardProps) {
 					</div>
 				</div>
 
-				{lead.status === LeadStatus.BILLABLE && (
-					<div className="flex flex-col gap-1">
-						<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
-							<DollarSign size={14} className="text-[#26395C]" />
-							<span>Payment Status</span>
-						</div>
-						<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
-							{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
-						</div>
+				<div className="flex flex-col gap-1">
+					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
+						<Briefcase size={14} className="text-[#26395C]" />
+						<span>Loan Officer Name</span>
 					</div>
-				)}
+					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
+						{lead.loanOfficerName || 'N/A'}
+					</div>
+				</div>
+
+				<div className="flex flex-col gap-1">
+					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
+						<User size={14} className="text-[#26395C]" />
+						<span>Username</span>
+					</div>
+					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
+						{lead.username || 'N/A'}
+					</div>
+				</div>
+
+				<div className="flex flex-col gap-1">
+					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
+						<Calendar size={14} className="text-[#26395C]" />
+						<span>Updated At</span>
+					</div>
+					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
+						{new Date(lead.updatedAt).toLocaleDateString('en-GB')}
+					</div>
+				</div>
 			</div>
 
 			{lead.status === LeadStatus.NON_BILLABLE && lead.statusReason && (
