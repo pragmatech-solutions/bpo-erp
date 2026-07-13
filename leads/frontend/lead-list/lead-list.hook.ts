@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 import { getLeadsApi } from './lead-list.api';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
-import { LoanType } from '@/common/constants/loan-type.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { getAgentsApi } from '@/agents/frontend/list-agents';
@@ -40,13 +39,15 @@ export function useLeadListHook() {
 		end?: Date;
 	} | null>(null);
 
-	const [isAdmin, setIsAdmin] = useState(false);
+	const [canFilterAgents] = useState(() => {
+		const userInfo = getCurrentLoggedInUserInformation();
+		const role = userInfo?.currentUser?.role;
+		return role === UserRole.ADMIN || role === UserRole.TEAM_LEAD;
+	});
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
 
 	useEffect(() => {
-		const userInfo = getCurrentLoggedInUserInformation();
-		if (userInfo?.currentUser?.role === UserRole.ADMIN) {
-			setIsAdmin(true);
+		if (canFilterAgents) {
 			const fetchAgents = async () => {
 				const response = await getAgentsApi();
 				if (response.success && response.data) {
@@ -55,7 +56,7 @@ export function useLeadListHook() {
 			};
 			fetchAgents();
 		}
-	}, []);
+	}, [canFilterAgents]);
 
 	const fetchLeads = useCallback(async () => {
 		setIsLoading(true);
@@ -153,7 +154,7 @@ export function useLeadListHook() {
 		leads,
 		isLoading,
 		errorMessage,
-		isAdmin,
+		canFilterAgents,
 		agents,
 		filters: {
 			search,
@@ -175,3 +176,7 @@ export function useLeadListHook() {
 		refresh: fetchLeads,
 	};
 }
+
+
+
+

@@ -44,15 +44,21 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const shouldRegisterServiceWorker = process.env.NODE_ENV === 'production';
+
 	return (
 		<html
 			lang="en"
 			className={cn('font-sans', inter.variable, poppins.variable)}
 		>
 			<body className={`${geistMono.variable} antialiased`}>
-				<SerwistProvider swUrl="/sw.js" cacheOnNavigation={false}>
-					{children}
-				</SerwistProvider>
+				{shouldRegisterServiceWorker ? (
+					<SerwistProvider swUrl="/sw.js" cacheOnNavigation={false}>
+						{children}
+					</SerwistProvider>
+				) : (
+					children
+				)}
 			</body>
 		</html>
 	);

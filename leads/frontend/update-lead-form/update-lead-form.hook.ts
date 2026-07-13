@@ -4,14 +4,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getLeadApi } from './get-lead.api';
 import { updateLeadApi } from './update-lead.api';
-import type { LeadDetails } from '@/leads/backend/get-lead';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 
 function formatErrorMessage(error: string): string {
 	try {
-		const parsed = JSON.parse(error);
+		const parsed: unknown = JSON.parse(error);
 		if (Array.isArray(parsed)) {
-			return parsed.map((issue: any) => issue.message).join(', ');
+			const messages = parsed
+				.map((issue) => {
+					if (
+						typeof issue === 'object' &&
+						issue !== null &&
+						'message' in issue &&
+						typeof issue.message === 'string'
+					) {
+						return issue.message;
+					}
+
+					return '';
+				})
+				.filter(Boolean);
+
+			return messages.join(', ');
 		}
 		return error;
 	} catch {
@@ -58,7 +72,11 @@ export function useUpdateLeadFormHook(id: string) {
 	}, [id]);
 
 	useEffect(() => {
-		fetchLead();
+		const timeoutId = setTimeout(() => {
+			fetchLead();
+		}, 0);
+
+		return () => clearTimeout(timeoutId);
 	}, [fetchLead]);
 
 	const handleSubmit = async (e?: React.FormEvent) => {
@@ -111,3 +129,5 @@ export function useUpdateLeadFormHook(id: string) {
 		handleCancel,
 	};
 }
+
+

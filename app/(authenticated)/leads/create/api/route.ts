@@ -3,6 +3,12 @@ import { z } from 'zod';
 import createLead from '@/leads/backend/create-lead';
 import { createLeadInputSchema } from '@/leads/backend/create-lead/create-lead.input-schema';
 
+function getErrorStatus(message: string) {
+	if (message === 'Unauthorized') return 401;
+	if (message.includes('Forbidden')) return 403;
+	return 500;
+}
+
 export async function POST(req: Request) {
 	try {
 		const body = await req.json();
@@ -31,7 +37,7 @@ export async function POST(req: Request) {
 
 		return NextResponse.json(
 			{ success: false, error: message },
-			{ status: 500 },
+			{ status: getErrorStatus(message) },
 		);
 	}
 }

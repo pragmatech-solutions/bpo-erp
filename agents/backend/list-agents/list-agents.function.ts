@@ -1,4 +1,5 @@
-import { getCurrentUser } from '@/common/backend/get-current-user.function';
+import { Types } from 'mongoose';
+import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
 import { connectToDatabase } from '@/common/database';
 import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
@@ -6,20 +7,26 @@ import type { AgentListItem } from './list-agents.type';
 
 export async function listAgents(): Promise<AgentListItem[]> {
 	await connectToDatabase();
-	const currentUserId = await getCurrentUser();
+	const currentUser = await getCurrentAuthenticatedUser();
 
-	if (!currentUserId) throw new Error('Unauthorized');
+	if (!currentUser) throw new Error('Unauthorized');
 
-	const currentUser = await Users.findById(currentUserId).lean();
-	if (!currentUser) throw new Error('User not found');
+	const agentFilter: Record<string, unknown> = {
+		role: UserRole.AGENT,
+		status: 'active',
+	};
 
-	if (currentUser.role !== UserRole.ADMIN) {
-		throw new Error('Forbidden: Admin access only');
+	if (currentUser.role === UserRole.TEAM_LEAD) {
+		if (!currentUser.teamId) {
+			throw new Error('Forbidden: Team lead is not assigned to a team');
+		}
+
+		agentFilter.team_id = new Types.ObjectId(currentUser.teamId);
+	} else if (currentUser.role !== UserRole.ADMIN) {
+		throw new Error('Forbidden: Admin or team lead access only');
 	}
 
-	const agents = await Users.find({ role: UserRole.AGENT, status: 'active' })
-		.sort({ name: 1 })
-		.lean();
+	const agents = await Users.find(agentFilter).sort({ name: 1 }).lean();
 
 	return agents.map((agent) => ({
 		id: String(agent._id),

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import listLeads from '@/leads/backend/list-leads';
-import { listLeadsInputSchema } from '@/leads/backend/list-leads/list-leads.input-schema';
+import getTeamDashboard from '@/teams/backend/get-team-dashboard';
+import { getTeamDashboardInputSchema } from '@/teams/backend/get-team-dashboard/get-team-dashboard.input-schema';
 
 function getErrorStatus(message: string) {
 	if (message === 'Unauthorized') return 401;
 	if (message.includes('Forbidden')) return 403;
+	if (message.includes('not found')) return 404;
 	return 500;
 }
 
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
 		const campaign = searchParams.get('campaign') || undefined;
 		const agentId = searchParams.get('agentId') || undefined;
 
-		const validatedInput = listLeadsInputSchema.parse({
+		const validatedInput = getTeamDashboardInputSchema.parse({
 			limit,
 			startDate,
 			endDate,
@@ -33,12 +34,11 @@ export async function GET(req: Request) {
 			agentId,
 		});
 
-		const leads = await listLeads(validatedInput);
-
-		return NextResponse.json({ success: true, data: leads });
+		const data = await getTeamDashboard(validatedInput);
+		return NextResponse.json({ success: true, data });
 	} catch (error: unknown) {
 		const message =
-			error instanceof Error ? error.message : 'Failed to list leads';
+			error instanceof Error ? error.message : 'Failed to load team dashboard';
 		return NextResponse.json(
 			{ success: false, error: message },
 			{ status: getErrorStatus(message) },

@@ -1,8 +1,8 @@
 import { Types } from 'mongoose';
-import { getCurrentUser } from '@/common/backend/get-current-user.function';
+import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
+import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
-import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import listLeads from '@/leads/backend/list-leads';
@@ -10,11 +10,8 @@ import type { DashboardData } from './lead-analytics.type';
 
 export async function getLeadAnalytics(): Promise<DashboardData> {
 	await connectToDatabase();
-	const currentUserId = await getCurrentUser();
-	if (!currentUserId) throw new Error('Unauthorized');
-
-	const currentUser = await Users.findById(currentUserId).lean();
-	if (!currentUser) throw new Error('User not found');
+	const currentUser = await getCurrentAuthenticatedUser();
+	if (!currentUser) throw new Error('Unauthorized');
 
 	const startDate = new Date();
 	startDate.setDate(startDate.getDate() - 14);
@@ -22,8 +19,18 @@ export async function getLeadAnalytics(): Promise<DashboardData> {
 		updated_at: { $gte: startDate },
 	};
 
-	if (currentUser.role !== UserRole.ADMIN) {
-		matchStage.created_by = new Types.ObjectId(currentUserId);
+	if (currentUser.role === UserRole.TEAM_LEAD) {
+		if (!currentUser.teamId) {
+			throw new Error('Forbidden: Team lead is not assigned to a team');
+		}
+
+		matchStage.created_by = {
+			$in: await getTeamAgentObjectIds(currentUser.teamId),
+		};
+	} else if (currentUser.role === UserRole.AGENT) {
+		matchStage.created_by = new Types.ObjectId(currentUser.id);
+	} else if (currentUser.role !== UserRole.ADMIN) {
+		throw new Error('Forbidden');
 	}
 
 	const analyticsRows = await Leads.aggregate([

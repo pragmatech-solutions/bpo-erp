@@ -6,6 +6,7 @@
 		"dev": "next dev",
 		"build": "next build --webpack",
 		"start": "next start",
+		"seed:sample": "node scripts/seed-sample-data.mjs",
 		"lint": "eslint",
 		"prepare": "husky"
 	},
@@ -55,3 +56,5 @@
 		"*.{js,jsx,ts,tsx,json,css,md}": "npx prettier --write"
 	}
 }
+
+

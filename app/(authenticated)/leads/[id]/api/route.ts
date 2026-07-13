@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLead } from '@/leads/backend/get-lead';
 import { updateLead } from '@/leads/backend/update-lead';
 
+function getErrorStatus(message: string) {
+	if (message === 'Unauthorized') return 401;
+	if (message.includes('Forbidden')) return 403;
+	if (message.includes('not found')) return 404;
+	return 400;
+}
+
 export async function GET(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
@@ -15,7 +22,7 @@ export async function GET(
 			error instanceof Error ? error.message : 'Failed to fetch lead';
 		return NextResponse.json(
 			{ success: false, error: message },
-			{ status: message.includes('Forbidden') ? 403 : 400 },
+			{ status: getErrorStatus(message) },
 		);
 	}
 }
@@ -34,7 +41,7 @@ export async function PATCH(
 			error instanceof Error ? error.message : 'Failed to update lead';
 		return NextResponse.json(
 			{ success: false, error: message },
-			{ status: message.includes('Forbidden') ? 403 : 400 },
+			{ status: getErrorStatus(message) },
 		);
 	}
 }

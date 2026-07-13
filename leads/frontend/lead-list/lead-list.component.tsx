@@ -52,7 +52,7 @@ export function LeadList() {
 		errorMessage,
 		filters,
 		resetFilters,
-		isAdmin,
+		canFilterAgents,
 		agents,
 	} = useLeadListHook();
 
@@ -183,7 +183,7 @@ export function LeadList() {
 							</SelectContent>
 						</Select>
 
-						{isAdmin && (
+						{canFilterAgents && (
 							<Select
 								value={filters.agentId}
 								onValueChange={filters.setAgentId}
@@ -238,3 +238,5 @@ export function LeadList() {
 		</div>
 	);
 }
+
+
