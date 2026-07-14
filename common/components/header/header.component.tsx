@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Moon } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { MobileSidebar } from '@/common/components/sidebar';
@@ -48,3 +48,4 @@ export function Header() {
 		</>
 	);
 }
+

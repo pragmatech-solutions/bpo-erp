@@ -9,10 +9,17 @@ import {
 } from '@/common/constants/navigation';
 import { cn } from '@/lib/utils';
 import { removeToken } from '@/lib/api-client';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 
 export function DesktopSidebar() {
 	const pathname = usePathname();
 	const router = useRouter();
+	const currentUserInformation = getCurrentLoggedInUserInformation();
+	const navigationLinks =
+		currentUserInformation?.currentUser.role === UserRole.TEAM_LEAD
+			? NAVIGATION_LINKS.filter((link) => link.href !== '/leads/create')
+			: NAVIGATION_LINKS;
 
 	const handleLogout = () => {
 		removeToken();
@@ -32,7 +39,7 @@ export function DesktopSidebar() {
 			</div>
 
 			<nav className="flex flex-1 flex-col gap-4 pr-0">
-				{NAVIGATION_LINKS.map((link) => {
+				{navigationLinks.map((link) => {
 					const isActive = pathname === link.href;
 					return (
 						<Link
@@ -81,3 +88,4 @@ export function DesktopSidebar() {
 		</aside>
 	);
 }
+

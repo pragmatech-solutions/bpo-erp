@@ -1,5 +1,5 @@
-import Overview from '@/dashboard/frontend/overview';
+import DashboardRouter from '@/dashboard/frontend/dashboard-router';
 
 export default function DashboardPage() {
-	return <Overview />;
+	return <DashboardRouter />;
 }

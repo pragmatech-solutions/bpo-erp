@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import getLeadAnalytics from '@/dashboard/backend/lead-analytics';
 
+function getErrorStatus(message: string) {
+	if (message === 'Unauthorized') return 401;
+	if (message.includes('Forbidden')) return 403;
+	return 500;
+}
+
 export async function GET() {
 	try {
 		const data = await getLeadAnalytics();
@@ -11,7 +17,9 @@ export async function GET() {
 				? error.message
 				: 'Unable to fetch dashboard analytics';
 
-		const status = message === 'Unauthorized' ? 401 : 500;
-		return NextResponse.json({ success: false, error: message }, { status });
+		return NextResponse.json(
+			{ success: false, error: message },
+			{ status: getErrorStatus(message) },
+		);
 	}
 }
