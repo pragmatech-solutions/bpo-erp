@@ -133,26 +133,6 @@ export function CreateLeadForm() {
 
 					<div className="flex flex-col gap-3">
 						<Label
-							htmlFor="loanOfficerName"
-							className="text-[16px] font-medium text-[#313957]"
-						>
-							Loan Officer Name (optional)
-						</Label>
-						<div className="relative">
-							<User className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#26395C]" />
-							<Input
-								id="loanOfficerName"
-								type="text"
-								placeholder="e.g. John Doe"
-								value={loanOfficerName}
-								onChange={(e) => setLoanOfficerName(e.target.value)}
-								className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white pl-12 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-blue-500"
-							/>
-						</div>
-					</div>
-
-					<div className="flex flex-col gap-3">
-						<Label
 							htmlFor="username"
 							className="text-[16px] font-medium text-[#313957]"
 						>
@@ -167,6 +147,26 @@ export function CreateLeadForm() {
 								value={username}
 								onChange={(e) => setUsername(e.target.value)}
 								required
+								className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white pl-12 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-blue-500"
+							/>
+						</div>
+					</div>
+
+					<div className="flex flex-col gap-3">
+						<Label
+							htmlFor="loanOfficerName"
+							className="text-[16px] font-medium text-[#313957]"
+						>
+							Loan Officer Name (optional)
+						</Label>
+						<div className="relative">
+							<User className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#26395C]" />
+							<Input
+								id="loanOfficerName"
+								type="text"
+								placeholder="e.g. John Doe"
+								value={loanOfficerName}
+								onChange={(e) => setLoanOfficerName(e.target.value)}
 								className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white pl-12 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-blue-500"
 							/>
 						</div>
@@ -273,4 +273,3 @@ export function CreateLeadForm() {
 		</div>
 	);
 }
-
