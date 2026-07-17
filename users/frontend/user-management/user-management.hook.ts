@@ -5,13 +5,11 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import type { TeamOverviewItem } from '@/teams/backend/manage-teams/manage-teams.type';
 import { getTeamsApi } from '@/teams/frontend/team-overview';
-import type {
-	ManagedUser,
-	UserAccountStatus,
-} from '@/users/backend/manage-users/manage-users.type';
+import type { ManagedUser } from '@/users/backend/manage-users/manage-users.type';
 import {
 	getManagedUsersApi,
 	updateManagedUserApi,
+	type UpdateManagedUserInput,
 	type UserStatusFilter,
 } from './user-management.api';
 
@@ -84,21 +82,50 @@ export function useUserManagementHook() {
 
 	const updateUser = async (
 		user: ManagedUser,
-		input: {
-			status: UserAccountStatus;
-		},
+		input: UpdateManagedUserInput,
 	) => {
-		if (input.status && input.status !== 'active') {
+		if (!isAdmin && input.status && input.status !== 'active') {
 			const confirmed = window.confirm('Disable this user account?');
 			if (!confirmed) return;
 		}
 
+		const previousUsers = users;
+		const selectedTeam = teams.find((team) => team.id === input.teamId);
+
+		setUsers((currentUsers) =>
+			currentUsers.map((currentUser) => {
+				if (currentUser.id !== user.id) return currentUser;
+
+				return {
+					...currentUser,
+					...(input.role ? { role: input.role } : {}),
+					...(input.status ? { status: input.status } : {}),
+					...(input.teamId !== undefined
+						? {
+								team:
+									input.teamId === null
+										? null
+										: selectedTeam
+											? { id: selectedTeam.id, name: selectedTeam.name }
+											: currentUser.team,
+							}
+						: {}),
+				};
+			}),
+		);
+
 		try {
 			setIsSaving(true);
 			setErrorMessage('');
-			await updateManagedUserApi(user.id, input);
+			const updatedUser = await updateManagedUserApi(user.id, input);
+			setUsers((currentUsers) =>
+				currentUsers.map((currentUser) =>
+					currentUser.id === updatedUser.id ? updatedUser : currentUser,
+				),
+			);
 			await loadUsers();
 		} catch (error) {
+			setUsers(previousUsers);
 			setErrorMessage(
 				error instanceof Error ? error.message : 'Unable to update user',
 			);

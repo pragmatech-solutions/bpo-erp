@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { requireAuthenticatedUser } from '@/common/backend/authorization.function';
 import { connectToDatabase } from '@/common/database';
 import { UserRole } from '@/common/constants/user-roles.enum';
+import { Teams } from '@/common/models/teams.schema';
 import { Users } from '@/common/models/users.schema';
 import {
 	listUsersInputSchema,
@@ -98,6 +99,26 @@ export async function listManagedUsers(
 	};
 }
 
+async function getAdminUpdatePayload(input: UpdateUserInput) {
+	const updatePayload: Record<string, unknown> = {};
+
+	if (input.role !== undefined) updatePayload.role = input.role;
+	if (input.status !== undefined) updatePayload.status = input.status;
+
+	if (input.teamId !== undefined) {
+		if (input.teamId === null || input.teamId === '') {
+			updatePayload.team_id = null;
+		} else {
+			if (!Types.ObjectId.isValid(input.teamId))
+				throw new Error('Team not found');
+			const teamExists = await Teams.exists({ _id: input.teamId });
+			if (!teamExists) throw new Error('Team not found');
+			updatePayload.team_id = new Types.ObjectId(input.teamId);
+		}
+	}
+
+	return updatePayload;
+}
 export async function updateManagedUser(input: UpdateUserInput) {
 	await connectToDatabase();
 	const currentUser = await requireAuthenticatedUser();
@@ -114,23 +135,25 @@ export async function updateManagedUser(input: UpdateUserInput) {
 	}>();
 	if (!targetUser) throw new Error('User not found');
 
-	if (
-		validatedInput.name !== undefined ||
-		validatedInput.email !== undefined ||
-		validatedInput.role !== undefined ||
-		validatedInput.teamId !== undefined
-	) {
-		throw new Error('Forbidden: User management can only update account status');
-	}
+	let updatePayload: Record<string, unknown>;
 
-	if (
-		validatedInput.status !== 'active' &&
-		validatedInput.status !== 'inactive'
-	) {
-		throw new Error('Forbidden: User account status can only be active or inactive');
-	}
-
-	if (currentUser.role === UserRole.TEAM_LEAD) {
+	if (currentUser.role === UserRole.ADMIN) {
+		updatePayload = await getAdminUpdatePayload(validatedInput);
+	} else if (currentUser.role === UserRole.TEAM_LEAD) {
+		if (
+			validatedInput.role !== undefined ||
+			validatedInput.teamId !== undefined
+		) {
+			throw new Error('Forbidden: Team leads can only update account status');
+		}
+		if (
+			validatedInput.status !== 'active' &&
+			validatedInput.status !== 'inactive'
+		) {
+			throw new Error(
+				'Forbidden: User account status can only be active or inactive',
+			);
+		}
 		if (
 			targetUser.role !== UserRole.AGENT ||
 			!currentUser.teamId ||
@@ -138,15 +161,18 @@ export async function updateManagedUser(input: UpdateUserInput) {
 		) {
 			throw new Error('User not found');
 		}
-	} else if (currentUser.role !== UserRole.ADMIN) {
+		updatePayload = { status: validatedInput.status };
+	} else {
 		throw new Error('Forbidden: User management access denied');
 	}
 
-	const user = await Users.findByIdAndUpdate(
-		validatedInput.id,
-		{ status: validatedInput.status },
-		{ new: true },
-	)
+	if (Object.keys(updatePayload).length === 0) {
+		throw new Error('No user fields provided for update');
+	}
+
+	const user = await Users.findByIdAndUpdate(validatedInput.id, updatePayload, {
+		new: true,
+	})
 		.select('_id name email role status team_id created_by created_at')
 		.populate('team_id', 'name')
 		.populate('created_by', 'name')

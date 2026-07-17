@@ -18,7 +18,18 @@ import type {
 } from '@/users/backend/manage-users/manage-users.type';
 import { useUserManagementHook } from './user-management.hook';
 
-const accountStatuses: UserAccountStatus[] = ['active', 'inactive'];
+const teamLeadAccountStatuses: UserAccountStatus[] = ['active', 'inactive'];
+const adminAccountStatuses: UserAccountStatus[] = [
+	'active',
+	'inactive',
+	'blocked',
+];
+const editableRoles: UserRole[] = [
+	UserRole.ADMIN,
+	UserRole.TEAM_LEAD,
+	UserRole.AGENT,
+	UserRole.QUALITY_ASSURANCE,
+];
 
 function initials(name: string) {
 	return name
@@ -78,16 +89,12 @@ function StatusSelect({
 				disabled={management.isSaving}
 			>
 				<span className="flex items-center gap-2 truncate">
-					<span
-						className={`size-2.5 rounded-full ${
-							user.status === 'active' ? 'bg-[#10B981]' : 'bg-[#F59E0B]'
-						}`}
-					/>
+					<StatusDot status={user.status} />
 					{statusLabel(user.status)}
 				</span>
 			</SelectTrigger>
 			<SelectContent>
-				{accountStatuses.map((status) => (
+				{teamLeadAccountStatuses.map((status) => (
 					<SelectItem key={status} value={status}>
 						{statusLabel(status)}
 					</SelectItem>
@@ -95,6 +102,17 @@ function StatusSelect({
 			</SelectContent>
 		</Select>
 	);
+}
+
+function StatusDot({ status }: { status: UserAccountStatus }) {
+	const color =
+		status === 'active'
+			? 'bg-[#10B981]'
+			: status === 'blocked'
+				? 'bg-[#F43F5E]'
+				: 'bg-[#F59E0B]';
+
+	return <span className={`size-2.5 rounded-full ${color}`} />;
 }
 
 export function UserManagement() {
@@ -151,22 +169,27 @@ export function UserManagement() {
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">All Roles</SelectItem>
-								<SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
-								<SelectItem value={UserRole.TEAM_LEAD}>Team Lead</SelectItem>
-								<SelectItem value={UserRole.AGENT}>Agent</SelectItem>
-								<SelectItem value={UserRole.QUALITY_ASSURANCE}>
-									Quality Assurance
-								</SelectItem>
+								{editableRoles.map((role) => (
+									<SelectItem key={role} value={role}>
+										{roleLabel(role)}
+									</SelectItem>
+								))}
 							</SelectContent>
 						</Select>
 					)}
-					<Select value={management.status} onValueChange={management.setStatus}>
+					<Select
+						value={management.status}
+						onValueChange={management.setStatus}
+					>
 						<SelectTrigger className="h-[48px] rounded-[12px] border-[#D4D7E3]">
 							<SelectValue placeholder="All Status" />
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="all">All Status</SelectItem>
-							{accountStatuses.map((status) => (
+							{(management.isAdmin
+								? adminAccountStatuses
+								: teamLeadAccountStatuses
+							).map((status) => (
 								<SelectItem key={status} value={status}>
 									{statusLabel(status)}
 								</SelectItem>
@@ -174,7 +197,10 @@ export function UserManagement() {
 						</SelectContent>
 					</Select>
 					{management.isAdmin && (
-						<Select value={management.teamId} onValueChange={management.setTeamId}>
+						<Select
+							value={management.teamId}
+							onValueChange={management.setTeamId}
+						>
 							<SelectTrigger className="h-[48px] rounded-[12px] border-[#D4D7E3]">
 								<SelectValue placeholder="All Team" />
 							</SelectTrigger>
@@ -241,13 +267,19 @@ export function UserManagement() {
 						<tbody>
 							{management.isLoading ? (
 								<tr>
-									<td className="px-6 py-10 text-center text-[#313957]" colSpan={6}>
+									<td
+										className="px-6 py-10 text-center text-[#313957]"
+										colSpan={6}
+									>
 										Loading users...
 									</td>
 								</tr>
 							) : management.users.length === 0 ? (
 								<tr>
-									<td className="px-6 py-10 text-center text-[#313957]" colSpan={6}>
+									<td
+										className="px-6 py-10 text-center text-[#313957]"
+										colSpan={6}
+									>
 										No users found.
 									</td>
 								</tr>
@@ -301,7 +333,9 @@ function Pagination({
 					variant="outline"
 					size="sm"
 					onClick={() =>
-						management.setPage(Math.min(management.totalPages, management.page + 1))
+						management.setPage(
+							Math.min(management.totalPages, management.page + 1),
+						)
 					}
 					disabled={management.page === management.totalPages}
 				>
@@ -309,6 +343,137 @@ function Pagination({
 				</Button>
 			</div>
 		</div>
+	);
+}
+
+function AdminRoleSelect({
+	user,
+	management,
+	className,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+	className: string;
+}) {
+	return (
+		<Select
+			value={user.role}
+			onValueChange={(value) =>
+				management.updateUser(user, { role: value as UserRole })
+			}
+		>
+			<SelectTrigger className={className} disabled={management.isSaving}>
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent>
+				{editableRoles.map((role) => (
+					<SelectItem key={role} value={role}>
+						{roleLabel(role)}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
+
+function AdminTeamSelect({
+	user,
+	management,
+	className,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+	className: string;
+}) {
+	return (
+		<Select
+			value={user.team?.id || 'none'}
+			onValueChange={(value) =>
+				management.updateUser(user, { teamId: value === 'none' ? null : value })
+			}
+		>
+			<SelectTrigger className={className} disabled={management.isSaving}>
+				<SelectValue placeholder="No Team" />
+			</SelectTrigger>
+			<SelectContent>
+				<SelectItem value="none">No Team</SelectItem>
+				{management.teams.map((team) => (
+					<SelectItem key={team.id} value={team.id}>
+						{team.name}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
+
+function AdminStatusSelect({
+	user,
+	management,
+	className,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+	className: string;
+}) {
+	return (
+		<Select
+			value={user.status}
+			onValueChange={(value) =>
+				management.updateUser(user, { status: value as UserAccountStatus })
+			}
+		>
+			<SelectTrigger className={className} disabled={management.isSaving}>
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent>
+				{adminAccountStatuses.map((status) => (
+					<SelectItem key={status} value={status}>
+						{statusLabel(status)}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
+
+function AdminEditableFields({
+	user,
+	management,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+}) {
+	const className =
+		'h-[40px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px]';
+
+	return (
+		<>
+			<div className="flex flex-col gap-2">
+				<span className="text-[12px] font-semibold text-black">Role</span>
+				<AdminRoleSelect
+					user={user}
+					management={management}
+					className={className}
+				/>
+			</div>
+			<div className="flex flex-col gap-2">
+				<span className="text-[12px] font-semibold text-black">Team</span>
+				<AdminTeamSelect
+					user={user}
+					management={management}
+					className={className}
+				/>
+			</div>
+			<div className="flex flex-col gap-2">
+				<span className="text-[12px] font-semibold text-black">Status</span>
+				<AdminStatusSelect
+					user={user}
+					management={management}
+					className={className}
+				/>
+			</div>
+		</>
 	);
 }
 
@@ -335,14 +500,24 @@ function UserMobileCard({
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
-				<ReadOnlyField label="Role" value={roleLabel(user.role)} />
-				<ReadOnlyField label="Team" value={user.team?.name || 'No Team'} />
-				<div className="flex flex-col gap-2">
-					<span className="text-[12px] font-semibold text-black">Status</span>
-					<StatusSelect user={user} management={management} className="w-full" />
+			{management.isAdmin ? (
+				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
+					<AdminEditableFields user={user} management={management} />
 				</div>
-			</div>
+			) : (
+				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
+					<ReadOnlyField label="Role" value={roleLabel(user.role)} />
+					<ReadOnlyField label="Team" value={user.team?.name || 'No Team'} />
+					<div className="flex flex-col gap-2">
+						<span className="text-[12px] font-semibold text-black">Status</span>
+						<StatusSelect
+							user={user}
+							management={management}
+							className="w-full"
+						/>
+					</div>
+				</div>
+			)}
 
 			<div className="mt-4 flex justify-end text-[12px] font-semibold text-black">
 				<span>Created On: {formatDate(user.createdAt)}</span>
@@ -350,7 +525,6 @@ function UserMobileCard({
 		</div>
 	);
 }
-
 function UserRow({
 	user,
 	management,
@@ -358,6 +532,44 @@ function UserRow({
 	user: ManagedUser;
 	management: ManagementHook;
 }) {
+	if (management.isAdmin) {
+		return (
+			<tr className="border-t border-[#D4D7E3]">
+				<td className="px-6 py-4">
+					<div className="flex items-center gap-3">
+						<span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#C5BFF0] text-xs">
+							{initials(user.name)}
+						</span>
+						<span className="font-medium">{user.name}</span>
+					</div>
+				</td>
+				<td className="px-6 py-4">{user.email}</td>
+				<td className="px-6 py-4">
+					<AdminRoleSelect
+						user={user}
+						management={management}
+						className="h-[40px] w-[170px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px]"
+					/>
+				</td>
+				<td className="px-6 py-4">
+					<AdminTeamSelect
+						user={user}
+						management={management}
+						className="h-[40px] w-[160px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px]"
+					/>
+				</td>
+				<td className="px-6 py-4">
+					<AdminStatusSelect
+						user={user}
+						management={management}
+						className="h-[40px] w-[135px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px]"
+					/>
+				</td>
+				<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
+			</tr>
+		);
+	}
+
 	return (
 		<tr className="border-t border-[#D4D7E3]">
 			<td className="px-6 py-4">
@@ -372,7 +584,11 @@ function UserRow({
 			<td className="px-6 py-4">{roleLabel(user.role)}</td>
 			<td className="px-6 py-4">{user.team?.name || 'No Team'}</td>
 			<td className="px-6 py-4">
-				<StatusSelect user={user} management={management} className="w-[135px]" />
+				<StatusSelect
+					user={user}
+					management={management}
+					className="w-[135px]"
+				/>
 			</td>
 			<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
 		</tr>

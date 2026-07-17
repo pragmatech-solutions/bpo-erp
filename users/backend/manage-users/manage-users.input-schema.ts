@@ -25,8 +25,6 @@ export const createUserInputSchema = z.object({
 
 export const updateUserInputSchema = z.object({
 	id: z.string().min(1),
-	name: z.string().trim().min(1).optional(),
-	email: z.string().trim().email().optional(),
 	role: z.nativeEnum(UserRole).optional(),
 	status: userStatusSchema.optional(),
 	teamId: z.string().nullable().optional(),
