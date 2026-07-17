@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginApi } from './login.api';
+import { UserRole } from '@/common/constants/user-roles.enum';
 
 type LoginError = string | Record<string, string[]>;
 
@@ -35,7 +36,8 @@ export function useLoginFormHook() {
 			const response = await loginApi({ email, password });
 
 			if (response.success) {
-				router.push('/');
+				const role = response.user?.role;
+				router.push(role === UserRole.QUALITY_ASSURANCE ? '/leads/list' : '/');
 			} else {
 				setError(response.error || 'Login failed');
 			}

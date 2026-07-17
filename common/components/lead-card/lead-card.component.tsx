@@ -41,9 +41,11 @@ function getInitials(name: string) {
 export function LeadCard({ lead }: LeadCardProps) {
 	const router = useRouter();
 	const userInfo = getCurrentLoggedInUserInformation();
-	const isAdmin = userInfo?.currentUser.role === UserRole.ADMIN;
+	const currentRole = userInfo?.currentUser.role;
 	const isPending = lead.status === LeadStatus.PENDING;
-	const canEdit = isAdmin && isPending;
+	const canEdit =
+		(currentRole === UserRole.ADMIN && isPending) ||
+		currentRole === UserRole.QUALITY_ASSURANCE;
 
 	const handleClick = () => {
 		if (canEdit) {
@@ -188,3 +190,4 @@ export function LeadCard({ lead }: LeadCardProps) {
 		</Card>
 	);
 }
+

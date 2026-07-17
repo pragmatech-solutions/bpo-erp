@@ -22,8 +22,11 @@ export async function listAgents(): Promise<AgentListItem[]> {
 		}
 
 		agentFilter.team_id = new Types.ObjectId(currentUser.teamId);
-	} else if (currentUser.role !== UserRole.ADMIN) {
-		throw new Error('Forbidden: Admin or team lead access only');
+	} else if (
+		currentUser.role !== UserRole.ADMIN &&
+		currentUser.role !== UserRole.QUALITY_ASSURANCE
+	) {
+		throw new Error('Forbidden: Admin, QA, or team lead access only');
 	}
 
 	const agents = await Users.find(agentFilter).sort({ name: 1 }).lean();
@@ -33,3 +36,4 @@ export async function listAgents(): Promise<AgentListItem[]> {
 		name: String(agent.name),
 	}));
 }
+

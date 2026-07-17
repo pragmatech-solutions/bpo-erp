@@ -13,7 +13,6 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { LoanType } from '@/common/constants/loan-type.enum';
-import { CAMPAIGNS } from '@/common/constants/campaigns';
 import { useCreateLeadFormHook } from './create-lead-form.hook';
 
 export function CreateLeadForm() {
@@ -34,6 +33,7 @@ export function CreateLeadForm() {
 		setHomeValue,
 		loanOfficerName,
 		setLoanOfficerName,
+		campaignOptions,
 		errorMessage,
 		isLoading,
 		success,
@@ -121,7 +121,7 @@ export function CreateLeadForm() {
 									<SelectValue placeholder="Select Campaign" />
 								</SelectTrigger>
 								<SelectContent position="popper">
-									{CAMPAIGNS.map((campaign) => (
+									{campaignOptions.map((campaign) => (
 										<SelectItem key={campaign} value={campaign}>
 											{campaign}
 										</SelectItem>
@@ -273,3 +273,4 @@ export function CreateLeadForm() {
 		</div>
 	);
 }
+

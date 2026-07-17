@@ -1,0 +1,380 @@
+'use client';
+
+import { useState } from 'react';
+import { ChevronDown, Filter, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import type {
+	ManagedUser,
+	UserAccountStatus,
+} from '@/users/backend/manage-users/manage-users.type';
+import { useUserManagementHook } from './user-management.hook';
+
+const accountStatuses: UserAccountStatus[] = ['active', 'inactive'];
+
+function initials(name: string) {
+	return name
+		.split(' ')
+		.map((part) => part[0])
+		.join('')
+		.slice(0, 2)
+		.toUpperCase();
+}
+
+function formatDate(value: string) {
+	return new Intl.DateTimeFormat('en-US').format(new Date(value));
+}
+
+function statusLabel(status: UserAccountStatus) {
+	return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function roleLabel(role: UserRole) {
+	if (role === UserRole.TEAM_LEAD) return 'Team Lead';
+	if (role === UserRole.QUALITY_ASSURANCE) return 'Quality Assurance';
+	return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+	return (
+		<div className="flex flex-col gap-2">
+			<span className="text-[12px] font-semibold text-black">{label}</span>
+			<div className="flex h-[40px] items-center justify-between rounded-[8px] border border-[#D4D7E3] bg-white px-3 text-[13px] text-[#0C1421]">
+				<span className="truncate">{value}</span>
+				<ChevronDown className="size-4 shrink-0 text-[#26395C] opacity-50" />
+			</div>
+		</div>
+	);
+}
+
+function StatusSelect({
+	user,
+	management,
+	className = '',
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+	className?: string;
+}) {
+	return (
+		<Select
+			value={user.status}
+			onValueChange={(value) =>
+				management.updateUser(user, {
+					status: value as UserAccountStatus,
+				})
+			}
+		>
+			<SelectTrigger
+				className={`h-[40px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px] ${className}`}
+				disabled={management.isSaving}
+			>
+				<span className="flex items-center gap-2 truncate">
+					<span
+						className={`size-2.5 rounded-full ${
+							user.status === 'active' ? 'bg-[#10B981]' : 'bg-[#F59E0B]'
+						}`}
+					/>
+					{statusLabel(user.status)}
+				</span>
+			</SelectTrigger>
+			<SelectContent>
+				{accountStatuses.map((status) => (
+					<SelectItem key={status} value={status}>
+						{statusLabel(status)}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
+
+export function UserManagement() {
+	const management = useUserManagementHook();
+	const [showMobileFilters, setShowMobileFilters] = useState(false);
+	const from =
+		management.total === 0 ? 0 : (management.page - 1) * management.limit + 1;
+	const to = Math.min(management.total, management.page * management.limit);
+
+	return (
+		<div className="flex flex-col gap-4 lg:gap-6">
+			<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+				<h1 className="font-[var(--font-poppins)] text-[24px] font-semibold text-[#313957] lg:text-[40px] lg:text-[#0C1421]">
+					User Management
+				</h1>
+			</div>
+
+			<div className="flex gap-2 lg:hidden">
+				<div className="relative min-w-0 flex-1">
+					<Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#26395C]" />
+					<Input
+						value={management.search}
+						onChange={(event) => management.setSearch(event.target.value)}
+						placeholder="Search"
+						className="h-[48px] rounded-[10px] border-[#D4D7E3] bg-white pl-12 text-[14px] focus-visible:ring-blue-500"
+					/>
+				</div>
+				<Button
+					type="button"
+					variant="outline"
+					size="icon"
+					onClick={() => setShowMobileFilters((current) => !current)}
+					className="size-[48px] shrink-0 rounded-[10px] border-[#D4D7E3] bg-white text-[#26395C]"
+					aria-label="Toggle user filters"
+				>
+					<Filter className="size-5" />
+				</Button>
+			</div>
+
+			<div
+				className={`${
+					showMobileFilters ? 'block' : 'hidden'
+				} rounded-[14px] bg-white p-4 lg:block lg:rounded-[20px] lg:p-8`}
+			>
+				<div className="mb-4 hidden items-center gap-2 text-[#26395C] lg:flex">
+					<Filter className="size-5" />
+					<span>Filter</span>
+				</div>
+				<div className="grid gap-4 lg:grid-cols-3">
+					{management.isAdmin && (
+						<Select value={management.role} onValueChange={management.setRole}>
+							<SelectTrigger className="h-[48px] rounded-[12px] border-[#D4D7E3]">
+								<SelectValue placeholder="All Roles" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All Roles</SelectItem>
+								<SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+								<SelectItem value={UserRole.TEAM_LEAD}>Team Lead</SelectItem>
+								<SelectItem value={UserRole.AGENT}>Agent</SelectItem>
+								<SelectItem value={UserRole.QUALITY_ASSURANCE}>
+									Quality Assurance
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					)}
+					<Select value={management.status} onValueChange={management.setStatus}>
+						<SelectTrigger className="h-[48px] rounded-[12px] border-[#D4D7E3]">
+							<SelectValue placeholder="All Status" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="all">All Status</SelectItem>
+							{accountStatuses.map((status) => (
+								<SelectItem key={status} value={status}>
+									{statusLabel(status)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					{management.isAdmin && (
+						<Select value={management.teamId} onValueChange={management.setTeamId}>
+							<SelectTrigger className="h-[48px] rounded-[12px] border-[#D4D7E3]">
+								<SelectValue placeholder="All Team" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All Team</SelectItem>
+								{management.teams.map((team) => (
+									<SelectItem key={team.id} value={team.id}>
+										{team.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					)}
+				</div>
+			</div>
+
+			<div className="hidden flex-col gap-3 lg:flex lg:flex-row lg:justify-end">
+				<div className="relative w-full lg:w-[390px]">
+					<Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#8897AD]" />
+					<Input
+						value={management.search}
+						onChange={(event) => management.setSearch(event.target.value)}
+						placeholder="Search user by name or email"
+						className="h-[48px] rounded-[12px] border-[#D4D7E3] bg-white pl-12"
+					/>
+				</div>
+			</div>
+
+			{management.errorMessage && (
+				<div className="rounded-[12px] bg-red-50 p-4 text-red-600">
+					{management.errorMessage}
+				</div>
+			)}
+
+			<div className="flex flex-col gap-3 lg:hidden">
+				{management.isLoading ? (
+					<div className="rounded-[12px] bg-white p-5 text-center text-[#313957]">
+						Loading users...
+					</div>
+				) : management.users.length === 0 ? (
+					<div className="rounded-[12px] bg-white p-5 text-center text-[#313957]">
+						No users found.
+					</div>
+				) : (
+					management.users.map((user) => (
+						<UserMobileCard key={user.id} user={user} management={management} />
+					))
+				)}
+			</div>
+
+			<div className="hidden overflow-hidden rounded-[20px] bg-white shadow-sm lg:block">
+				<div className="overflow-x-auto">
+					<table className="w-full min-w-[900px] text-left">
+						<thead className="bg-[#F1F5FB]">
+							<tr>
+								<th className="px-6 py-5 font-semibold">User</th>
+								<th className="px-6 py-5 font-semibold">Email</th>
+								<th className="px-6 py-5 font-semibold">Role</th>
+								<th className="px-6 py-5 font-semibold">Team</th>
+								<th className="px-6 py-5 font-semibold">Status</th>
+								<th className="px-6 py-5 font-semibold">Created On</th>
+							</tr>
+						</thead>
+						<tbody>
+							{management.isLoading ? (
+								<tr>
+									<td className="px-6 py-10 text-center text-[#313957]" colSpan={6}>
+										Loading users...
+									</td>
+								</tr>
+							) : management.users.length === 0 ? (
+								<tr>
+									<td className="px-6 py-10 text-center text-[#313957]" colSpan={6}>
+										No users found.
+									</td>
+								</tr>
+							) : (
+								management.users.map((user) => (
+									<UserRow key={user.id} user={user} management={management} />
+								))
+							)}
+						</tbody>
+					</table>
+				</div>
+				<Pagination management={management} from={from} to={to} />
+			</div>
+
+			<div className="lg:hidden">
+				<Pagination management={management} from={from} to={to} />
+			</div>
+		</div>
+	);
+}
+
+type ManagementHook = ReturnType<typeof useUserManagementHook>;
+
+function Pagination({
+	management,
+	from,
+	to,
+}: {
+	management: ManagementHook;
+	from: number;
+	to: number;
+}) {
+	return (
+		<div className="flex flex-col gap-3 border-t border-[#D4D7E3] bg-white px-4 py-4 text-[#8897AD] lg:flex-row lg:items-center lg:justify-between lg:px-6">
+			<span>
+				Showing {from} to {to} of {management.total} users
+			</span>
+			<div className="flex items-center gap-2">
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => management.setPage(Math.max(1, management.page - 1))}
+					disabled={management.page === 1}
+				>
+					&lt;
+				</Button>
+				<span className="text-[#26395C]">
+					{management.page} / {management.totalPages}
+				</span>
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() =>
+						management.setPage(Math.min(management.totalPages, management.page + 1))
+					}
+					disabled={management.page === management.totalPages}
+				>
+					&gt;
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+function UserMobileCard({
+	user,
+	management,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+}) {
+	return (
+		<div className="rounded-[12px] border border-[#D4D7E3] bg-white p-4 shadow-sm">
+			<div className="mb-5 flex items-center gap-4">
+				<span className="flex size-[48px] shrink-0 items-center justify-center rounded-full bg-[#C5BFF0] text-[18px] font-semibold text-[#0C1421]">
+					{initials(user.name)}
+				</span>
+				<div className="min-w-0">
+					<h2 className="truncate text-[16px] font-semibold text-[#0C1421]">
+						{user.name}
+					</h2>
+					<p className="truncate text-[12px] font-medium text-black">
+						{user.email}
+					</p>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
+				<ReadOnlyField label="Role" value={roleLabel(user.role)} />
+				<ReadOnlyField label="Team" value={user.team?.name || 'No Team'} />
+				<div className="flex flex-col gap-2">
+					<span className="text-[12px] font-semibold text-black">Status</span>
+					<StatusSelect user={user} management={management} className="w-full" />
+				</div>
+			</div>
+
+			<div className="mt-4 flex justify-end text-[12px] font-semibold text-black">
+				<span>Created On: {formatDate(user.createdAt)}</span>
+			</div>
+		</div>
+	);
+}
+
+function UserRow({
+	user,
+	management,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+}) {
+	return (
+		<tr className="border-t border-[#D4D7E3]">
+			<td className="px-6 py-4">
+				<div className="flex items-center gap-3">
+					<span className="flex size-8 items-center justify-center rounded-full bg-[#C5BFF0] text-xs">
+						{initials(user.name)}
+					</span>
+					<span className="font-medium">{user.name}</span>
+				</div>
+			</td>
+			<td className="px-6 py-4">{user.email}</td>
+			<td className="px-6 py-4">{roleLabel(user.role)}</td>
+			<td className="px-6 py-4">{user.team?.name || 'No Team'}</td>
+			<td className="px-6 py-4">
+				<StatusSelect user={user} management={management} className="w-[135px]" />
+			</td>
+			<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
+		</tr>
+	);
+}
