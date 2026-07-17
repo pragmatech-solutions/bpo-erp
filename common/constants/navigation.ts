@@ -21,7 +21,12 @@ export const NAVIGATION_LINKS = [
 		label: 'Lead List',
 		href: '/leads/list',
 		icon: Users,
-		roles: [UserRole.ADMIN, UserRole.TEAM_LEAD, UserRole.AGENT, UserRole.QUALITY_ASSURANCE],
+		roles: [
+			UserRole.ADMIN,
+			UserRole.TEAM_LEAD,
+			UserRole.AGENT,
+			UserRole.QUALITY_ASSURANCE,
+		],
 	},
 	{
 		label: 'Create Lead',
@@ -39,7 +44,7 @@ export const NAVIGATION_LINKS = [
 		label: 'User',
 		href: '/users',
 		icon: UserCog,
-		roles: [UserRole.ADMIN, UserRole.TEAM_LEAD],
+		roles: [UserRole.ADMIN],
 	},
 	{
 		label: 'Campaign',
@@ -60,7 +65,3 @@ export const BOTTOM_NAVIGATION_OPTIONS = [
 		icon: LogOut,
 	},
 ];
-
-
-
-
