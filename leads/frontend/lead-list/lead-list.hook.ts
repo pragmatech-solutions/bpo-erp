@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 import { getLeadsApi } from './lead-list.api';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
-import { LoanType } from '@/common/constants/loan-type.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { getAgentsApi } from '@/agents/frontend/list-agents';
 import type { AgentListItem } from '@/agents/backend/list-agents/list-agents.type';
+import { getCampaignOptionsApi } from '@/campaigns/frontend/campaign-options';
+import { CAMPAIGNS } from '@/common/constants/campaigns';
 
 export type DurationPreset =
 	| 'Today'
@@ -35,18 +36,40 @@ export function useLeadListHook() {
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [campaign, setCampaign] = useState<string>('All Campaigns');
 	const [agentId, setAgentId] = useState<string>('All Agents');
+	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;
 		end?: Date;
 	} | null>(null);
 
-	const [isAdmin, setIsAdmin] = useState(false);
+	const [canFilterAgents] = useState(() => {
+		const userInfo = getCurrentLoggedInUserInformation();
+		const role = userInfo?.currentUser?.role;
+		return (
+			role === UserRole.ADMIN ||
+			role === UserRole.TEAM_LEAD ||
+			role === UserRole.QUALITY_ASSURANCE
+		);
+	});
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
 
 	useEffect(() => {
-		const userInfo = getCurrentLoggedInUserInformation();
-		if (userInfo?.currentUser?.role === UserRole.ADMIN) {
-			setIsAdmin(true);
+		async function loadCampaignOptions() {
+			try {
+				const response = await getCampaignOptionsApi();
+				if (response.campaigns.length > 0) {
+					setCampaignOptions(response.campaigns);
+				}
+			} catch {
+				setCampaignOptions(CAMPAIGNS);
+			}
+		}
+
+		loadCampaignOptions();
+	}, []);
+
+	useEffect(() => {
+		if (canFilterAgents) {
 			const fetchAgents = async () => {
 				const response = await getAgentsApi();
 				if (response.success && response.data) {
@@ -55,7 +78,7 @@ export function useLeadListHook() {
 			};
 			fetchAgents();
 		}
-	}, []);
+	}, [canFilterAgents]);
 
 	const fetchLeads = useCallback(async () => {
 		setIsLoading(true);
@@ -153,8 +176,9 @@ export function useLeadListHook() {
 		leads,
 		isLoading,
 		errorMessage,
-		isAdmin,
+		canFilterAgents,
 		agents,
+		campaignOptions,
 		filters: {
 			search,
 			setSearch,
@@ -175,3 +199,9 @@ export function useLeadListHook() {
 		refresh: fetchLeads,
 	};
 }
+
+
+
+
+
+

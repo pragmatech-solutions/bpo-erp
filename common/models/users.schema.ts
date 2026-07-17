@@ -16,6 +16,16 @@ const UserSchema = new Schema(
 			enum: Object.values(UserRole),
 			required: true,
 		},
+		team_id: {
+			type: Schema.Types.ObjectId,
+			ref: 'teams',
+			required: false,
+		},
+		created_by: {
+			type: Schema.Types.ObjectId,
+			ref: 'users',
+			required: false,
+		},
 	},
 	{
 		timestamps: {
@@ -26,3 +36,5 @@ const UserSchema = new Schema(
 );
 
 export const Users = models.users || model('users', UserSchema);
+
+

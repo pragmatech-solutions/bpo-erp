@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import listLeads from '@/leads/backend/list-leads';
 import { listLeadsInputSchema } from '@/leads/backend/list-leads/list-leads.input-schema';
 
+function getErrorStatus(message: string) {
+	if (message === 'Unauthorized') return 401;
+	if (message.includes('Forbidden')) return 403;
+	return 500;
+}
+
 export async function GET(req: Request) {
 	try {
 		const { searchParams } = new URL(req.url);
@@ -35,7 +41,7 @@ export async function GET(req: Request) {
 			error instanceof Error ? error.message : 'Failed to list leads';
 		return NextResponse.json(
 			{ success: false, error: message },
-			{ status: 500 },
+			{ status: getErrorStatus(message) },
 		);
 	}
 }

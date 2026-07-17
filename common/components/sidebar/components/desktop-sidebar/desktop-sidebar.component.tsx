@@ -1,5 +1,6 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -9,10 +10,34 @@ import {
 } from '@/common/constants/navigation';
 import { cn } from '@/lib/utils';
 import { removeToken } from '@/lib/api-client';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
+
+function subscribeToCurrentUser(callback: () => void) {
+	window.addEventListener('storage', callback);
+	return () => window.removeEventListener('storage', callback);
+}
+
+function getCurrentRoleSnapshot() {
+	const currentUserInformation = getCurrentLoggedInUserInformation();
+	return currentUserInformation?.currentUser.role as UserRole | undefined;
+}
+
+function getServerRoleSnapshot() {
+	return undefined;
+}
 
 export function DesktopSidebar() {
 	const pathname = usePathname();
 	const router = useRouter();
+	const currentRole = useSyncExternalStore(
+		subscribeToCurrentUser,
+		getCurrentRoleSnapshot,
+		getServerRoleSnapshot,
+	);
+	const navigationLinks = NAVIGATION_LINKS.filter((link) =>
+		currentRole ? link.roles.includes(currentRole) : false,
+	);
 
 	const handleLogout = () => {
 		removeToken();
@@ -32,7 +57,7 @@ export function DesktopSidebar() {
 			</div>
 
 			<nav className="flex flex-1 flex-col gap-4 pr-0">
-				{NAVIGATION_LINKS.map((link) => {
+				{navigationLinks.map((link) => {
 					const isActive = pathname === link.href;
 					return (
 						<Link

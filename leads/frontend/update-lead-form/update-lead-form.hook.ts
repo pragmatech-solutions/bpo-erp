@@ -4,14 +4,30 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getLeadApi } from './get-lead.api';
 import { updateLeadApi } from './update-lead.api';
-import type { LeadDetails } from '@/leads/backend/get-lead';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 
 function formatErrorMessage(error: string): string {
 	try {
-		const parsed = JSON.parse(error);
+		const parsed: unknown = JSON.parse(error);
 		if (Array.isArray(parsed)) {
-			return parsed.map((issue: any) => issue.message).join(', ');
+			const messages = parsed
+				.map((issue) => {
+					if (
+						typeof issue === 'object' &&
+						issue !== null &&
+						'message' in issue &&
+						typeof issue.message === 'string'
+					) {
+						return issue.message;
+					}
+
+					return '';
+				})
+				.filter(Boolean);
+
+			return messages.join(', ');
 		}
 		return error;
 	} catch {
@@ -35,6 +51,12 @@ export function useUpdateLeadFormHook(id: string) {
 	const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid'>(
 		'unpaid',
 	);
+	const [currentRole] = useState(() => {
+		const userInfo = getCurrentLoggedInUserInformation();
+		return userInfo?.currentUser.role as UserRole | undefined;
+	});
+	const isAdmin = currentRole === UserRole.ADMIN;
+	const isQualityAssurance = currentRole === UserRole.QUALITY_ASSURANCE;
 
 	const fetchLead = useCallback(async () => {
 		setIsLoading(true);
@@ -58,7 +80,11 @@ export function useUpdateLeadFormHook(id: string) {
 	}, [id]);
 
 	useEffect(() => {
-		fetchLead();
+		const timeoutId = setTimeout(() => {
+			fetchLead();
+		}, 0);
+
+		return () => clearTimeout(timeoutId);
 	}, [fetchLead]);
 
 	const handleSubmit = async (e?: React.FormEvent) => {
@@ -72,7 +98,7 @@ export function useUpdateLeadFormHook(id: string) {
 			status,
 			statusReason:
 				status === LeadStatus.NON_BILLABLE ? statusReason : undefined,
-			paymentStatus,
+			paymentStatus: isAdmin ? paymentStatus : 'unpaid',
 		});
 
 		if (response.success) {
@@ -106,8 +132,13 @@ export function useUpdateLeadFormHook(id: string) {
 			setStatusReason,
 			paymentStatus,
 			setPaymentStatus,
+			isAdmin,
+			isQualityAssurance,
 		},
 		handleSubmit,
 		handleCancel,
 	};
 }
+
+
+

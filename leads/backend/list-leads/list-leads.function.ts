@@ -1,8 +1,8 @@
 import { Types } from 'mongoose';
-import { getCurrentUser } from '@/common/backend/get-current-user.function';
+import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
+import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
-import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { listLeadsInputSchema } from './list-leads.input-schema';
 import type { ListedLead, ListLeadsInput } from './list-leads.type';
@@ -11,12 +11,9 @@ export async function listLeads(
 	input: ListLeadsInput = {},
 ): Promise<ListedLead[]> {
 	await connectToDatabase();
-	const currentUserId = await getCurrentUser();
+	const currentUser = await getCurrentAuthenticatedUser();
 
-	if (!currentUserId) throw new Error('Unauthorized');
-
-	const currentUser = await Users.findById(currentUserId).lean();
-	if (!currentUser) throw new Error('User not found');
+	if (!currentUser) throw new Error('Unauthorized');
 
 	const validatedInput = listLeadsInputSchema.parse(input);
 	const dateFilter: Record<string, Date> = {};
@@ -26,13 +23,40 @@ export async function listLeads(
 
 	const matchStage: Record<string, unknown> = {};
 
-	if (currentUser.role !== UserRole.ADMIN) {
-		matchStage.created_by = new Types.ObjectId(currentUserId);
-	} else if (
-		validatedInput.agentId &&
-		validatedInput.agentId !== 'All Agents'
+	if (
+		currentUser.role === UserRole.ADMIN ||
+		currentUser.role === UserRole.QUALITY_ASSURANCE
 	) {
-		matchStage.created_by = new Types.ObjectId(validatedInput.agentId);
+		if (
+			validatedInput.agentId &&
+			validatedInput.agentId !== 'All Agents' &&
+			Types.ObjectId.isValid(validatedInput.agentId)
+		) {
+			matchStage.created_by = new Types.ObjectId(validatedInput.agentId);
+		}
+	} else if (currentUser.role === UserRole.TEAM_LEAD) {
+		if (!currentUser.teamId) {
+			throw new Error('Forbidden: Team lead is not assigned to a team');
+		}
+
+		const teamAgentIds = await getTeamAgentObjectIds(currentUser.teamId);
+		const requestedAgentId = validatedInput.agentId;
+
+		if (requestedAgentId && requestedAgentId !== 'All Agents') {
+			const selectedAgentId = teamAgentIds.find(
+				(agentId) => agentId.toString() === requestedAgentId,
+			);
+
+			matchStage.created_by = selectedAgentId
+				? selectedAgentId
+				: { $in: [] };
+		} else {
+			matchStage.created_by = { $in: teamAgentIds };
+		}
+	} else if (currentUser.role === UserRole.AGENT) {
+		matchStage.created_by = new Types.ObjectId(currentUser.id);
+	} else {
+		throw new Error('Forbidden');
 	}
 
 	if (validatedInput.status) {
@@ -102,3 +126,4 @@ export async function listLeads(
 
 	return leads as ListedLead[];
 }
+

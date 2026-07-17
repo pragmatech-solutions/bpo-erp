@@ -1,26 +1,61 @@
-import { getCurrentUser } from '@/common/backend/get-current-user.function';
+import { Types } from 'mongoose';
+import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
+import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
-import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import type { GetLeadInput, LeadDetails } from './get-lead.type';
 
+type LeadDocument = {
+	_id: Types.ObjectId;
+	customer_name: string;
+	username: string;
+	customer_number: string;
+	loan_type: LeadDetails['loanType'];
+	status: LeadDetails['status'];
+	status_reason?: string;
+	payment_status?: 'paid' | 'unpaid';
+	updated_at: Date;
+	created_by: {
+		_id: Types.ObjectId;
+		name: string;
+	};
+};
+
 export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 	await connectToDatabase();
-	const currentUserId = await getCurrentUser();
+	const currentUser = await getCurrentAuthenticatedUser();
 
-	if (!currentUserId) throw new Error('Unauthorized');
-
-	const currentUser = await Users.findById(currentUserId).lean();
-	if (!currentUser || currentUser.role !== UserRole.ADMIN) {
-		throw new Error('Forbidden: Only admins can access this');
-	}
+	if (!currentUser) throw new Error('Unauthorized');
 
 	const lead = await Leads.findById(input.id)
 		.populate('created_by', 'name')
-		.lean();
+		.lean<LeadDocument>();
 
 	if (!lead) throw new Error('Lead not found');
+
+	if (currentUser.role === UserRole.QUALITY_ASSURANCE) {
+		// QA can review any lead across teams.
+	} else if (currentUser.role === UserRole.TEAM_LEAD) {
+		if (!currentUser.teamId) {
+			throw new Error('Forbidden: Team lead is not assigned to a team');
+		}
+
+		const teamAgentIds = await getTeamAgentObjectIds(currentUser.teamId);
+		const canReadLead = teamAgentIds.some(
+			(agentId) => agentId.toString() === lead.created_by._id.toString(),
+		);
+
+		if (!canReadLead) {
+			throw new Error('Lead not found');
+		}
+	} else if (currentUser.role === UserRole.AGENT) {
+		if (lead.created_by._id.toString() !== currentUser.id) {
+			throw new Error('Lead not found');
+		}
+	} else if (currentUser.role !== UserRole.ADMIN) {
+		throw new Error('Forbidden');
+	}
 
 	return {
 		id: lead._id.toString(),
@@ -38,3 +73,5 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		},
 	};
 }
+
+
