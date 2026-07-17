@@ -13,7 +13,6 @@ import {
 import { LeadCard } from '@/common/components/lead-card';
 import { DatePickerWithRange } from './components/date-range-picker.component';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
-import { CAMPAIGNS } from '@/common/constants/campaigns';
 import {
 	useLeadListHook,
 	type DurationPreset,
@@ -54,6 +53,7 @@ export function LeadList() {
 		resetFilters,
 		canFilterAgents,
 		agents,
+		campaignOptions,
 	} = useLeadListHook();
 
 	return (
@@ -175,7 +175,7 @@ export function LeadList() {
 							</SelectTrigger>
 							<SelectContent className="rounded-[19px] border-none shadow-xl">
 								<SelectItem value="All Campaigns">All Campaigns</SelectItem>
-								{CAMPAIGNS.map((c) => (
+								{campaignOptions.map((c) => (
 									<SelectItem key={c} value={c}>
 										{c}
 									</SelectItem>
@@ -238,5 +238,6 @@ export function LeadList() {
 		</div>
 	);
 }
+
 
 

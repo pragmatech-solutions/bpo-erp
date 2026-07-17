@@ -23,7 +23,10 @@ export async function listLeads(
 
 	const matchStage: Record<string, unknown> = {};
 
-	if (currentUser.role === UserRole.ADMIN) {
+	if (
+		currentUser.role === UserRole.ADMIN ||
+		currentUser.role === UserRole.QUALITY_ASSURANCE
+	) {
 		if (
 			validatedInput.agentId &&
 			validatedInput.agentId !== 'All Agents' &&
@@ -123,3 +126,4 @@ export async function listLeads(
 
 	return leads as ListedLead[];
 }
+

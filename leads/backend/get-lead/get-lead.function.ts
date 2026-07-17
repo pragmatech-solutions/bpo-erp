@@ -34,7 +34,9 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 
 	if (!lead) throw new Error('Lead not found');
 
-	if (currentUser.role === UserRole.TEAM_LEAD) {
+	if (currentUser.role === UserRole.QUALITY_ASSURANCE) {
+		// QA can review any lead across teams.
+	} else if (currentUser.role === UserRole.TEAM_LEAD) {
 		if (!currentUser.teamId) {
 			throw new Error('Forbidden: Team lead is not assigned to a team');
 		}
@@ -47,15 +49,11 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		if (!canReadLead) {
 			throw new Error('Lead not found');
 		}
-	} else if (
-		currentUser.role === UserRole.AGENT &&
-		lead.created_by._id.toString() !== currentUser.id
-	) {
-		throw new Error('Lead not found');
-	} else if (
-		currentUser.role !== UserRole.ADMIN &&
-		currentUser.role !== UserRole.AGENT
-	) {
+	} else if (currentUser.role === UserRole.AGENT) {
+		if (lead.created_by._id.toString() !== currentUser.id) {
+			throw new Error('Lead not found');
+		}
+	} else if (currentUser.role !== UserRole.ADMIN) {
 		throw new Error('Forbidden');
 	}
 
@@ -75,4 +73,5 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		},
 	};
 }
+
 

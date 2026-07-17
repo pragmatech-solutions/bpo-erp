@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { getLeadApi } from './get-lead.api';
 import { updateLeadApi } from './update-lead.api';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 
 function formatErrorMessage(error: string): string {
 	try {
@@ -49,6 +51,12 @@ export function useUpdateLeadFormHook(id: string) {
 	const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid'>(
 		'unpaid',
 	);
+	const [currentRole] = useState(() => {
+		const userInfo = getCurrentLoggedInUserInformation();
+		return userInfo?.currentUser.role as UserRole | undefined;
+	});
+	const isAdmin = currentRole === UserRole.ADMIN;
+	const isQualityAssurance = currentRole === UserRole.QUALITY_ASSURANCE;
 
 	const fetchLead = useCallback(async () => {
 		setIsLoading(true);
@@ -90,7 +98,7 @@ export function useUpdateLeadFormHook(id: string) {
 			status,
 			statusReason:
 				status === LeadStatus.NON_BILLABLE ? statusReason : undefined,
-			paymentStatus,
+			paymentStatus: isAdmin ? paymentStatus : 'unpaid',
 		});
 
 		if (response.success) {
@@ -124,10 +132,13 @@ export function useUpdateLeadFormHook(id: string) {
 			setStatusReason,
 			paymentStatus,
 			setPaymentStatus,
+			isAdmin,
+			isQualityAssurance,
 		},
 		handleSubmit,
 		handleCancel,
 	};
 }
+
 
 

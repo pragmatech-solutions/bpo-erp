@@ -12,7 +12,11 @@ export default async function EditLeadPage({
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 
-	if (!currentUser || currentUser.role !== UserRole.ADMIN) {
+	if (
+		!currentUser ||
+		(currentUser.role !== UserRole.ADMIN &&
+			currentUser.role !== UserRole.QUALITY_ASSURANCE)
+	) {
 		notFound();
 	}
 
@@ -20,3 +24,4 @@ export default async function EditLeadPage({
 
 	return <UpdateLeadForm id={id} />;
 }
+

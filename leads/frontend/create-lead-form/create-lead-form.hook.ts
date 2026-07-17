@@ -1,8 +1,10 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createLeadApi } from './create-lead.api';
+import { getCampaignOptionsApi } from '@/campaigns/frontend/campaign-options';
+import { CAMPAIGNS } from '@/common/constants/campaigns';
 
 type CreateLeadError = string | Record<string, string[]>;
 
@@ -19,6 +21,22 @@ export function useCreateLeadFormHook() {
 	const [error, setError] = useState<CreateLeadError>('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [success, setSuccess] = useState(false);
+	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
+
+	useEffect(() => {
+		async function loadCampaignOptions() {
+			try {
+				const response = await getCampaignOptionsApi();
+				if (response.campaigns.length > 0) {
+					setCampaignOptions(response.campaigns);
+				}
+			} catch {
+				setCampaignOptions(CAMPAIGNS);
+			}
+		}
+
+		loadCampaignOptions();
+	}, []);
 
 	const errorMessage = useMemo(() => {
 		if (typeof error === 'string') {
@@ -87,6 +105,7 @@ export function useCreateLeadFormHook() {
 		setHomeValue,
 		loanOfficerName,
 		setLoanOfficerName,
+		campaignOptions,
 		errorMessage,
 		isLoading,
 		success,
@@ -94,3 +113,4 @@ export function useCreateLeadFormHook() {
 		handleCancel,
 	};
 }
+

@@ -8,6 +8,8 @@ import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/ge
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { getAgentsApi } from '@/agents/frontend/list-agents';
 import type { AgentListItem } from '@/agents/backend/list-agents/list-agents.type';
+import { getCampaignOptionsApi } from '@/campaigns/frontend/campaign-options';
+import { CAMPAIGNS } from '@/common/constants/campaigns';
 
 export type DurationPreset =
 	| 'Today'
@@ -34,6 +36,7 @@ export function useLeadListHook() {
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [campaign, setCampaign] = useState<string>('All Campaigns');
 	const [agentId, setAgentId] = useState<string>('All Agents');
+	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;
 		end?: Date;
@@ -42,9 +45,28 @@ export function useLeadListHook() {
 	const [canFilterAgents] = useState(() => {
 		const userInfo = getCurrentLoggedInUserInformation();
 		const role = userInfo?.currentUser?.role;
-		return role === UserRole.ADMIN || role === UserRole.TEAM_LEAD;
+		return (
+			role === UserRole.ADMIN ||
+			role === UserRole.TEAM_LEAD ||
+			role === UserRole.QUALITY_ASSURANCE
+		);
 	});
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
+
+	useEffect(() => {
+		async function loadCampaignOptions() {
+			try {
+				const response = await getCampaignOptionsApi();
+				if (response.campaigns.length > 0) {
+					setCampaignOptions(response.campaigns);
+				}
+			} catch {
+				setCampaignOptions(CAMPAIGNS);
+			}
+		}
+
+		loadCampaignOptions();
+	}, []);
 
 	useEffect(() => {
 		if (canFilterAgents) {
@@ -156,6 +178,7 @@ export function useLeadListHook() {
 		errorMessage,
 		canFilterAgents,
 		agents,
+		campaignOptions,
 		filters: {
 			search,
 			setSearch,
@@ -176,6 +199,8 @@ export function useLeadListHook() {
 		refresh: fetchLeads,
 	};
 }
+
+
 
 
 
