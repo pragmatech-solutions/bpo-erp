@@ -1,0 +1,102 @@
+<mxfile host="app.diagrams.net" modified="2026-07-18T00:00:00.000Z" agent="claude-code" version="24.0.0" type="device">
+  <diagram name="BPO ERP Architecture" id="bpo-erp-architecture">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Client layer -->
+        <mxCell id="client" value="Browser / Installed PWA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="40" width="320" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Next.js layer -->
+        <mxCell id="nextjs" value="Next.js App Router (app/)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="150" width="1200" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="pages-auth" value="app/(auth)/*&#10;login, signup pages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="230" y="195" width="260" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="pages-authed" value="app/(authenticated)/*&#10;dashboard, leads, teams, users, campaigns pages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="530" y="195" width="320" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="api-routes" value="API routes (per page: /api/route.ts)&#10;thin wrappers, call domain backend functions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="890" y="195" width="470" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Domain modules layer -->
+        <mxCell id="modules" value="Domain modules (backend/ + frontend/ per module)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="320" width="1200" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-auth" value="auth&#10;login / signup" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="220" y="365" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-leads" value="leads&#10;create / list / get / update" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="380" y="365" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-teams" value="teams&#10;manage-teams / get-team-dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="550" y="365" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-users" value="users&#10;manage-users" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="730" y="365" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-campaigns" value="campaigns&#10;campaigns CRUD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="880" y="365" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-dashboard" value="dashboard&#10;lead-analytics / dashboard-router" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="365" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-agents" value="agents&#10;list-agents" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1230" y="365" width="130" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Common layer -->
+        <mxCell id="common" value="common/ (shared)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="490" width="1200" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="common-models" value="common/models&#10;Mongoose schemas: users, leads, teams, campaigns, request-logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="230" y="535" width="340" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="common-backend" value="common/backend&#10;authorization.function.ts, get-current-authenticated-user, get-team-agent-ids" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="600" y="535" width="380" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="common-components" value="common/components + components/ui&#10;header, sidebar, lead-card, shadcn primitives" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="535" width="330" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Database layer -->
+        <mxCell id="mongo" value="MongoDB&#10;(via Mongoose, common/database.ts)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="700" width="240" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- PWA service worker note -->
+        <mxCell id="sw" value="Service worker (Serwist)&#10;app/sw.ts — offline/installable PWA" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="40" width="280" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="client" target="nextjs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-sw" value="registers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;" edge="1" parent="1" source="client" target="sw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="calls" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="api-routes" target="mod-leads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="nextjs" target="modules">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="modules" target="common">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="reads/writes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="common-models" target="mongo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="auth/session cookie (JWT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;" edge="1" parent="1" source="client" target="mod-auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
