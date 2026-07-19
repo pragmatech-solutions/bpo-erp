@@ -7,6 +7,7 @@
 		"build": "next build --webpack",
 		"start": "next start",
 		"seed:sample": "node scripts/seed-sample-data.mjs",
+		"backfill:usernames": "node scripts/backfill-usernames.mjs",
 		"lint": "eslint",
 		"prepare": "husky"
 	},
@@ -56,5 +57,3 @@
 		"*.{js,jsx,ts,tsx,json,css,md}": "npx prettier --write"
 	}
 }
-
-

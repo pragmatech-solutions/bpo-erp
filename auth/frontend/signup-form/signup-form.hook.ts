@@ -10,6 +10,7 @@ type SignupError = string | Record<string, string[]>;
 export function useSignupFormHook() {
 	const router = useRouter();
 	const [name, setName] = useState('');
+	const [username, setUsername] = useState('');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [agreed, setAgreed] = useState(false);
@@ -41,7 +42,7 @@ export function useSignupFormHook() {
 		setIsLoading(true);
 
 		try {
-			const payload = { name, email, password };
+			const payload = { name, username, email, password };
 			const validated = signupInputSchema.safeParse(payload);
 
 			if (!validated.success) {
@@ -68,6 +69,8 @@ export function useSignupFormHook() {
 	return {
 		name,
 		setName,
+		username,
+		setUsername,
 		email,
 		setEmail,
 		password,
