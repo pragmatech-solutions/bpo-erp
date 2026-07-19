@@ -7,17 +7,18 @@ import { UserResponse } from '../login/login.type';
 export async function signupUser(input: SignupInput): Promise<UserResponse> {
 	await connectToDatabase();
 
-	const { name, email, password } = input;
+	const { name, username, email, password } = input;
 
-	const existingUser = await Users.findOne({ email });
+	const existingUser = await Users.findOne({ $or: [{ email }, { username }] });
 	if (existingUser) {
-		throw new Error('User with this email already exists');
+		throw new Error('User with this email or username already exists');
 	}
 
 	const hashedPassword = await bcrypt.hash(password, 12);
 
 	const newUser = new Users({
 		name,
+		username,
 		email,
 		password: hashedPassword,
 		role: 'agent',

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useLoginFormHook } from './login-form.hook';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label';
 
 export function LoginForm() {
 	const {
-		email,
-		setEmail,
+		identifier,
+		setIdentifier,
 		password,
 		setPassword,
 		isPasswordVisible,
@@ -49,17 +49,20 @@ export function LoginForm() {
 					>
 						<div className="flex flex-col gap-4 md:gap-[23px]">
 							<div className="flex flex-col gap-2 md:gap-[10px]">
-								<Label htmlFor="email" className="text-[14px] text-[#0C1421]">
-									Email
+								<Label
+									htmlFor="identifier"
+									className="text-[14px] text-[#0C1421]"
+								>
+									Username or Email
 								</Label>
 								<div className="relative">
-									<Mail className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-[#8897AD]" />
+									<User className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-[#8897AD]" />
 									<Input
-										id="email"
-										type="email"
-										value={email}
-										onChange={(event) => setEmail(event.target.value)}
-										placeholder="John@email.com"
+										id="identifier"
+										type="text"
+										value={identifier}
+										onChange={(event) => setIdentifier(event.target.value)}
+										placeholder="Username or email"
 										required
 										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] pl-[46px] text-[14px] placeholder:text-[#8897AD] md:text-[16px]"
 									/>

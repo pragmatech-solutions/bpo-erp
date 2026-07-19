@@ -12,6 +12,8 @@ export function SignupForm() {
 	const {
 		name,
 		setName,
+		username,
+		setUsername,
 		email,
 		setEmail,
 		password,
@@ -67,6 +69,28 @@ export function SignupForm() {
 										value={name}
 										onChange={(event) => setName(event.target.value)}
 										placeholder="John Doe"
+										required
+										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] pl-[58px] text-[14px] placeholder:text-[#8897AD] md:text-[16px]"
+									/>
+								</div>
+							</div>
+
+							{/* Username */}
+							<div className="flex flex-col gap-2 md:mb-[25px]">
+								<Label
+									htmlFor="username"
+									className="text-[14px] text-[#0C1421] md:text-[16px]"
+								>
+									Username
+								</Label>
+								<div className="relative">
+									<User className="pointer-events-none absolute left-7 top-1/2 size-[18px] -translate-y-1/2 text-[#8897AD]" />
+									<Input
+										id="username"
+										type="text"
+										value={username}
+										onChange={(event) => setUsername(event.target.value)}
+										placeholder="johndoe"
 										required
 										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] pl-[58px] text-[14px] placeholder:text-[#8897AD] md:text-[16px]"
 									/>

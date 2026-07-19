@@ -4,6 +4,7 @@ import { UserRole } from '../constants/user-roles.enum';
 const UserSchema = new Schema(
 	{
 		name: { type: String, required: true },
+		username: { type: String, required: true, unique: true, trim: true },
 		email: { type: String, required: true, unique: true },
 		password: { type: String, required: true },
 		status: {
@@ -36,5 +37,3 @@ const UserSchema = new Schema(
 );
 
 export const Users = models.users || model('users', UserSchema);
-
-
