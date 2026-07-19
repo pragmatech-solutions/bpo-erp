@@ -4,7 +4,7 @@ import { apiClient, setToken } from '@/lib/api-client';
 import { saveCurrentLoggedInUserInformation } from './get-current-logged-in-user-information.function';
 
 type LoginPayload = {
-	email: string;
+	identifier: string;
 	password: string;
 };
 

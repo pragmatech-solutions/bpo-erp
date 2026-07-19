@@ -7,8 +7,10 @@ import { createSession } from './create-session.function';
 export async function loginUser(credentials: LoginCredentials) {
 	await connectToDatabase();
 
-	const { email, password } = credentials;
-	const user = await Users.findOne({ email });
+	const { identifier, password } = credentials;
+	const user = await Users.findOne({
+		$or: [{ email: identifier }, { username: identifier }],
+	});
 
 	if (!user) {
 		throw new Error('Invalid credentials');

@@ -9,7 +9,7 @@ type LoginError = string | Record<string, string[]>;
 
 export function useLoginFormHook() {
 	const router = useRouter();
-	const [email, setEmail] = useState('');
+	const [identifier, setIdentifier] = useState('');
 	const [password, setPassword] = useState('');
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const [error, setError] = useState<LoginError>('');
@@ -33,7 +33,7 @@ export function useLoginFormHook() {
 		setIsLoading(true);
 
 		try {
-			const response = await loginApi({ email, password });
+			const response = await loginApi({ identifier, password });
 
 			if (response.success) {
 				const role = response.user?.role;
@@ -49,8 +49,8 @@ export function useLoginFormHook() {
 	}
 
 	return {
-		email,
-		setEmail,
+		identifier,
+		setIdentifier,
 		password,
 		setPassword,
 		isPasswordVisible,

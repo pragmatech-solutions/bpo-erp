@@ -47,6 +47,7 @@ function loadEnvFile() {
 const UserSchema = new mongoose.Schema(
 	{
 		name: { type: String, required: true },
+		username: { type: String, required: true, unique: true, trim: true },
 		email: { type: String, required: true, unique: true },
 		password: { type: String, required: true },
 		status: {
@@ -134,6 +135,10 @@ function getSeedEmail(localPart) {
 	return `${localPart}.seed@${SEED_EMAIL_DOMAIN}`;
 }
 
+function getSeedUsername(localPart) {
+	return `${localPart}.seed`;
+}
+
 function getLeadStatus(agentIndex, leadIndex) {
 	return LEAD_STATUSES[(agentIndex + leadIndex) % LEAD_STATUSES.length];
 }
@@ -195,6 +200,7 @@ async function seed() {
 	const hashedPassword = await bcrypt.hash(SEED_PASSWORD, 12);
 	const admin = await Users.create({
 		name: 'Seed Admin',
+		username: getSeedUsername('admin'),
 		email: getSeedEmail('admin'),
 		password: hashedPassword,
 		status: 'active',
@@ -214,6 +220,7 @@ async function seed() {
 		const teamLead = await Users.create({
 			_id: teamLeadId,
 			name: `Seed Team Lead ${teamNumber}`,
+			username: getSeedUsername(`teamlead${teamNumber}`),
 			email: getSeedEmail(`teamlead${teamNumber}`),
 			password: hashedPassword,
 			status: 'active',
@@ -236,6 +243,7 @@ async function seed() {
 			const agentNumber = agentIndex + 1;
 			teamAgents.push({
 				name: `Seed Agent ${teamNumber}-${String(agentNumber).padStart(2, '0')}`,
+				username: getSeedUsername(`team${teamNumber}.agent${String(agentNumber).padStart(2, '0')}`),
 				email: getSeedEmail(`team${teamNumber}.agent${String(agentNumber).padStart(2, '0')}`),
 				password: hashedPassword,
 				status: 'active',
