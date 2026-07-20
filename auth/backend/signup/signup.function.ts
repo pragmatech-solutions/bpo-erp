@@ -9,7 +9,9 @@ export async function signupUser(input: SignupInput): Promise<UserResponse> {
 
 	const { name, username, email, password } = input;
 
-	const existingUser = await Users.findOne({ $or: [{ email }, { username }] });
+	const existingUser = await Users.findOne({
+		$or: [...(email ? [{ email }] : []), { username }],
+	});
 	if (existingUser) {
 		throw new Error('User with this email or username already exists');
 	}

@@ -16,7 +16,7 @@ type UserDocument = {
 	_id: Types.ObjectId;
 	name: string;
 	username: string;
-	email: string;
+	email?: string;
 	role: UserRole;
 	status: 'active' | 'inactive' | 'blocked';
 	team_id?: { _id: Types.ObjectId; name: string } | null;

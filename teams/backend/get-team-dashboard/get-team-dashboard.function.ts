@@ -19,7 +19,7 @@ import type {
 type TeamAgentDocument = {
 	_id: Types.ObjectId;
 	name: string;
-	email: string;
+	email?: string;
 };
 
 type TeamDocument = {
@@ -98,7 +98,11 @@ export async function getTeamDashboard(
 	const selectedAgent = agents.find(
 		(agent) => agent._id.toString() === validatedInput.agentId,
 	);
-	const displayedAgents = validatedInput.agentId ? selectedAgent ? [selectedAgent] : [] : agents;
+	const displayedAgents = validatedInput.agentId
+		? selectedAgent
+			? [selectedAgent]
+			: []
+		: agents;
 	const displayedAgentIds = displayedAgents.map((agent) => agent._id);
 	const leadMatch = createLeadMatch(displayedAgentIds, validatedInput);
 
@@ -108,9 +112,17 @@ export async function getTeamDashboard(
 			$group: {
 				_id: '$created_by',
 				total: { $sum: 1 },
-				pending: { $sum: { $cond: [{ $eq: ['$status', LeadStatus.PENDING] }, 1, 0] } },
-				billable: { $sum: { $cond: [{ $eq: ['$status', LeadStatus.BILLABLE] }, 1, 0] } },
-				nonBillable: { $sum: { $cond: [{ $eq: ['$status', LeadStatus.NON_BILLABLE] }, 1, 0] } },
+				pending: {
+					$sum: { $cond: [{ $eq: ['$status', LeadStatus.PENDING] }, 1, 0] },
+				},
+				billable: {
+					$sum: { $cond: [{ $eq: ['$status', LeadStatus.BILLABLE] }, 1, 0] },
+				},
+				nonBillable: {
+					$sum: {
+						$cond: [{ $eq: ['$status', LeadStatus.NON_BILLABLE] }, 1, 0],
+					},
+				},
 				campaigns: { $addToSet: '$campaign' },
 			},
 		},
@@ -137,12 +149,15 @@ export async function getTeamDashboard(
 		};
 	});
 
-	const analytics = members.reduce((totals, member) => ({
-		total: totals.total + member.analytics.total,
-		pending: totals.pending + member.analytics.pending,
-		billable: totals.billable + member.analytics.billable,
-		nonBillable: totals.nonBillable + member.analytics.nonBillable,
-	}), getEmptyAnalytics());
+	const analytics = members.reduce(
+		(totals, member) => ({
+			total: totals.total + member.analytics.total,
+			pending: totals.pending + member.analytics.pending,
+			billable: totals.billable + member.analytics.billable,
+			nonBillable: totals.nonBillable + member.analytics.nonBillable,
+		}),
+		getEmptyAnalytics(),
+	);
 
 	const campaigns = await Leads.distinct('campaign', {
 		created_by: { $in: agents.map((agent) => agent._id) },
@@ -157,4 +172,3 @@ export async function getTeamDashboard(
 		leads,
 	};
 }
-

@@ -4,7 +4,7 @@ export type LoginCredentials = {
 };
 
 export type UserResponse = {
-	email: string;
+	email?: string;
 	username: string;
 	name: string;
 	status: 'active' | 'inactive' | 'blocked';
