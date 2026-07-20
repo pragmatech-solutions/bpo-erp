@@ -44,7 +44,11 @@ export function TeamPerformance({ id }: { id: string }) {
 	}
 
 	if (errorMessage) {
-		return <div className="rounded-[12px] bg-red-50 p-4 text-red-600">{errorMessage}</div>;
+		return (
+			<div className="rounded-[12px] bg-red-50 p-4 text-red-600">
+				{errorMessage}
+			</div>
+		);
 	}
 
 	if (!data) {
@@ -100,7 +104,10 @@ export function TeamPerformance({ id }: { id: string }) {
 						<tbody>
 							{data.members.length === 0 ? (
 								<tr>
-									<td className="px-6 py-10 text-center text-[#313957]" colSpan={5}>
+									<td
+										className="px-6 py-10 text-center text-[#313957]"
+										colSpan={5}
+									>
 										No members found for this team.
 									</td>
 								</tr>
@@ -114,13 +121,19 @@ export function TeamPerformance({ id }: { id: string }) {
 												</span>
 												<div>
 													<div className="font-medium">{member.name}</div>
-													<div className="text-sm text-[#8897AD]">{member.email}</div>
+													<div className="text-sm text-[#8897AD]">
+														{member.email || '—'}
+													</div>
 												</div>
 											</div>
 										</td>
 										<td className="px-6 py-5">{member.stats.total}</td>
-										<td className="px-6 py-5 text-[#F59E0B]">{member.stats.pending}</td>
-										<td className="px-6 py-5 text-[#10B981]">{member.stats.billable}</td>
+										<td className="px-6 py-5 text-[#F59E0B]">
+											{member.stats.pending}
+										</td>
+										<td className="px-6 py-5 text-[#10B981]">
+											{member.stats.billable}
+										</td>
 										<td className="px-6 py-5 text-[#F43F5E]">
 											{member.stats.nonBillable}
 										</td>
