@@ -6,7 +6,7 @@ export type ManagedUser = {
 	id: string;
 	name: string;
 	username: string;
-	email: string;
+	email?: string;
 	role: UserRole;
 	status: UserAccountStatus;
 	team: {

@@ -103,7 +103,7 @@ export function SignupForm() {
 									htmlFor="email"
 									className="text-[14px] text-[#0C1421] md:text-[16px]"
 								>
-									Email
+									Email (optional)
 								</Label>
 								<div className="relative">
 									<Mail className="pointer-events-none absolute left-7 top-1/2 size-[18px] -translate-y-1/2 text-[#8897AD]" />
@@ -113,7 +113,6 @@ export function SignupForm() {
 										value={email}
 										onChange={(event) => setEmail(event.target.value)}
 										placeholder="Johndoe@email.com"
-										required
 										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] pl-[58px] text-[14px] placeholder:text-[#8897AD] md:text-[16px]"
 									/>
 								</div>

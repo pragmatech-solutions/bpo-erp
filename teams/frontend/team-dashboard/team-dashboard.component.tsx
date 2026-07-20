@@ -1,6 +1,14 @@
 'use client';
 
-import { AlertCircle, CheckCircle2, Clock3, Filter, Search, User, Users } from 'lucide-react';
+import {
+	AlertCircle,
+	CheckCircle2,
+	Clock3,
+	Filter,
+	Search,
+	User,
+	Users,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -228,14 +236,36 @@ export function TeamDashboard() {
 									<p className="text-[16px] font-semibold text-[#313957]">
 										{member.name}
 									</p>
-									<p className="text-[13px] text-[#8897AD]">{member.email}</p>
+									<p className="text-[13px] text-[#8897AD]">
+										{member.email || '—'}
+									</p>
 								</div>
 							</div>
 							<div className="grid grid-cols-4 gap-2 text-center text-[#313957]">
-								<div><p className="text-[20px] font-semibold">{member.analytics.total}</p><p className="text-[11px]">Total</p></div>
-								<div><p className="text-[20px] font-semibold">{member.analytics.pending}</p><p className="text-[11px]">Pending</p></div>
-								<div><p className="text-[20px] font-semibold">{member.analytics.billable}</p><p className="text-[11px]">Billable</p></div>
-								<div><p className="text-[20px] font-semibold">{member.analytics.nonBillable}</p><p className="text-[11px]">Non-Billable</p></div>
+								<div>
+									<p className="text-[20px] font-semibold">
+										{member.analytics.total}
+									</p>
+									<p className="text-[11px]">Total</p>
+								</div>
+								<div>
+									<p className="text-[20px] font-semibold">
+										{member.analytics.pending}
+									</p>
+									<p className="text-[11px]">Pending</p>
+								</div>
+								<div>
+									<p className="text-[20px] font-semibold">
+										{member.analytics.billable}
+									</p>
+									<p className="text-[11px]">Billable</p>
+								</div>
+								<div>
+									<p className="text-[20px] font-semibold">
+										{member.analytics.nonBillable}
+									</p>
+									<p className="text-[11px]">Non-Billable</p>
+								</div>
 							</div>
 						</Card>
 					))}
@@ -261,4 +291,3 @@ export function TeamDashboard() {
 		</div>
 	);
 }
-

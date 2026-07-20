@@ -33,7 +33,7 @@ type TeamDocument = {
 type UserDocument = {
 	_id: Types.ObjectId;
 	name: string;
-	email: string;
+	email?: string;
 };
 
 type LeadStatusAggregate = {
@@ -48,7 +48,9 @@ const emptyStats = (): LeadStats => ({
 	nonBillable: 0,
 });
 
-async function getLeadStatsForUsers(userIds: Types.ObjectId[]): Promise<LeadStats> {
+async function getLeadStatsForUsers(
+	userIds: Types.ObjectId[],
+): Promise<LeadStats> {
 	if (userIds.length === 0) return emptyStats();
 
 	const rows = await Leads.aggregate<LeadStatusAggregate>([
@@ -80,7 +82,9 @@ async function getTeamLead(teamLeadId?: Types.ObjectId | null) {
 	};
 }
 
-async function buildTeamOverview(team: TeamDocument): Promise<TeamOverviewItem> {
+async function buildTeamOverview(
+	team: TeamDocument,
+): Promise<TeamOverviewItem> {
 	const [teamLead, members] = await Promise.all([
 		getTeamLead(team.team_lead),
 		Users.find({
@@ -189,7 +193,9 @@ export async function createTeam(input: CreateTeamInput) {
 		return new Types.ObjectId(memberId);
 	});
 
-	const existingTeam = await Teams.findOne({ name: validatedInput.name }).lean();
+	const existingTeam = await Teams.findOne({
+		name: validatedInput.name,
+	}).lean();
 	if (existingTeam) throw new Error('Team already exists');
 
 	const teamLead = await Users.findById(validatedInput.teamLeadId).lean<{

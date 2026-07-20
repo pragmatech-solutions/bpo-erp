@@ -6,7 +6,7 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 type CurrentUserDocument = {
 	_id: Types.ObjectId;
 	name: string;
-	email: string;
+	email?: string;
 	role: UserRole;
 	team_id?: Types.ObjectId | string | null;
 };
@@ -14,7 +14,7 @@ type CurrentUserDocument = {
 export type CurrentAuthenticatedUser = {
 	id: string;
 	name: string;
-	email: string;
+	email?: string;
 	role: UserRole;
 	teamId?: string;
 };
