@@ -10,10 +10,13 @@ export default async function TeamsPage() {
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 
-	if (!currentUser || currentUser.role !== UserRole.ADMIN) {
+	if (
+		!currentUser ||
+		(currentUser.role !== UserRole.ADMIN &&
+			currentUser.role !== UserRole.TEAM_LEAD)
+	) {
 		notFound();
 	}
 
-	return <TeamOverview />;
+	return <TeamOverview canCreateTeams={currentUser.role === UserRole.ADMIN} />;
 }
-
