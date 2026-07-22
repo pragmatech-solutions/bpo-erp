@@ -125,7 +125,11 @@ function StatCards({
 	);
 }
 
-export function TeamOverview() {
+export function TeamOverview({
+	canCreateTeams = false,
+}: {
+	canCreateTeams?: boolean;
+}) {
 	const teams = useTeamOverviewHook();
 	const [showMobileFilters, setShowMobileFilters] = useState(false);
 	const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
@@ -202,7 +206,9 @@ export function TeamOverview() {
 				<div className="grid gap-3">
 					<Select
 						value={teams.duration}
-						onValueChange={(value) => teams.setDuration(value as TeamDurationPreset)}
+						onValueChange={(value) =>
+							teams.setDuration(value as TeamDurationPreset)
+						}
 					>
 						<SelectTrigger className="h-[48px] rounded-[10px] border-[#D4D7E3]">
 							<SelectValue placeholder="Select Duration" />
@@ -217,7 +223,9 @@ export function TeamOverview() {
 					</Select>
 					<Select
 						value={teams.status}
-						onValueChange={(value) => teams.setStatus(value as TeamStatusFilter)}
+						onValueChange={(value) =>
+							teams.setStatus(value as TeamStatusFilter)
+						}
 					>
 						<SelectTrigger className="h-[48px] rounded-[10px] border-[#D4D7E3]">
 							<SelectValue placeholder="All Status" />
@@ -256,9 +264,14 @@ export function TeamOverview() {
 							className="h-[48px] rounded-[12px] border-[#D4D7E3] bg-white pl-12"
 						/>
 					</div>
-					<Button asChild className="h-[48px] rounded-[12px] bg-[#2F61E8] px-8 text-[16px]">
-						<Link href="/teams/create">+ Create Team</Link>
-					</Button>
+					{canCreateTeams && (
+						<Button
+							asChild
+							className="h-[48px] rounded-[12px] bg-[#2F61E8] px-8 text-[16px]"
+						>
+							<Link href="/teams/create">+ Create Team</Link>
+						</Button>
+					)}
 				</div>
 			</div>
 
@@ -319,12 +332,14 @@ export function TeamOverview() {
 				<Pagination teams={teams} from={from} to={to} />
 			</div>
 
-			<Button
-				asChild
-				className="fixed bottom-6 right-6 z-30 h-[48px] rounded-[8px] bg-[#2F61E8] px-5 text-[14px] shadow-lg lg:hidden"
-			>
-				<Link href="/teams/create">+ Create Team</Link>
-			</Button>
+			{canCreateTeams && (
+				<Button
+					asChild
+					className="fixed bottom-6 right-6 z-30 h-[48px] rounded-[8px] bg-[#2F61E8] px-5 text-[14px] shadow-lg lg:hidden"
+				>
+					<Link href="/teams/create">+ Create Team</Link>
+				</Button>
+			)}
 		</div>
 	);
 }
@@ -363,7 +378,9 @@ function DesktopTeamSection({
 						<Users className="size-5 text-[#26395C]" />
 					</span>
 					<div className="min-w-0">
-						<div className="truncate text-[14px] font-semibold">{team.name}</div>
+						<div className="truncate text-[14px] font-semibold">
+							{team.name}
+						</div>
 					</div>
 				</div>
 				<div className="min-w-0">
@@ -389,7 +406,10 @@ function DesktopTeamSection({
 					label="Non-Billable"
 					className="text-[#F43F5E]"
 				/>
-				<DesktopSummaryStat value={formatDate(team.createdAt)} label="Created On" />
+				<DesktopSummaryStat
+					value={formatDate(team.createdAt)}
+					label="Created On"
+				/>
 				{isExpanded ? (
 					<ChevronDown className="size-5 text-black" />
 				) : (
@@ -495,7 +515,9 @@ function Pagination({
 				<Button
 					variant="outline"
 					size="sm"
-					onClick={() => teams.setPage(Math.min(teams.totalPages, teams.page + 1))}
+					onClick={() =>
+						teams.setPage(Math.min(teams.totalPages, teams.page + 1))
+					}
 					disabled={teams.page === teams.totalPages}
 				>
 					&gt;
@@ -505,11 +527,21 @@ function Pagination({
 	);
 }
 
-function TeamStat({ value, label, className = '' }: { value: number | string; label: string; className?: string }) {
+function TeamStat({
+	value,
+	label,
+	className = '',
+}: {
+	value: number | string;
+	label: string;
+	className?: string;
+}) {
 	return (
 		<div className="text-center">
 			<div className={`text-[11px] font-medium ${className}`}>{value}</div>
-			<div className="text-[9px] font-medium leading-tight text-black">{label}</div>
+			<div className="text-[9px] font-medium leading-tight text-black">
+				{label}
+			</div>
 		</div>
 	);
 }
@@ -558,9 +590,21 @@ function TeamMobileCard({
 				<div className="grid grid-cols-6 items-start gap-1">
 					<TeamStat value={team.memberCount} label="Members" />
 					<TeamStat value={team.stats.total} label="Total Leads" />
-					<TeamStat value={String(team.stats.pending).padStart(2, '0')} label="Pending" className="text-[#F59E0B]" />
-					<TeamStat value={String(team.stats.billable).padStart(2, '0')} label="Billable" className="text-[#10B981]" />
-					<TeamStat value={String(team.stats.nonBillable).padStart(2, '0')} label="Non-Billable" className="text-[#F43F5E]" />
+					<TeamStat
+						value={String(team.stats.pending).padStart(2, '0')}
+						label="Pending"
+						className="text-[#F59E0B]"
+					/>
+					<TeamStat
+						value={String(team.stats.billable).padStart(2, '0')}
+						label="Billable"
+						className="text-[#10B981]"
+					/>
+					<TeamStat
+						value={String(team.stats.nonBillable).padStart(2, '0')}
+						label="Non-Billable"
+						className="text-[#F43F5E]"
+					/>
 					<TeamStat value={formatDate(team.createdAt)} label="Created On" />
 				</div>
 			</div>
@@ -592,9 +636,15 @@ function TeamMobileCard({
 								>
 									<span className="truncate">{member.name}</span>
 									<span>{member.stats.total}</span>
-									<span className="text-[#F59E0B]">{String(member.stats.pending).padStart(2, '0')}</span>
-									<span className="text-[#10B981]">{String(member.stats.billable).padStart(2, '0')}</span>
-									<span className="text-[#F43F5E]">{String(member.stats.nonBillable).padStart(2, '0')}</span>
+									<span className="text-[#F59E0B]">
+										{String(member.stats.pending).padStart(2, '0')}
+									</span>
+									<span className="text-[#10B981]">
+										{String(member.stats.billable).padStart(2, '0')}
+									</span>
+									<span className="text-[#F43F5E]">
+										{String(member.stats.nonBillable).padStart(2, '0')}
+									</span>
 									<span className="flex items-center gap-1">
 										<span className="size-1.5 rounded-full bg-[#10B981]" />
 										Active
