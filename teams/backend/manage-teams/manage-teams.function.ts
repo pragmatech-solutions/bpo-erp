@@ -1,5 +1,8 @@
 import { Types } from 'mongoose';
-import { requireAdmin } from '@/common/backend/authorization.function';
+import {
+	requireAdmin,
+	requireAuthenticatedUser,
+} from '@/common/backend/authorization.function';
 import { connectToDatabase } from '@/common/database';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { UserRole } from '@/common/constants/user-roles.enum';
@@ -113,7 +116,17 @@ export async function listTeams(
 	input: ListTeamsInput = {},
 ): Promise<TeamOverviewData> {
 	await connectToDatabase();
-	await requireAdmin();
+	const currentUser = await requireAuthenticatedUser();
+	if (
+		currentUser.role !== UserRole.ADMIN &&
+		currentUser.role !== UserRole.TEAM_LEAD
+	) {
+		throw new Error('Forbidden: Team management access denied');
+	}
+	if (currentUser.role === UserRole.TEAM_LEAD && !currentUser.teamId) {
+		throw new Error('Team not found');
+	}
+
 	const validatedInput = listTeamsInputSchema.parse(input);
 	const filter: Record<string, unknown> = {};
 	const dateFilter: Record<string, Date> = {};
@@ -127,11 +140,16 @@ export async function listTeams(
 	}
 
 	if (
+		currentUser.role === UserRole.ADMIN &&
 		validatedInput.teamLeadId &&
 		validatedInput.teamLeadId !== 'all' &&
 		Types.ObjectId.isValid(validatedInput.teamLeadId)
 	) {
 		filter.team_lead = new Types.ObjectId(validatedInput.teamLeadId);
+	}
+
+	if (currentUser.role === UserRole.TEAM_LEAD) {
+		filter._id = new Types.ObjectId(currentUser.teamId);
 	}
 
 	if (validatedInput.startDate) dateFilter.$gte = validatedInput.startDate;
@@ -141,6 +159,21 @@ export async function listTeams(
 	}
 
 	const skip = (validatedInput.page - 1) * validatedInput.limit;
+	const agentFilter =
+		currentUser.role === UserRole.TEAM_LEAD
+			? {
+					role: UserRole.AGENT,
+					team_id: new Types.ObjectId(currentUser.teamId),
+				}
+			: {
+					role: UserRole.AGENT,
+					team_id: { $exists: true, $ne: null },
+				};
+	const teamLeadFilter =
+		currentUser.role === UserRole.TEAM_LEAD
+			? { _id: new Types.ObjectId(currentUser.id) }
+			: { role: UserRole.TEAM_LEAD };
+
 	const [teams, total, allAgents, teamLeadUsers] = await Promise.all([
 		Teams.find(filter)
 			.select('_id name team_lead status created_at')
@@ -149,13 +182,10 @@ export async function listTeams(
 			.limit(validatedInput.limit)
 			.lean<TeamDocument[]>(),
 		Teams.countDocuments(filter),
-		Users.find({
-			role: UserRole.AGENT,
-			team_id: { $exists: true, $ne: null },
-		})
+		Users.find(agentFilter)
 			.select('_id')
 			.lean<Array<Pick<UserDocument, '_id'>>>(),
-		Users.find({ role: UserRole.TEAM_LEAD })
+		Users.find(teamLeadFilter)
 			.select('_id name')
 			.sort({ name: 1 })
 			.lean<Array<Pick<UserDocument, '_id' | 'name'>>>(),
@@ -250,7 +280,14 @@ export async function getTeamPerformance(
 	input: GetTeamPerformanceInput,
 ): Promise<TeamPerformanceData> {
 	await connectToDatabase();
-	await requireAdmin();
+	const currentUser = await requireAuthenticatedUser();
+	if (
+		currentUser.role !== UserRole.ADMIN &&
+		currentUser.role !== UserRole.TEAM_LEAD
+	) {
+		throw new Error('Forbidden: Team management access denied');
+	}
+
 	const validatedInput = getTeamPerformanceInputSchema.parse(input);
 
 	if (!Types.ObjectId.isValid(validatedInput.id)) {
@@ -261,6 +298,12 @@ export async function getTeamPerformance(
 		.select('_id name team_lead')
 		.lean<TeamDocument>();
 	if (!team) throw new Error('Team not found');
+	if (
+		currentUser.role === UserRole.TEAM_LEAD &&
+		(!currentUser.teamId || team._id.toString() !== currentUser.teamId)
+	) {
+		throw new Error('Team not found');
+	}
 
 	const [teamLead, members] = await Promise.all([
 		getTeamLead(team.team_lead),

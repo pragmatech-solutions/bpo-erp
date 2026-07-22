@@ -14,11 +14,14 @@ export default async function TeamPerformancePage({
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 
-	if (!currentUser || currentUser.role !== UserRole.ADMIN) {
+	if (
+		!currentUser ||
+		(currentUser.role !== UserRole.ADMIN &&
+			currentUser.role !== UserRole.TEAM_LEAD)
+	) {
 		notFound();
 	}
 
 	const { id } = await params;
 	return <TeamPerformance id={id} />;
 }
-
