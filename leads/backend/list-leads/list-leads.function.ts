@@ -47,14 +47,14 @@ export async function listLeads(
 				(agentId) => agentId.toString() === requestedAgentId,
 			);
 
-			matchStage.created_by = selectedAgentId
-				? selectedAgentId
-				: { $in: [] };
+			matchStage.created_by = selectedAgentId ? selectedAgentId : { $in: [] };
 		} else {
 			matchStage.created_by = { $in: teamAgentIds };
 		}
 	} else if (currentUser.role === UserRole.AGENT) {
 		matchStage.created_by = new Types.ObjectId(currentUser.id);
+	} else if (currentUser.role === UserRole.LOAN_OFFICER) {
+		matchStage.loan_officer_id = new Types.ObjectId(currentUser.id);
 	} else {
 		throw new Error('Forbidden');
 	}
@@ -98,13 +98,25 @@ export async function listLeads(
 		},
 		{ $unwind: { path: '$created_by', preserveNullAndEmptyArrays: true } },
 		{
+			$lookup: {
+				from: 'users',
+				localField: 'loan_officer_id',
+				foreignField: '_id',
+				as: 'loan_officer',
+			},
+		},
+		{ $unwind: { path: '$loan_officer', preserveNullAndEmptyArrays: true } },
+		{
 			$project: {
 				id: { $toString: '$_id' },
 				customerName: '$customer_name',
 				username: '$username',
 				customerNumber: '$customer_number',
 				loanType: '$loan_type',
-				loanOfficerName: '$loan_officer_name',
+				loanOfficerName: {
+					$ifNull: ['$loan_officer.name', '$loan_officer_name'],
+				},
+				loanOfficerPhoneNumber: '$loan_officer.phone_number',
 				status: '$status',
 				statusReason: '$status_reason',
 				paymentStatus: '$payment_status',
@@ -126,4 +138,3 @@ export async function listLeads(
 
 	return leads as ListedLead[];
 }
-

@@ -18,6 +18,7 @@ export type ListedLead = {
 	customerNumber: string;
 	loanType: string;
 	loanOfficerName?: string;
+	loanOfficerPhoneNumber?: string;
 	status: LeadStatus;
 	statusReason?: string;
 	paymentStatus?: 'paid' | 'unpaid';

@@ -8,9 +8,9 @@ export type CreateLeadPayload = {
 	customer_number: string;
 	campaign: string;
 	loan_type: string;
+	loan_officer_id: string;
 	loan_balance?: number;
 	home_value?: number;
-	loan_officer_name?: string;
 };
 
 export type CreateLeadApiResponse = {

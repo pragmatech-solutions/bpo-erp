@@ -1,11 +1,13 @@
-import { Schema, model, models } from 'mongoose';
+﻿import { Schema, model, models } from 'mongoose';
 import { UserRole } from '../constants/user-roles.enum';
 
 const UserSchema = new Schema(
 	{
 		name: { type: String, required: true },
 		email: { type: String, required: true, unique: true },
+		username: { type: String, required: false, unique: true, sparse: true },
 		password: { type: String, required: true },
+		phone_number: { type: String, required: false },
 		status: {
 			type: String,
 			default: 'inactive',
@@ -36,5 +38,3 @@ const UserSchema = new Schema(
 );
 
 export const Users = models.users || model('users', UserSchema);
-
-

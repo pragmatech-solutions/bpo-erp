@@ -1,4 +1,4 @@
-import { Schema, model, models } from 'mongoose';
+﻿import { Schema, model, models } from 'mongoose';
 import { LeadStatus } from '../constants/lead-status.enum';
 import { LoanType } from '../constants/loan-type.enum';
 
@@ -20,6 +20,11 @@ const LeadSchema = new Schema(
 		customer_name: { type: String, required: true },
 		username: { type: String, required: true },
 		campaign: { type: String, required: true },
+		loan_officer_id: {
+			type: Schema.Types.ObjectId,
+			ref: 'users',
+			required: true,
+		},
 		loan_officer_name: { type: String, required: false },
 		loan_type: {
 			type: String,

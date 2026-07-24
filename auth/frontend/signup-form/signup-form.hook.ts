@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signupApi } from './signup.api';
 import { signupInputSchema } from '@/auth/backend/signup/signup.input-schema';
+import { UserRole } from '@/common/constants/user-roles.enum';
 
 type SignupError = string | Record<string, string[]>;
 
@@ -11,6 +12,10 @@ export function useSignupFormHook() {
 	const router = useRouter();
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
+	const [phoneNumber, setPhoneNumber] = useState('');
+	const [role, setRole] = useState<UserRole.AGENT | UserRole.LOAN_OFFICER>(
+		UserRole.AGENT,
+	);
 	const [password, setPassword] = useState('');
 	const [agreed, setAgreed] = useState(false);
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -41,7 +46,13 @@ export function useSignupFormHook() {
 		setIsLoading(true);
 
 		try {
-			const payload = { name, email, password };
+			const payload = {
+				name,
+				email,
+				password,
+				role,
+				phone_number: phoneNumber,
+			};
 			const validated = signupInputSchema.safeParse(payload);
 
 			if (!validated.success) {
@@ -51,7 +62,7 @@ export function useSignupFormHook() {
 				return;
 			}
 
-			const response = await signupApi(payload);
+			const response = await signupApi(validated.data);
 
 			if (response.success) {
 				router.push('/login');
@@ -70,6 +81,10 @@ export function useSignupFormHook() {
 		setName,
 		email,
 		setEmail,
+		phoneNumber,
+		setPhoneNumber,
+		role,
+		setRole,
 		password,
 		setPassword,
 		agreed,

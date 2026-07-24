@@ -21,9 +21,10 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 		handleCancel,
 	} = useUpdateLeadFormHook(id);
 
-	const statusOptions = form.isQualityAssurance
-		? [LeadStatus.BILLABLE, LeadStatus.NON_BILLABLE]
-		: Object.values(LeadStatus);
+	const statusOptions =
+		form.isQualityAssurance || form.isLoanOfficer
+			? [LeadStatus.BILLABLE, LeadStatus.NON_BILLABLE]
+			: Object.values(LeadStatus);
 
 	if (isLoading) {
 		return (
@@ -154,19 +155,18 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 						</div>
 					)}
 
-					{form.status === LeadStatus.BILLABLE &&
-						form.isQualityAssurance && (
-							<div className="flex flex-col gap-4">
-								<label className="text-[16px] font-medium text-[#313957]">
-									Payment Status
-								</label>
-								<div className="grid grid-cols-1 gap-3 lg:w-[966px]">
-									<div className="flex h-[58px] items-center justify-center rounded-[12px] border border-[#F43F5E] bg-[#FFE4E6] text-[16px]">
-										Unpaid
-									</div>
+					{form.status === LeadStatus.BILLABLE && form.isQualityAssurance && (
+						<div className="flex flex-col gap-4">
+							<label className="text-[16px] font-medium text-[#313957]">
+								Payment Status
+							</label>
+							<div className="grid grid-cols-1 gap-3 lg:w-[966px]">
+								<div className="flex h-[58px] items-center justify-center rounded-[12px] border border-[#F43F5E] bg-[#FFE4E6] text-[16px]">
+									Unpaid
 								</div>
 							</div>
-						)}
+						</div>
+					)}
 
 					{/* Error/Success Messages */}
 					{errorMessage && (
@@ -205,4 +205,3 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 		</div>
 	);
 }
-

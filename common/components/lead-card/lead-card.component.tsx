@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
 	Phone,
@@ -25,7 +25,6 @@ function getStatusPill(status: LeadStatus) {
 	if (status === LeadStatus.PENDING) return 'bg-[#FEF3C7] text-[#F59E0B]';
 	if (status === LeadStatus.BILLABLE) return 'bg-[#D1FAE5] text-[#10B981]';
 
-	// Fallback (should not reach here)
 	return 'bg-[#FEF3C7] text-[#F59E0B]';
 }
 
@@ -45,7 +44,8 @@ export function LeadCard({ lead }: LeadCardProps) {
 	const isPending = lead.status === LeadStatus.PENDING;
 	const canEdit =
 		(currentRole === UserRole.ADMIN && isPending) ||
-		currentRole === UserRole.QUALITY_ASSURANCE;
+		currentRole === UserRole.QUALITY_ASSURANCE ||
+		currentRole === UserRole.LOAN_OFFICER;
 
 	const handleClick = () => {
 		if (canEdit) {
@@ -149,10 +149,15 @@ export function LeadCard({ lead }: LeadCardProps) {
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
 						<Briefcase size={14} className="text-[#26395C]" />
-						<span>Loan Officer Name</span>
+						<span>Loan Officer</span>
 					</div>
 					<div className="pl-6 text-[12px] font-medium lg:text-[14px]">
 						{lead.loanOfficerName || 'N/A'}
+						{lead.loanOfficerPhoneNumber && (
+							<span className="block text-[#8897AD]">
+								{lead.loanOfficerPhoneNumber}
+							</span>
+						)}
 					</div>
 				</div>
 
@@ -190,4 +195,3 @@ export function LeadCard({ lead }: LeadCardProps) {
 		</Card>
 	);
 }
-

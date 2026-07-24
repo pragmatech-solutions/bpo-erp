@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { User, Phone, Briefcase, DollarSign, Home, Target } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -31,8 +31,10 @@ export function CreateLeadForm() {
 		setLoanBalance,
 		homeValue,
 		setHomeValue,
-		loanOfficerName,
-		setLoanOfficerName,
+		loanOfficerId,
+		setLoanOfficerId,
+		loanOfficerOptions,
+		selectedLoanOfficer,
 		campaignOptions,
 		errorMessage,
 		isLoading,
@@ -154,22 +156,35 @@ export function CreateLeadForm() {
 
 					<div className="flex flex-col gap-3">
 						<Label
-							htmlFor="loanOfficerName"
+							htmlFor="loanOfficerId"
 							className="text-[16px] font-medium text-[#313957]"
 						>
-							Loan Officer Name (optional)
+							Loan Officer *
 						</Label>
 						<div className="relative">
-							<User className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#26395C]" />
-							<Input
-								id="loanOfficerName"
-								type="text"
-								placeholder="e.g. John Doe"
-								value={loanOfficerName}
-								onChange={(e) => setLoanOfficerName(e.target.value)}
-								className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white pl-12 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-blue-500"
-							/>
+							<User className="absolute left-4 top-1/2 z-10 size-5 -translate-y-1/2 text-[#26395C]" />
+							<Select value={loanOfficerId} onValueChange={setLoanOfficerId}>
+								<SelectTrigger
+									id="loanOfficerId"
+									className="h-[58px] w-full rounded-[12px] border border-[#D4D7E3] bg-white pl-12 pr-4 text-[16px] text-[#313957] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 data-[placeholder]:text-[#8897AD]"
+								>
+									<SelectValue placeholder="Select Loan Officer" />
+								</SelectTrigger>
+								<SelectContent position="popper">
+									{loanOfficerOptions.map((loanOfficer) => (
+										<SelectItem key={loanOfficer.id} value={loanOfficer.id}>
+											{loanOfficer.phoneNumber
+												? `${loanOfficer.name} - ${loanOfficer.phoneNumber}`
+												: loanOfficer.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</div>
+						<p className="text-[13px] font-medium text-[#8897AD]">
+							Phone:{' '}
+							{selectedLoanOfficer?.phoneNumber || 'Select a loan officer'}
+						</p>
 					</div>
 
 					<div className="flex flex-col gap-3">

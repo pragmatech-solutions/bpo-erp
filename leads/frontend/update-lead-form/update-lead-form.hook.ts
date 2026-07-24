@@ -57,6 +57,7 @@ export function useUpdateLeadFormHook(id: string) {
 	});
 	const isAdmin = currentRole === UserRole.ADMIN;
 	const isQualityAssurance = currentRole === UserRole.QUALITY_ASSURANCE;
+	const isLoanOfficer = currentRole === UserRole.LOAN_OFFICER;
 
 	const fetchLead = useCallback(async () => {
 		setIsLoading(true);
@@ -98,7 +99,7 @@ export function useUpdateLeadFormHook(id: string) {
 			status,
 			statusReason:
 				status === LeadStatus.NON_BILLABLE ? statusReason : undefined,
-			paymentStatus: isAdmin ? paymentStatus : 'unpaid',
+			...(isAdmin ? { paymentStatus } : {}),
 		});
 
 		if (response.success) {
@@ -134,11 +135,9 @@ export function useUpdateLeadFormHook(id: string) {
 			setPaymentStatus,
 			isAdmin,
 			isQualityAssurance,
+			isLoanOfficer,
 		},
 		handleSubmit,
 		handleCancel,
 	};
 }
-
-
-

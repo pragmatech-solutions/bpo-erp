@@ -37,7 +37,11 @@ export function useLoginFormHook() {
 
 			if (response.success) {
 				const role = response.user?.role;
-				router.push(role === UserRole.QUALITY_ASSURANCE ? '/leads/list' : '/');
+				router.push(
+					role === UserRole.QUALITY_ASSURANCE || role === UserRole.LOAN_OFFICER
+						? '/leads/list'
+						: '/',
+				);
 			} else {
 				setError(response.error || 'Login failed');
 			}

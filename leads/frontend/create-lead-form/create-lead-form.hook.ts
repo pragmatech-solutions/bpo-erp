@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createLeadApi } from './create-lead.api';
 import { getCampaignOptionsApi } from '@/campaigns/frontend/campaign-options';
+import { getLoanOfficerOptionsApi } from '@/loan-officers/frontend/loan-officer-options';
+import type { LoanOfficerOption } from '@/loan-officers/backend/list-loan-officers';
 import { CAMPAIGNS } from '@/common/constants/campaigns';
 
 type CreateLeadError = string | Record<string, string[]>;
@@ -15,16 +17,19 @@ export function useCreateLeadFormHook() {
 	const [customerNumber, setCustomerNumber] = useState('');
 	const [campaign, setCampaign] = useState('');
 	const [loanType, setLoanType] = useState('');
-	const [loanOfficerName, setLoanOfficerName] = useState('');
+	const [loanOfficerId, setLoanOfficerId] = useState('');
 	const [loanBalance, setLoanBalance] = useState('');
 	const [homeValue, setHomeValue] = useState('');
 	const [error, setError] = useState<CreateLeadError>('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [success, setSuccess] = useState(false);
 	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
+	const [loanOfficerOptions, setLoanOfficerOptions] = useState<
+		LoanOfficerOption[]
+	>([]);
 
 	useEffect(() => {
-		async function loadCampaignOptions() {
+		async function loadOptions() {
 			try {
 				const response = await getCampaignOptionsApi();
 				if (response.campaigns.length > 0) {
@@ -33,10 +38,23 @@ export function useCreateLeadFormHook() {
 			} catch {
 				setCampaignOptions(CAMPAIGNS);
 			}
+
+			const loanOfficerResponse = await getLoanOfficerOptionsApi();
+			if (loanOfficerResponse.success && loanOfficerResponse.data) {
+				setLoanOfficerOptions(loanOfficerResponse.data);
+			}
 		}
 
-		loadCampaignOptions();
+		loadOptions();
 	}, []);
+
+	const selectedLoanOfficer = useMemo(
+		() =>
+			loanOfficerOptions.find(
+				(loanOfficer) => loanOfficer.id === loanOfficerId,
+			),
+		[loanOfficerId, loanOfficerOptions],
+	);
 
 	const errorMessage = useMemo(() => {
 		if (typeof error === 'string') {
@@ -55,13 +73,13 @@ export function useCreateLeadFormHook() {
 		try {
 			const response = await createLeadApi({
 				customer_name: customerName,
-				username: username,
+				username,
 				customer_number: customerNumber,
-				campaign: campaign,
+				campaign,
 				loan_type: loanType,
+				loan_officer_id: loanOfficerId,
 				loan_balance: loanBalance ? Number(loanBalance) : undefined,
 				home_value: homeValue ? Number(homeValue) : undefined,
-				loan_officer_name: loanOfficerName || undefined,
 			});
 
 			if (response.success) {
@@ -73,7 +91,7 @@ export function useCreateLeadFormHook() {
 				setLoanType('');
 				setLoanBalance('');
 				setHomeValue('');
-				setLoanOfficerName('');
+				setLoanOfficerId('');
 			} else {
 				setError(response.error || 'Failed to create lead');
 			}
@@ -103,8 +121,10 @@ export function useCreateLeadFormHook() {
 		setLoanBalance,
 		homeValue,
 		setHomeValue,
-		loanOfficerName,
-		setLoanOfficerName,
+		loanOfficerId,
+		setLoanOfficerId,
+		loanOfficerOptions,
+		selectedLoanOfficer,
 		campaignOptions,
 		errorMessage,
 		isLoading,
@@ -113,4 +133,3 @@ export function useCreateLeadFormHook() {
 		handleCancel,
 	};
 }
-
