@@ -15,7 +15,8 @@ export default async function EditLeadPage({
 	if (
 		!currentUser ||
 		(currentUser.role !== UserRole.ADMIN &&
-			currentUser.role !== UserRole.QUALITY_ASSURANCE)
+			currentUser.role !== UserRole.QUALITY_ASSURANCE &&
+			currentUser.role !== UserRole.LOAN_OFFICER)
 	) {
 		notFound();
 	}
@@ -24,4 +25,3 @@ export default async function EditLeadPage({
 
 	return <UpdateLeadForm id={id} />;
 }
-

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 
 export const updateLeadInputSchema = z
@@ -6,7 +6,7 @@ export const updateLeadInputSchema = z
 		id: z.string(),
 		status: z.nativeEnum(LeadStatus),
 		statusReason: z.string().optional(),
-		paymentStatus: z.enum(['paid', 'unpaid']).default('unpaid').optional(),
+		paymentStatus: z.enum(['paid', 'unpaid']).optional(),
 	})
 	.refine(
 		(data) => {

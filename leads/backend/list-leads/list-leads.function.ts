@@ -47,14 +47,14 @@ export async function listLeads(
 				(agentId) => agentId.toString() === requestedAgentId,
 			);
 
-			matchStage.created_by = selectedAgentId
-				? selectedAgentId
-				: { $in: [] };
+			matchStage.created_by = selectedAgentId ? selectedAgentId : { $in: [] };
 		} else {
 			matchStage.created_by = { $in: teamAgentIds };
 		}
 	} else if (currentUser.role === UserRole.AGENT) {
 		matchStage.created_by = new Types.ObjectId(currentUser.id);
+	} else if (currentUser.role === UserRole.LOAN_OFFICER) {
+		matchStage.loan_officer_id = new Types.ObjectId(currentUser.id);
 	} else {
 		throw new Error('Forbidden');
 	}
@@ -98,17 +98,52 @@ export async function listLeads(
 		},
 		{ $unwind: { path: '$created_by', preserveNullAndEmptyArrays: true } },
 		{
+			$lookup: {
+				from: 'users',
+				localField: 'loan_officer_id',
+				foreignField: '_id',
+				as: 'loan_officer',
+			},
+		},
+		{ $unwind: { path: '$loan_officer', preserveNullAndEmptyArrays: true } },
+		{
 			$project: {
 				id: { $toString: '$_id' },
+				leadType: '$lead_type',
 				customerName: '$customer_name',
 				username: '$username',
 				customerNumber: '$customer_number',
 				loanType: '$loan_type',
-				loanOfficerName: '$loan_officer_name',
+				loanOfficerName: {
+					$ifNull: ['$loan_officer.name', '$loan_officer_name'],
+				},
+				loanOfficerPhoneNumber: {
+					$ifNull: ['$loan_officer.phone_number', '$loan_officer_phone_number'],
+				},
 				status: '$status',
 				statusReason: '$status_reason',
 				paymentStatus: '$payment_status',
 				campaign: '$campaign',
+				callTransfer: {
+					firstName: '$call_transfer.first_name',
+					lastName: '$call_transfer.last_name',
+					originPhone: '$call_transfer.origin_phone',
+					address: '$call_transfer.address',
+					city: '$call_transfer.city',
+					state: '$call_transfer.state',
+					zip: '$call_transfer.zip',
+					email: '$call_transfer.email',
+					homeValue: '$call_transfer.home_value',
+					mortgageBalance: '$call_transfer.mortgage_balance',
+					mortgageRateType: '$call_transfer.mortgage_rate_type',
+					propertyType: '$call_transfer.property_type',
+					multipleProperties: '$call_transfer.multiple_properties',
+					mortgageRate: '$call_transfer.mortgage_rate',
+					cashOutAmount: '$call_transfer.cash_out_amount',
+					loanType: '$call_transfer.loan_type',
+					loanPurpose: '$call_transfer.loan_purpose',
+					credit: '$call_transfer.credit',
+				},
 				updatedAt: {
 					$dateToString: {
 						date: '$updated_at',
@@ -126,4 +161,6 @@ export async function listLeads(
 
 	return leads as ListedLead[];
 }
+
+
 

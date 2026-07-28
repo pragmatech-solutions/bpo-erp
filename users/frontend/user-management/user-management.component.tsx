@@ -29,6 +29,7 @@ const editableRoles: UserRole[] = [
 	UserRole.TEAM_LEAD,
 	UserRole.AGENT,
 	UserRole.QUALITY_ASSURANCE,
+	UserRole.LOAN_OFFICER,
 ];
 
 function initials(name: string) {
@@ -51,6 +52,7 @@ function statusLabel(status: UserAccountStatus) {
 function roleLabel(role: UserRole) {
 	if (role === UserRole.TEAM_LEAD) return 'Team Lead';
 	if (role === UserRole.QUALITY_ASSURANCE) return 'Quality Assurance';
+	if (role === UserRole.LOAN_OFFICER) return 'Loan Officer';
 	return role.charAt(0).toUpperCase() + role.slice(1);
 }
 

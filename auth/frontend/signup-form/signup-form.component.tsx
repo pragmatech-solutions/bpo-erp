@@ -2,11 +2,19 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react';
 import { useSignupFormHook } from './signup-form.hook';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import { UserRole } from '@/common/constants/user-roles.enum';
 
 export function SignupForm() {
 	const {
@@ -16,6 +24,10 @@ export function SignupForm() {
 		setUsername,
 		email,
 		setEmail,
+		phoneNumber,
+		setPhoneNumber,
+		role,
+		setRole,
 		password,
 		setPassword,
 		agreed,
@@ -53,7 +65,6 @@ export function SignupForm() {
 						className="flex flex-col gap-4 md:gap-0"
 					>
 						<div className="flex flex-col gap-[16px] md:gap-0">
-							{/* Full Name */}
 							<div className="flex flex-col gap-2 md:mb-[25px]">
 								<Label
 									htmlFor="name"
@@ -118,7 +129,51 @@ export function SignupForm() {
 								</div>
 							</div>
 
-							{/* Password */}
+							<div className="flex flex-col gap-2 md:mb-[25px]">
+								<Label
+									htmlFor="role"
+									className="text-[14px] text-[#0C1421] md:text-[16px]"
+								>
+									Role
+								</Label>
+								<Select
+									value={role}
+									onValueChange={(value) =>
+										setRole(value as UserRole.AGENT)
+									}
+								>
+									<SelectTrigger
+										id="role"
+										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] px-5 text-[14px] md:text-[16px]"
+									>
+										<SelectValue placeholder="Select role" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value={UserRole.AGENT}>Agent</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+
+							<div className="flex flex-col gap-2 md:mb-[25px]">
+								<Label
+									htmlFor="phoneNumber"
+									className="text-[14px] text-[#0C1421] md:text-[16px]"
+								>
+									Phone Number
+								</Label>
+								<div className="relative">
+									<Phone className="pointer-events-none absolute left-7 top-1/2 size-[18px] -translate-y-1/2 text-[#8897AD]" />
+									<Input
+										id="phoneNumber"
+										type="tel"
+										value={phoneNumber}
+										onChange={(event) => setPhoneNumber(event.target.value)}
+										placeholder="e.g. +1 (555) 000-0000"
+										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] pl-[58px] text-[14px] placeholder:text-[#8897AD] md:text-[16px]"
+									/>
+								</div>
+							</div>
+
 							<div className="flex flex-col gap-2 md:mb-[13px]">
 								<Label
 									htmlFor="password"
@@ -187,13 +242,13 @@ export function SignupForm() {
 							<Button
 								type="submit"
 								disabled={isLoading}
-								className="h-[55px] w-full rounded-[12px] bg-[#2563EB] text-[20px] font-medium text-white hover:bg-[#2563EB]/90 active:scale-[0.98] transition-transform"
+								className="h-[55px] w-full rounded-[12px] bg-[#2563EB] text-[20px] font-medium text-white transition-transform hover:bg-[#2563EB]/90 active:scale-[0.98]"
 							>
 								{isLoading ? 'Creating Account...' : 'Create Account'}
 							</Button>
 							<p className="text-[14px] text-[#313957] md:text-[16px]">
 								Already have an account?{' '}
-								<Link href="/login" className="text-[#1E4AE9] font-medium">
+								<Link href="/login" className="font-medium text-[#1E4AE9]">
 									Sign in
 								</Link>
 							</p>
@@ -204,3 +259,5 @@ export function SignupForm() {
 		</div>
 	);
 }
+
+

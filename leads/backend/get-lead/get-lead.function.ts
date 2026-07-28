@@ -12,6 +12,12 @@ type LeadDocument = {
 	username: string;
 	customer_number: string;
 	loan_type: LeadDetails['loanType'];
+	loan_officer_name?: string;
+	loan_officer_id?: {
+		_id: Types.ObjectId;
+		name: string;
+		phone_number?: string;
+	} | null;
 	status: LeadDetails['status'];
 	status_reason?: string;
 	payment_status?: 'paid' | 'unpaid';
@@ -30,12 +36,17 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 
 	const lead = await Leads.findById(input.id)
 		.populate('created_by', 'name')
+		.populate('loan_officer_id', 'name phone_number')
 		.lean<LeadDocument>();
 
 	if (!lead) throw new Error('Lead not found');
 
 	if (currentUser.role === UserRole.QUALITY_ASSURANCE) {
 		// QA can review any lead across teams.
+	} else if (currentUser.role === UserRole.LOAN_OFFICER) {
+		if (lead.loan_officer_id?._id.toString() !== currentUser.id) {
+			throw new Error('Lead not found');
+		}
 	} else if (currentUser.role === UserRole.TEAM_LEAD) {
 		if (!currentUser.teamId) {
 			throw new Error('Forbidden: Team lead is not assigned to a team');
@@ -63,6 +74,8 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		username: lead.username,
 		customerNumber: lead.customer_number,
 		loanType: lead.loan_type,
+		loanOfficerName: lead.loan_officer_id?.name || lead.loan_officer_name,
+		loanOfficerPhoneNumber: lead.loan_officer_id?.phone_number,
 		status: lead.status,
 		statusReason: lead.status_reason,
 		paymentStatus: lead.payment_status,
@@ -73,5 +86,3 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		},
 	};
 }
-
-

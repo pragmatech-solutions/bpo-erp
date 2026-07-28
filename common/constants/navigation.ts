@@ -26,6 +26,7 @@ export const NAVIGATION_LINKS = [
 			UserRole.TEAM_LEAD,
 			UserRole.AGENT,
 			UserRole.QUALITY_ASSURANCE,
+			UserRole.LOAN_OFFICER,
 		],
 	},
 	{
