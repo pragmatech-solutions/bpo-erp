@@ -1,10 +1,11 @@
 export type LoginCredentials = {
-	email: string;
+	identifier: string;
 	password: string;
 };
 
 export type UserResponse = {
-	email: string;
+	email?: string;
+	username: string;
 	name: string;
 	phone_number?: string;
 	status: 'active' | 'inactive' | 'blocked';

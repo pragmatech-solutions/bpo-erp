@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,7 @@ type SignupError = string | Record<string, string[]>;
 export function useSignupFormHook() {
 	const router = useRouter();
 	const [name, setName] = useState('');
+	const [username, setUsername] = useState('');
 	const [email, setEmail] = useState('');
 	const [phoneNumber, setPhoneNumber] = useState('');
 	const [role, setRole] = useState<UserRole.AGENT>(UserRole.AGENT);
@@ -46,6 +47,7 @@ export function useSignupFormHook() {
 		try {
 			const payload = {
 				name,
+				username,
 				email,
 				password,
 				role,
@@ -77,6 +79,8 @@ export function useSignupFormHook() {
 	return {
 		name,
 		setName,
+		username,
+		setUsername,
 		email,
 		setEmail,
 		phoneNumber,
@@ -94,5 +98,3 @@ export function useSignupFormHook() {
 		handleSubmit,
 	};
 }
-
-

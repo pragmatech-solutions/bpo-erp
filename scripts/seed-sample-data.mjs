@@ -1,4 +1,4 @@
-﻿import fs from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
@@ -55,8 +55,8 @@ function loadEnvFile() {
 const UserSchema = new mongoose.Schema(
 	{
 		name: { type: String, required: true },
-		email: { type: String, required: true, unique: true },
-		username: { type: String, required: false, unique: true, sparse: true },
+		username: { type: String, required: true, unique: true, trim: true },
+		email: { type: String, unique: true, sparse: true, trim: true },
 		password: { type: String, required: true },
 		phone_number: { type: String, required: false },
 		status: {
@@ -175,10 +175,15 @@ function getSeedEmail(localPart) {
 	return `${localPart}.seed@${SEED_EMAIL_DOMAIN}`;
 }
 
-function buildUser(fields) {
+function getSeedUsername(localPart) {
+	return `${localPart}.seed`;
+}
+
+function buildSeedUser({ localPart, ...fields }) {
 	return {
 		...fields,
-		username: fields.email,
+		username: fields.username || getSeedUsername(localPart),
+		email: fields.email ?? getSeedEmail(localPart),
 	};
 }
 
@@ -204,7 +209,8 @@ function buildLead(agent, teamIndex, agentIndex, leadIndex) {
 		loan_type: LOAN_TYPES[leadNumber % LOAN_TYPES.length],
 		loan_balance: 90000 + leadNumber * 1200,
 		home_value: 180000 + leadNumber * 2500,
-		payment_status: status === 'billable' ? getLeadPaymentStatus(leadIndex) : 'unpaid',
+		payment_status:
+			status === 'billable' ? getLeadPaymentStatus(leadIndex) : 'unpaid',
 	};
 
 	if (status === 'non billable') {
@@ -224,7 +230,8 @@ function buildCallTransferLead({ agent, loanOfficer, leadIndex }) {
 	const leadNumber = leadIndex + 1;
 	const homeValue = 260000 + leadIndex * 25000;
 	const loanBalance = 150000 + leadIndex * 15000;
-	const loanType = CALL_TRANSFER_LOAN_TYPES[leadIndex % CALL_TRANSFER_LOAN_TYPES.length];
+	const loanType =
+		CALL_TRANSFER_LOAN_TYPES[leadIndex % CALL_TRANSFER_LOAN_TYPES.length];
 	const firstName = `Transfer${leadNumber}`;
 	const lastName = 'Customer';
 
@@ -274,7 +281,10 @@ function buildCallTransferLead({ agent, loanOfficer, leadIndex }) {
 
 async function clearPreviousSeedData() {
 	const seedUsers = await Users.find({
-		email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` },
+		$or: [
+			{ email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` } },
+			{ username: { $regex: '\\.seed$' } },
+		],
 	}).select('_id');
 	const seedUserIds = seedUsers.map((user) => user._id);
 
@@ -284,7 +294,10 @@ async function clearPreviousSeedData() {
 	}
 
 	await Users.deleteMany({
-		email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` },
+		$or: [
+			{ email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` } },
+			{ username: { $regex: '\\.seed$' } },
+		],
 	});
 	await Teams.deleteMany({ name: { $in: TEAM_NAMES } });
 }
@@ -301,9 +314,9 @@ async function seed() {
 
 	const hashedPassword = await bcrypt.hash(SEED_PASSWORD, 12);
 	const admin = await Users.create(
-		buildUser({
+		buildSeedUser({
+			localPart: 'admin',
 			name: 'Seed Admin',
-			email: getSeedEmail('admin'),
 			password: hashedPassword,
 			status: 'active',
 			role: 'admin',
@@ -318,9 +331,9 @@ async function seed() {
 
 	const loanOfficerUsers = Array.from({ length: 4 }, (_, index) => {
 		const officerNumber = index + 1;
-		return buildUser({
+		return buildSeedUser({
+			localPart: `loanofficer${officerNumber}`,
 			name: `Seed Loan Officer ${officerNumber}`,
-			email: getSeedEmail(`loanofficer${officerNumber}`),
 			password: hashedPassword,
 			phone_number: `+1 888 555 010${officerNumber}`,
 			status: 'active',
@@ -336,10 +349,10 @@ async function seed() {
 		const teamNumber = teamIndex + 1;
 
 		const teamLead = await Users.create(
-			buildUser({
+			buildSeedUser({
 				_id: teamLeadId,
+				localPart: `teamlead${teamNumber}`,
 				name: `Seed Team Lead ${teamNumber}`,
-				email: getSeedEmail(`teamlead${teamNumber}`),
 				password: hashedPassword,
 				status: 'active',
 				role: 'team_lead',
@@ -360,13 +373,11 @@ async function seed() {
 		const teamAgents = [];
 		for (let agentIndex = 0; agentIndex < 10; agentIndex += 1) {
 			const agentNumber = agentIndex + 1;
-			const agentEmail = getSeedEmail(
-				`team${teamNumber}.agent${String(agentNumber).padStart(2, '0')}`,
-			);
+			const agentLocalPart = `team${teamNumber}.agent${String(agentNumber).padStart(2, '0')}`;
 			teamAgents.push(
-				buildUser({
+				buildSeedUser({
+					localPart: agentLocalPart,
 					name: `Seed Agent ${teamNumber}-${String(agentNumber).padStart(2, '0')}`,
-					email: agentEmail,
 					password: hashedPassword,
 					status: 'active',
 					role: 'agent',
@@ -399,11 +410,18 @@ async function seed() {
 
 	console.log('Sample seed completed successfully.');
 	console.log('Password for every seeded user:', SEED_PASSWORD);
-	console.log('Admin:', admin.email);
-	console.log('Team Leads:', createdTeamLeads.map((user) => user.email).join(', '));
+	console.log('Admin:', admin.email, '| Username:', admin.username);
+	console.log(
+		'Team Leads:',
+		createdTeamLeads
+			.map((user) => `${user.email} (${user.username})`)
+			.join(', '),
+	);
 	console.log(
 		'Loan Officers:',
-		createdLoanOfficers.map((user) => user.email).join(', '),
+		createdLoanOfficers
+			.map((user) => `${user.email} (${user.username})`)
+			.join(', '),
 	);
 	console.log('Teams created:', createdTeams.length);
 	console.log('Agents created:', createdAgents.length);

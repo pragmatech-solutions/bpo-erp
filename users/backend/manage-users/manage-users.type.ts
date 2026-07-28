@@ -5,7 +5,8 @@ export type UserAccountStatus = 'active' | 'inactive' | 'blocked';
 export type ManagedUser = {
 	id: string;
 	name: string;
-	email: string;
+	username: string;
+	email?: string;
 	role: UserRole;
 	status: UserAccountStatus;
 	team: {

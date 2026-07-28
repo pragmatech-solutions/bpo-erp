@@ -4,7 +4,7 @@ import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 export type TeamMemberDashboardItem = {
 	id: string;
 	name: string;
-	email: string;
+	email?: string;
 	analytics: LeadAnalytics;
 	campaigns: string[];
 };

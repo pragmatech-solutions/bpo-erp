@@ -15,7 +15,8 @@ import type { ManagedUser, ManagedUserListData } from './manage-users.type';
 type UserDocument = {
 	_id: Types.ObjectId;
 	name: string;
-	email: string;
+	username: string;
+	email?: string;
 	role: UserRole;
 	status: 'active' | 'inactive' | 'blocked';
 	team_id?: { _id: Types.ObjectId; name: string } | null;
@@ -27,6 +28,7 @@ function mapUser(user: UserDocument): ManagedUser {
 	return {
 		id: user._id.toString(),
 		name: user.name,
+		username: user.username,
 		email: user.email,
 		role: user.role,
 		status: user.status,
@@ -75,13 +77,19 @@ export async function listManagedUsers(
 	if (validatedInput.status !== 'all') filter.status = validatedInput.status;
 	if (validatedInput.search) {
 		const searchRegex = new RegExp(validatedInput.search, 'i');
-		filter.$or = [{ name: searchRegex }, { email: searchRegex }];
+		filter.$or = [
+			{ name: searchRegex },
+			{ email: searchRegex },
+			{ username: searchRegex },
+		];
 	}
 
 	const skip = (validatedInput.page - 1) * validatedInput.limit;
 	const [users, total] = await Promise.all([
 		Users.find(filter)
-			.select('_id name email role status team_id created_by created_at')
+			.select(
+				'_id name username email role status team_id created_by created_at',
+			)
 			.populate('team_id', 'name')
 			.populate('created_by', 'name')
 			.sort({ created_at: -1 })
@@ -173,7 +181,7 @@ export async function updateManagedUser(input: UpdateUserInput) {
 	const user = await Users.findByIdAndUpdate(validatedInput.id, updatePayload, {
 		new: true,
 	})
-		.select('_id name email role status team_id created_by created_at')
+		.select('_id name username email role status team_id created_by created_at')
 		.populate('team_id', 'name')
 		.populate('created_by', 'name')
 		.lean<UserDocument>();

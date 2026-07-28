@@ -36,7 +36,7 @@ type TeamDocument = {
 type UserDocument = {
 	_id: Types.ObjectId;
 	name: string;
-	email: string;
+	email?: string;
 };
 
 type LeadStatusAggregate = {

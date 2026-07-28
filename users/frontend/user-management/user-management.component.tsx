@@ -497,7 +497,7 @@ function UserMobileCard({
 						{user.name}
 					</h2>
 					<p className="truncate text-[12px] font-medium text-black">
-						{user.email}
+						{user.email || '—'}
 					</p>
 				</div>
 			</div>
@@ -545,7 +545,7 @@ function UserRow({
 						<span className="font-medium">{user.name}</span>
 					</div>
 				</td>
-				<td className="px-6 py-4">{user.email}</td>
+				<td className="px-6 py-4">{user.email || '—'}</td>
 				<td className="px-6 py-4">
 					<AdminRoleSelect
 						user={user}

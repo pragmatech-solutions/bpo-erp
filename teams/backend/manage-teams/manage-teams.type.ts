@@ -35,7 +35,7 @@ export type TeamOverviewData = {
 export type TeamMemberPerformance = {
 	id: string;
 	name: string;
-	email: string;
+	email?: string;
 	stats: LeadStats;
 };
 

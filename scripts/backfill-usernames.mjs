@@ -1,16 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
-
-const QA_USER = {
-	name: 'Seed QA',
-	username: 'qa.seed',
-	email: 'qa.seed@mavrix.local',
-	password: 'Password123!',
-	status: 'active',
-	role: 'quality_assurance',
-};
 
 function loadEnvFile() {
 	const envPath = path.join(process.cwd(), '.env');
@@ -33,7 +23,7 @@ function loadEnvFile() {
 const UserSchema = new mongoose.Schema(
 	{
 		name: { type: String, required: true },
-		username: { type: String, required: true, unique: true, trim: true },
+		username: { type: String, required: false, trim: true },
 		email: { type: String, required: true, unique: true },
 		password: { type: String, required: true },
 		status: {
@@ -67,46 +57,64 @@ const UserSchema = new mongoose.Schema(
 
 const Users = mongoose.models.users || mongoose.model('users', UserSchema);
 
-async function seedQaUser() {
+function usernameFromEmail(email) {
+	return email.slice(0, email.indexOf('@'));
+}
+
+async function backfillUsernames() {
 	loadEnvFile();
 
 	if (!process.env.MONGODB_URI) {
-		throw new Error('MONGODB_URI is missing. Add it to .env before seeding.');
+		throw new Error('MONGODB_URI is missing. Add it to .env before running.');
 	}
 
 	await mongoose.connect(process.env.MONGODB_URI, { bufferCommands: false });
 
-	const hashedPassword = await bcrypt.hash(QA_USER.password, 12);
-	const existingUser = await Users.findOne({ email: QA_USER.email });
+	const users = await Users.find({
+		$or: [{ username: { $exists: false } }, { username: null }, { username: '' }],
+	});
 
-	if (existingUser) {
-		existingUser.name = QA_USER.name;
-		existingUser.username = QA_USER.username;
-		existingUser.password = hashedPassword;
-		existingUser.status = QA_USER.status;
-		existingUser.role = QA_USER.role;
-		existingUser.team_id = undefined;
-		await existingUser.save();
-		console.log('QA user already existed, updated credentials and role.');
-	} else {
-		await Users.create({
-			name: QA_USER.name,
-			username: QA_USER.username,
-			email: QA_USER.email,
-			password: hashedPassword,
-			status: QA_USER.status,
-			role: QA_USER.role,
-		});
-		console.log('QA user created successfully.');
+	if (users.length === 0) {
+		console.log('No users are missing a username. Nothing to do.');
+		return;
 	}
 
-	console.log('Email:', QA_USER.email);
-	console.log('Password:', QA_USER.password);
+	const takenUsernames = new Set(
+		(await Users.find({ username: { $exists: true, $nin: [null, ''] } }).select(
+			'username',
+		)).map((user) => user.username),
+	);
+
+	let updatedCount = 0;
+	let collisionCount = 0;
+
+	for (const user of users) {
+		const baseUsername = usernameFromEmail(user.email);
+		let candidate = baseUsername;
+		let suffix = 2;
+
+		while (takenUsernames.has(candidate)) {
+			candidate = `${baseUsername}-${suffix}`;
+			suffix += 1;
+			collisionCount += 1;
+		}
+
+		takenUsernames.add(candidate);
+		user.username = candidate;
+		await user.save();
+		updatedCount += 1;
+		console.log(`Set username "${candidate}" for ${user.email}`);
+	}
+
+	console.log(`Backfill complete. Updated ${updatedCount} user(s).`);
+	if (collisionCount > 0) {
+		console.log(`Resolved ${collisionCount} username collision(s) with numeric suffixes.`);
+	}
 }
 
-seedQaUser()
+backfillUsernames()
 	.catch((error) => {
-		console.error('QA seed failed.');
+		console.error('Username backfill failed.');
 		console.error(error);
 		process.exitCode = 1;
 	})
