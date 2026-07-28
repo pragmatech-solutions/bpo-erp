@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+﻿import { Types } from 'mongoose';
 import { connectToDatabase } from '@/common/database';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
 import { UserRole } from '@/common/constants/user-roles.enum';
@@ -19,23 +19,32 @@ export async function createLead(input: CreateLeadInput) {
 	}
 
 	const validatedData = createLeadInputSchema.parse(input);
-	if (!Types.ObjectId.isValid(validatedData.loan_officer_id)) {
-		throw new Error('Loan officer not found');
+	const { loan_officer_id, ...leadData } = validatedData;
+	let loanOfficerFields = {};
+
+	if (loan_officer_id) {
+		if (!Types.ObjectId.isValid(loan_officer_id)) {
+			throw new Error('Loan officer not found');
+		}
+
+		const loanOfficer = await Users.findOne({
+			_id: loan_officer_id,
+			role: UserRole.LOAN_OFFICER,
+			status: 'active',
+		})
+			.select('_id name')
+			.lean<{ _id: Types.ObjectId; name: string }>();
+		if (!loanOfficer) throw new Error('Loan officer not found');
+
+		loanOfficerFields = {
+			loan_officer_id: loanOfficer._id,
+			loan_officer_name: loanOfficer.name,
+		};
 	}
 
-	const loanOfficer = await Users.findOne({
-		_id: validatedData.loan_officer_id,
-		role: UserRole.LOAN_OFFICER,
-		status: 'active',
-	})
-		.select('_id name')
-		.lean<{ _id: Types.ObjectId; name: string }>();
-	if (!loanOfficer) throw new Error('Loan officer not found');
-
 	const newLead = new Leads({
-		...validatedData,
-		loan_officer_id: loanOfficer._id,
-		loan_officer_name: loanOfficer.name,
+		...leadData,
+		...loanOfficerFields,
 		created_by: new Types.ObjectId(currentUser.id),
 		status: 'pending',
 	});

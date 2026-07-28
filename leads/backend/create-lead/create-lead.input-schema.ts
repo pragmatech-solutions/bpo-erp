@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 import { LoanType } from '@/common/constants/loan-type.enum';
 
 export const createLeadInputSchema = z.object({
@@ -9,7 +9,7 @@ export const createLeadInputSchema = z.object({
 		.min(1, 'Customer number is required')
 		.regex(/^[0-9\s()+-]+$/, 'Invalid number format'),
 	campaign: z.string().min(1, 'Campaign is required'),
-	loan_officer_id: z.string().min(1, 'Loan officer is required'),
+	loan_officer_id: z.string().optional(),
 	loan_type: z.nativeEnum(LoanType).refine((value) => !!value, {
 		message: 'Invalid loan type',
 	}),
@@ -18,3 +18,4 @@ export const createLeadInputSchema = z.object({
 });
 
 export type CreateLeadInput = z.infer<typeof createLeadInputSchema>;
+

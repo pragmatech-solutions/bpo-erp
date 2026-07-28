@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,9 +13,7 @@ export function useSignupFormHook() {
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [phoneNumber, setPhoneNumber] = useState('');
-	const [role, setRole] = useState<UserRole.AGENT | UserRole.LOAN_OFFICER>(
-		UserRole.AGENT,
-	);
+	const [role, setRole] = useState<UserRole.AGENT>(UserRole.AGENT);
 	const [password, setPassword] = useState('');
 	const [agreed, setAgreed] = useState(false);
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -96,3 +94,5 @@ export function useSignupFormHook() {
 		handleSubmit,
 	};
 }
+
+

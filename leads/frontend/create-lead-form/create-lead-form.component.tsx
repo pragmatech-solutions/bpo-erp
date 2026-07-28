@@ -1,5 +1,7 @@
 ﻿'use client';
 
+import { useSyncExternalStore } from 'react';
+import Link from 'next/link';
 import { User, Phone, Briefcase, DollarSign, Home, Target } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,8 +15,23 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { LoanType } from '@/common/constants/loan-type.enum';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import { useCreateLeadFormHook } from './create-lead-form.hook';
 
+function subscribeToCurrentUser(callback: () => void) {
+	window.addEventListener('storage', callback);
+	return () => window.removeEventListener('storage', callback);
+}
+
+function getCurrentRoleSnapshot() {
+	const currentUserInformation = getCurrentLoggedInUserInformation();
+	return currentUserInformation?.currentUser.role as UserRole | undefined;
+}
+
+function getServerRoleSnapshot() {
+	return undefined;
+}
 export function CreateLeadForm() {
 	const {
 		customerName,
@@ -31,10 +48,6 @@ export function CreateLeadForm() {
 		setLoanBalance,
 		homeValue,
 		setHomeValue,
-		loanOfficerId,
-		setLoanOfficerId,
-		loanOfficerOptions,
-		selectedLoanOfficer,
 		campaignOptions,
 		errorMessage,
 		isLoading,
@@ -42,12 +55,29 @@ export function CreateLeadForm() {
 		handleSubmit,
 		handleCancel,
 	} = useCreateLeadFormHook();
+	const currentRole = useSyncExternalStore(
+		subscribeToCurrentUser,
+		getCurrentRoleSnapshot,
+		getServerRoleSnapshot,
+	);
+	const canCreateCallTransferLead =
+		currentRole === UserRole.AGENT || currentRole === UserRole.TEAM_LEAD;
 
 	return (
 		<div className="flex flex-col gap-8">
-			<h1 className="font-[var(--font-poppins)] text-[24px] font-semibold tracking-[0.01em] text-[#0C1421] lg:text-[32px]">
-				Create Lead
-			</h1>
+			<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+				<h1 className="font-[var(--font-poppins)] text-[24px] font-semibold tracking-[0.01em] text-[#0C1421] lg:text-[32px]">
+					Create Lead
+				</h1>
+				{canCreateCallTransferLead ? (
+					<Button
+						asChild
+						className="h-[44px] rounded-[12px] bg-[#2563EB] text-white hover:bg-blue-700 lg:w-[220px]"
+					>
+						<Link href="/leads/create/call-transfer">Call Transfer Lead</Link>
+					</Button>
+				) : null}
+			</div>
 
 			<Card className="w-full max-w-[1034px] rounded-[24px] border-none bg-white p-6 shadow-[0px_4px_4px_-3px_rgba(0,0,0,0.25)] lg:p-10">
 				<div className="mb-6 flex flex-col gap-1">
@@ -156,39 +186,6 @@ export function CreateLeadForm() {
 
 					<div className="flex flex-col gap-3">
 						<Label
-							htmlFor="loanOfficerId"
-							className="text-[16px] font-medium text-[#313957]"
-						>
-							Loan Officer *
-						</Label>
-						<div className="relative">
-							<User className="absolute left-4 top-1/2 z-10 size-5 -translate-y-1/2 text-[#26395C]" />
-							<Select value={loanOfficerId} onValueChange={setLoanOfficerId}>
-								<SelectTrigger
-									id="loanOfficerId"
-									className="h-[58px] w-full rounded-[12px] border border-[#D4D7E3] bg-white pl-12 pr-4 text-[16px] text-[#313957] outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 data-[placeholder]:text-[#8897AD]"
-								>
-									<SelectValue placeholder="Select Loan Officer" />
-								</SelectTrigger>
-								<SelectContent position="popper">
-									{loanOfficerOptions.map((loanOfficer) => (
-										<SelectItem key={loanOfficer.id} value={loanOfficer.id}>
-											{loanOfficer.phoneNumber
-												? `${loanOfficer.name} - ${loanOfficer.phoneNumber}`
-												: loanOfficer.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<p className="text-[13px] font-medium text-[#8897AD]">
-							Phone:{' '}
-							{selectedLoanOfficer?.phoneNumber || 'Select a loan officer'}
-						</p>
-					</div>
-
-					<div className="flex flex-col gap-3">
-						<Label
 							htmlFor="loanType"
 							className="text-[16px] font-medium text-[#313957]"
 						>
@@ -288,3 +285,12 @@ export function CreateLeadForm() {
 		</div>
 	);
 }
+
+
+
+
+
+
+
+
+

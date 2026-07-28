@@ -109,6 +109,7 @@ export async function listLeads(
 		{
 			$project: {
 				id: { $toString: '$_id' },
+				leadType: '$lead_type',
 				customerName: '$customer_name',
 				username: '$username',
 				customerNumber: '$customer_number',
@@ -116,11 +117,33 @@ export async function listLeads(
 				loanOfficerName: {
 					$ifNull: ['$loan_officer.name', '$loan_officer_name'],
 				},
-				loanOfficerPhoneNumber: '$loan_officer.phone_number',
+				loanOfficerPhoneNumber: {
+					$ifNull: ['$loan_officer.phone_number', '$loan_officer_phone_number'],
+				},
 				status: '$status',
 				statusReason: '$status_reason',
 				paymentStatus: '$payment_status',
 				campaign: '$campaign',
+				callTransfer: {
+					firstName: '$call_transfer.first_name',
+					lastName: '$call_transfer.last_name',
+					originPhone: '$call_transfer.origin_phone',
+					address: '$call_transfer.address',
+					city: '$call_transfer.city',
+					state: '$call_transfer.state',
+					zip: '$call_transfer.zip',
+					email: '$call_transfer.email',
+					homeValue: '$call_transfer.home_value',
+					mortgageBalance: '$call_transfer.mortgage_balance',
+					mortgageRateType: '$call_transfer.mortgage_rate_type',
+					propertyType: '$call_transfer.property_type',
+					multipleProperties: '$call_transfer.multiple_properties',
+					mortgageRate: '$call_transfer.mortgage_rate',
+					cashOutAmount: '$call_transfer.cash_out_amount',
+					loanType: '$call_transfer.loan_type',
+					loanPurpose: '$call_transfer.loan_purpose',
+					credit: '$call_transfer.credit',
+				},
 				updatedAt: {
 					$dateToString: {
 						date: '$updated_at',
@@ -138,3 +161,6 @@ export async function listLeads(
 
 	return leads as ListedLead[];
 }
+
+
+

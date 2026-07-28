@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -36,7 +36,6 @@ export function SignupForm() {
 		isLoading,
 		handleSubmit,
 	} = useSignupFormHook();
-	const isLoanOfficer = role === UserRole.LOAN_OFFICER;
 
 	return (
 		<div className="min-h-screen w-full bg-[#D4E8F8]">
@@ -116,7 +115,7 @@ export function SignupForm() {
 								<Select
 									value={role}
 									onValueChange={(value) =>
-										setRole(value as UserRole.AGENT | UserRole.LOAN_OFFICER)
+										setRole(value as UserRole.AGENT)
 									}
 								>
 									<SelectTrigger
@@ -127,9 +126,6 @@ export function SignupForm() {
 									</SelectTrigger>
 									<SelectContent>
 										<SelectItem value={UserRole.AGENT}>Agent</SelectItem>
-										<SelectItem value={UserRole.LOAN_OFFICER}>
-											Loan Officer
-										</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
@@ -139,7 +135,7 @@ export function SignupForm() {
 									htmlFor="phoneNumber"
 									className="text-[14px] text-[#0C1421] md:text-[16px]"
 								>
-									Phone Number {isLoanOfficer ? '*' : ''}
+									Phone Number
 								</Label>
 								<div className="relative">
 									<Phone className="pointer-events-none absolute left-7 top-1/2 size-[18px] -translate-y-1/2 text-[#8897AD]" />
@@ -149,7 +145,6 @@ export function SignupForm() {
 										value={phoneNumber}
 										onChange={(event) => setPhoneNumber(event.target.value)}
 										placeholder="e.g. +1 (555) 000-0000"
-										required={isLoanOfficer}
 										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] pl-[58px] text-[14px] placeholder:text-[#8897AD] md:text-[16px]"
 									/>
 								</div>
@@ -240,3 +235,5 @@ export function SignupForm() {
 		</div>
 	);
 }
+
+

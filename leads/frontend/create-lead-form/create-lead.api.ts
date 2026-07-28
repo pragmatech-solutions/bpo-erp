@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { apiClient } from '@/lib/api-client';
 
@@ -8,7 +8,6 @@ export type CreateLeadPayload = {
 	customer_number: string;
 	campaign: string;
 	loan_type: string;
-	loan_officer_id: string;
 	loan_balance?: number;
 	home_value?: number;
 };
@@ -38,3 +37,4 @@ export async function createLeadApi(
 		};
 	}
 }
+
