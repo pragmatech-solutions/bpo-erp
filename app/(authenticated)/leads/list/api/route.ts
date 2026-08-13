@@ -11,6 +11,9 @@ function getErrorStatus(message: string) {
 export async function GET(req: Request) {
 	try {
 		const { searchParams } = new URL(req.url);
+		const page = searchParams.get('page')
+			? Number(searchParams.get('page'))
+			: undefined;
 		const limit = searchParams.get('limit')
 			? Number(searchParams.get('limit'))
 			: undefined;
@@ -24,6 +27,7 @@ export async function GET(req: Request) {
 		const deletedFilter = searchParams.get('deletedFilter') || undefined;
 
 		const validatedInput = listLeadsInputSchema.parse({
+			page,
 			limit,
 			startDate,
 			endDate,
@@ -35,9 +39,15 @@ export async function GET(req: Request) {
 			deletedFilter,
 		});
 
-		const leads = await listLeads(validatedInput);
+		const result = await listLeads(validatedInput);
 
-		return NextResponse.json({ success: true, data: leads });
+		return NextResponse.json({
+			success: true,
+			data: result.leads,
+			total: result.total,
+			page: result.page,
+			limit: result.limit,
+		});
 	} catch (error: unknown) {
 		const message =
 			error instanceof Error ? error.message : 'Failed to list leads';

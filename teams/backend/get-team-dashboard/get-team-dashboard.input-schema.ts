@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import { MAX_PAGE_SIZE } from '@/common/constants/pagination';
 
 export const getTeamDashboardInputSchema = z.object({
-	limit: z.number().int().positive().max(100).default(20),
+	// The team dashboard shows an unpaginated lead feed, so it keeps its own
+	// default while sharing the global cap.
+	limit: z.number().int().positive().max(MAX_PAGE_SIZE).default(20),
 	startDate: z.coerce.date().optional(),
 	endDate: z.coerce.date().optional(),
 	status: z.nativeEnum(LeadStatus).optional(),

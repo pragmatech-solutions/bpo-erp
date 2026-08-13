@@ -23,6 +23,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Pagination } from '@/common/components/pagination';
+import { PAGE_SIZE_OPTIONS } from '@/common/constants/pagination';
 import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import type {
 	TeamMemberPerformance,
@@ -147,8 +149,6 @@ export function TeamOverview({
 		Record<string, TeamMemberPerformance[]>
 	>({});
 	const [loadingMembersId, setLoadingMembersId] = useState<string | null>(null);
-	const from = teams.total === 0 ? 0 : (teams.page - 1) * teams.limit + 1;
-	const to = Math.min(teams.total, teams.page * teams.limit);
 
 	const toggleExpanded = async (team: TeamOverviewItem) => {
 		if (expandedTeamId === team.id) {
@@ -335,11 +335,29 @@ export function TeamOverview({
 						/>
 					))
 				)}
-				<Pagination teams={teams} from={from} to={to} />
+				<Pagination
+					page={teams.page}
+					totalPages={teams.totalPages}
+					total={teams.total}
+					limit={teams.limit}
+					itemLabel="teams"
+					onPageChange={teams.setPage}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					onPageSizeChange={teams.setLimit}
+				/>
 			</div>
 
 			<div className="lg:hidden">
-				<Pagination teams={teams} from={from} to={to} />
+				<Pagination
+					page={teams.page}
+					totalPages={teams.totalPages}
+					total={teams.total}
+					limit={teams.limit}
+					itemLabel="teams"
+					onPageChange={teams.setPage}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					onPageSizeChange={teams.setLimit}
+				/>
 			</div>
 
 			{canCreateTeams && (
@@ -509,47 +527,6 @@ function DesktopSummaryStat({
 		</div>
 	);
 }
-function Pagination({
-	teams,
-	from,
-	to,
-}: {
-	teams: ReturnType<typeof useTeamOverviewHook>;
-	from: number;
-	to: number;
-}) {
-	return (
-		<div className="flex flex-col gap-3 border-t border-[#D4D7E3] bg-white px-4 py-4 text-[#8897AD] lg:flex-row lg:items-center lg:justify-between lg:px-6">
-			<span>
-				Showing {from} to {to} of {teams.total} teams
-			</span>
-			<div className="flex items-center gap-2">
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() => teams.setPage(Math.max(1, teams.page - 1))}
-					disabled={teams.page === 1}
-				>
-					&lt;
-				</Button>
-				<span className="text-[#26395C]">
-					{teams.page} / {teams.totalPages}
-				</span>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() =>
-						teams.setPage(Math.min(teams.totalPages, teams.page + 1))
-					}
-					disabled={teams.page === teams.totalPages}
-				>
-					&gt;
-				</Button>
-			</div>
-		</div>
-	);
-}
-
 function TeamStat({
 	value,
 	label,

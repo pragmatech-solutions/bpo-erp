@@ -64,7 +64,7 @@ export async function getLeadAnalytics(): Promise<DashboardData> {
 		nonBillable: 0,
 	};
 
-	const recentLeads = await listLeads({ limit: 5, startDate });
+	const { leads: recentLeads } = await listLeads({ limit: 5, startDate });
 
 	return {
 		analytics: {

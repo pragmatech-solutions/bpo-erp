@@ -11,6 +11,8 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { LeadCard } from '@/common/components/lead-card';
+import { Pagination } from '@/common/components/pagination';
+import { PAGE_SIZE_OPTIONS } from '@/common/constants/pagination';
 import { DurationFilter } from './components/duration-filter.component';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { getUserRoleLabel } from '@/common/constants/user-role-label';
@@ -61,6 +63,7 @@ export function LeadList() {
 		canFilterAgents,
 		agents,
 		campaignOptions,
+		pagination,
 		refresh,
 	} = useLeadListHook();
 
@@ -209,7 +212,7 @@ export function LeadList() {
 				</Button>
 			</div>
 
-			<div className="flex-1">
+			<div className="flex flex-1 flex-col gap-6 pb-10">
 				{isLoading ? (
 					<div className="flex h-40 items-center justify-center text-[#313957]">
 						Loading leads...
@@ -223,7 +226,7 @@ export function LeadList() {
 						No leads found.
 					</div>
 				) : (
-					<div className="grid grid-cols-1 gap-6 pb-10 lg:grid-cols-2">
+					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 						{leads.map((lead) => (
 							<LeadCard
 								key={lead.id}
@@ -232,6 +235,22 @@ export function LeadList() {
 							/>
 						))}
 					</div>
+				)}
+
+				{/* Kept mounted while refetching so it does not flicker on every
+				    debounced filter change. */}
+				{!errorMessage && pagination.total > 0 && (
+					<Pagination
+						page={pagination.page}
+						totalPages={pagination.totalPages}
+						total={pagination.total}
+						limit={pagination.limit}
+						itemLabel="leads"
+						onPageChange={pagination.setPage}
+						pageSizeOptions={PAGE_SIZE_OPTIONS}
+						onPageSizeChange={pagination.setLimit}
+						className="rounded-[19px] border-t-0"
+					/>
 				)}
 			</div>
 		</div>
