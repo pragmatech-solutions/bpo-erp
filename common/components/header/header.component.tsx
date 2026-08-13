@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { MobileSidebar } from '@/common/components/sidebar';
+import { AvailabilityToggle } from '@/common/components/availability-toggle';
 import { useHeaderHook } from './header.hook';
 
 export function Header() {
@@ -29,8 +30,9 @@ export function Header() {
 					<Image src="/logo.png" alt="Logo" width={58} height={58} />
 				</div>
 
-				{/* Desktop & Mobile Right: Theme & Profile */}
+				{/* Desktop & Mobile Right: Availability & Profile */}
 				<div className="flex items-center gap-4">
+					<AvailabilityToggle />
 					<div className="flex size-[49px] items-center justify-center rounded-full bg-[#D9D9D9] lg:bg-transparent">
 						<Image
 							src="/generic-user.svg"
@@ -48,4 +50,3 @@ export function Header() {
 		</>
 	);
 }
-

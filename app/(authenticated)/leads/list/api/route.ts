@@ -21,6 +21,7 @@ export async function GET(req: Request) {
 		const search = searchParams.get('search') || undefined;
 		const campaign = searchParams.get('campaign') || undefined;
 		const agentId = searchParams.get('agentId') || undefined;
+		const deletedFilter = searchParams.get('deletedFilter') || undefined;
 
 		const validatedInput = listLeadsInputSchema.parse({
 			limit,
@@ -31,6 +32,7 @@ export async function GET(req: Request) {
 			search,
 			campaign,
 			agentId,
+			deletedFilter,
 		});
 
 		const leads = await listLeads(validatedInput);

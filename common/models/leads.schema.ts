@@ -1,4 +1,4 @@
-﻿import { Schema, model, models } from 'mongoose';
+import { Schema, model, models } from 'mongoose';
 import { LeadStatus } from '../constants/lead-status.enum';
 import { LoanType } from '../constants/loan-type.enum';
 
@@ -22,6 +22,11 @@ const LeadSchema = new Schema(
 			},
 		},
 		customer_number: { type: String, required: true },
+		customer_number_normalized: {
+			type: String,
+			required: false,
+			index: { unique: true, sparse: true },
+		},
 		customer_name: { type: String, required: true },
 		username: { type: String, required: true },
 		campaign: { type: String, required: true },
@@ -43,6 +48,12 @@ const LeadSchema = new Schema(
 			type: String,
 			enum: ['paid', 'unpaid'],
 			default: 'unpaid',
+		},
+		deleted_at: { type: Date, required: false },
+		deleted_by: {
+			type: Schema.Types.ObjectId,
+			ref: 'users',
+			required: false,
 		},
 		call_transfer: {
 			first_name: { type: String, required: false },
@@ -74,4 +85,5 @@ const LeadSchema = new Schema(
 );
 
 export const Leads = models.leads || model('leads', LeadSchema);
+
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Filter, Search } from 'lucide-react';
+import { ChevronDown, Copy, Filter, KeyRound, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -237,6 +237,10 @@ export function UserManagement() {
 				</div>
 			)}
 
+			{management.resetPasswordResult && (
+				<ResetPasswordNotice management={management} />
+			)}
+
 			<div className="flex flex-col gap-3 lg:hidden">
 				{management.isLoading ? (
 					<div className="rounded-[12px] bg-white p-5 text-center text-[#313957]">
@@ -255,7 +259,7 @@ export function UserManagement() {
 
 			<div className="hidden overflow-hidden rounded-[20px] bg-white shadow-sm lg:block">
 				<div className="overflow-x-auto">
-					<table className="w-full min-w-[900px] text-left">
+					<table className="w-full min-w-[1050px] text-left">
 						<thead className="bg-[#F1F5FB]">
 							<tr>
 								<th className="px-6 py-5 font-semibold">User</th>
@@ -264,6 +268,9 @@ export function UserManagement() {
 								<th className="px-6 py-5 font-semibold">Team</th>
 								<th className="px-6 py-5 font-semibold">Status</th>
 								<th className="px-6 py-5 font-semibold">Created On</th>
+								{management.isAdmin && (
+									<th className="px-6 py-5 font-semibold">Action</th>
+								)}
 							</tr>
 						</thead>
 						<tbody>
@@ -271,7 +278,7 @@ export function UserManagement() {
 								<tr>
 									<td
 										className="px-6 py-10 text-center text-[#313957]"
-										colSpan={6}
+										colSpan={management.isAdmin ? 7 : 6}
 									>
 										Loading users...
 									</td>
@@ -280,7 +287,7 @@ export function UserManagement() {
 								<tr>
 									<td
 										className="px-6 py-10 text-center text-[#313957]"
-										colSpan={6}
+										colSpan={management.isAdmin ? 7 : 6}
 									>
 										No users found.
 									</td>
@@ -521,10 +528,80 @@ function UserMobileCard({
 				</div>
 			)}
 
-			<div className="mt-4 flex justify-end text-[12px] font-semibold text-black">
+			<div className="mt-4 flex items-center justify-between gap-3 text-[12px] font-semibold text-black">
 				<span>Created On: {formatDate(user.createdAt)}</span>
+				{management.isAdmin && (
+					<AdminPasswordResetAction user={user} management={management} />
+				)}
 			</div>
 		</div>
+	);
+}
+function ResetPasswordNotice({ management }: { management: ManagementHook }) {
+	const result = management.resetPasswordResult;
+	if (!result) return null;
+
+	const copyPassword = async () => {
+		await navigator.clipboard.writeText(result.temporaryPassword);
+	};
+
+	return (
+		<div className="rounded-[14px] border border-blue-100 bg-white p-4 shadow-sm">
+			<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+				<div>
+					<p className="text-[14px] font-semibold text-[#0C1421]">
+						Temporary password generated for {result.user.name}
+					</p>
+					<p className="mt-1 text-[13px] text-[#313957]">
+						Copy this password and share it with the user. It will not be shown again after this message is closed.
+					</p>
+				</div>
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+					<code className="rounded-[10px] bg-[#F1F5FB] px-4 py-3 text-[15px] font-semibold text-[#0C1421]">
+						{result.temporaryPassword}
+					</code>
+					<Button
+						type="button"
+						variant="outline"
+						onClick={copyPassword}
+						className="h-[42px] rounded-[10px] border-[#D4D7E3]"
+					>
+						<Copy className="mr-2 size-4" />
+						Copy
+					</Button>
+					<Button
+						type="button"
+						variant="ghost"
+						onClick={() => management.setResetPasswordResult(null)}
+						className="h-[42px] rounded-[10px]"
+						aria-label="Close temporary password notice"
+					>
+						<X className="size-4" />
+					</Button>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function AdminPasswordResetAction({
+	user,
+	management,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+}) {
+	return (
+		<Button
+			type="button"
+			variant="outline"
+			onClick={() => management.resetUserPassword(user)}
+			disabled={management.isResettingPassword}
+			className="h-[36px] rounded-[8px] border-[#D4D7E3] px-3 text-[12px] text-[#26395C]"
+		>
+			<KeyRound className="mr-2 size-4" />
+			Reset
+		</Button>
 	);
 }
 function UserRow({
@@ -568,6 +645,9 @@ function UserRow({
 					/>
 				</td>
 				<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
+				<td className="px-6 py-4">
+					<AdminPasswordResetAction user={user} management={management} />
+				</td>
 			</tr>
 		);
 	}
@@ -596,3 +676,10 @@ function UserRow({
 		</tr>
 	);
 }
+
+
+
+
+
+
+

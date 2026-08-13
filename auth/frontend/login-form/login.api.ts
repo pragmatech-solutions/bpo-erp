@@ -1,6 +1,6 @@
 'use client';
 
-import { apiClient, setToken } from '@/lib/api-client';
+import { apiClient, setAuthTokens } from '@/lib/api-client';
 import { saveCurrentLoggedInUserInformation } from './get-current-logged-in-user-information.function';
 
 type LoginPayload = {
@@ -14,6 +14,7 @@ type LoginApiResponse = {
 	message?: string;
 	user?: {
 		token?: string;
+		refreshToken?: string;
 		[key: string]: unknown;
 	};
 };
@@ -27,8 +28,8 @@ export async function loginApi(
 			body: JSON.stringify(payload),
 		});
 
-		if (data.success && data.user?.token) {
-			setToken(data.user.token);
+		if (data.success && data.user?.token && data.user.refreshToken) {
+			setAuthTokens(data.user.token, data.user.refreshToken);
 			if (
 				typeof data.user.name === 'string' &&
 				typeof data.user.role === 'string'

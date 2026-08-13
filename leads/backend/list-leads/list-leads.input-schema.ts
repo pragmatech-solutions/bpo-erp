@@ -10,4 +10,5 @@ export const listLeadsInputSchema = z.object({
 	search: z.string().optional(),
 	campaign: z.string().optional(),
 	agentId: z.string().optional(),
+	deletedFilter: z.enum(['active', 'deleted', 'all']).default('active'),
 });

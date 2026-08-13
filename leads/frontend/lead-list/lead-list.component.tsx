@@ -11,25 +11,15 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { LeadCard } from '@/common/components/lead-card';
-import { DatePickerWithRange } from './components/date-range-picker.component';
+import { DurationFilter } from './components/duration-filter.component';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import {
 	useLeadListHook,
-	type DurationPreset,
+	type DeletedLeadFilter,
 	type LeadStatusFilter,
 	type PaymentStatusFilter,
 } from './lead-list.hook';
 
-const DURATIONS: DurationPreset[] = [
-	'Today',
-	'Yesterday',
-	'Last 7 Days',
-	'Last 30 Days',
-	'This Month',
-	'Last Month',
-	'All',
-	'Custom Range',
-];
 
 const STATUSES: LeadStatusFilter[] = [
 	'All Status',
@@ -44,6 +34,21 @@ const PAYMENT_STATUSES: PaymentStatusFilter[] = [
 	'unpaid',
 ];
 
+const DELETED_FILTERS: Array<{ label: string; value: DeletedLeadFilter }> = [
+	{ label: 'Active Leads', value: 'active' },
+	{ label: 'Deleted Leads', value: 'deleted' },
+	{ label: 'All Leads', value: 'all' },
+];
+
+function formatStatusLabel(status: LeadStatusFilter) {
+	if (status === 'All Status') return status;
+
+	return status
+		.split(' ')
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(' ');
+}
+
 export function LeadList() {
 	const {
 		leads,
@@ -51,14 +56,15 @@ export function LeadList() {
 		errorMessage,
 		filters,
 		resetFilters,
+		isAdmin,
 		canFilterAgents,
 		agents,
 		campaignOptions,
+		refresh,
 	} = useLeadListHook();
 
 	return (
 		<div className="flex flex-col gap-6">
-			{/* Header & Search */}
 			<div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
 				<h1 className="font-[var(--font-poppins)] text-[24px] font-semibold text-[#0C1421] lg:text-[32px]">
 					Lead List
@@ -69,7 +75,7 @@ export function LeadList() {
 						placeholder="Search"
 						className="h-[55px] rounded-[19px] border-none bg-white pl-12 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-1 focus-visible:ring-blue-400"
 						value={filters.search}
-						onChange={(e) => filters.setSearch(e.target.value)}
+						onChange={(event) => filters.setSearch(event.target.value)}
 					/>
 				</div>
 			</div>
@@ -82,63 +88,24 @@ export function LeadList() {
 					</div>
 
 					<div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-						<Select
+						<DurationFilter
 							value={filters.duration}
-							onValueChange={(val) =>
-								filters.setDuration(val as DurationPreset)
-							}
-						>
-							<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[307px]">
-								<SelectValue placeholder="Select Duration" />
-							</SelectTrigger>
-							<SelectContent className="rounded-[19px] border-none shadow-xl">
-								{DURATIONS.map((d) => (
-									<SelectItem key={d} value={d}>
-										{d}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-
-						{filters.duration === 'Custom Range' && (
-							<DatePickerWithRange
-								date={
-									filters.customDateRange
-										? {
-												from: filters.customDateRange.start,
-												to: filters.customDateRange.end,
-											}
-										: undefined
-								}
-								onDateChange={(range) => {
-									if (range?.from) {
-										filters.setCustomDateRange({
-											start: range.from,
-											end: range.to || range.from,
-										});
-									} else {
-										filters.setCustomDateRange(null);
-									}
-								}}
-							/>
-						)}
+							customDateRange={filters.customDateRange}
+							onDurationChange={filters.setDuration}
+							onCustomDateRangeChange={filters.setCustomDateRange}
+						/>
 
 						<Select
 							value={filters.status}
-							onValueChange={(val) => filters.setStatus(val as LeadStatus)}
+							onValueChange={(value) => filters.setStatus(value as LeadStatus)}
 						>
 							<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
 								<SelectValue placeholder="All Status" />
 							</SelectTrigger>
 							<SelectContent className="rounded-[19px] border-none shadow-xl">
-								{STATUSES.map((s) => (
-									<SelectItem key={s} value={s}>
-										{s === 'All Status'
-											? s
-											: s
-													.split(' ')
-													.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-													.join(' ')}
+								{STATUSES.map((status) => (
+									<SelectItem key={status} value={status}>
+										{formatStatusLabel(status)}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -147,19 +114,20 @@ export function LeadList() {
 						{filters.status === LeadStatus.BILLABLE && (
 							<Select
 								value={filters.paymentStatus}
-								onValueChange={(val) =>
-									filters.setPaymentStatus(val as PaymentStatusFilter)
+								onValueChange={(value) =>
+									filters.setPaymentStatus(value as PaymentStatusFilter)
 								}
 							>
 								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
 									<SelectValue placeholder="All Payment Status" />
 								</SelectTrigger>
 								<SelectContent className="rounded-[19px] border-none shadow-xl">
-									{PAYMENT_STATUSES.map((s) => (
-										<SelectItem key={s} value={s}>
-											{s === 'All Payment Status'
-												? s
-												: s.charAt(0).toUpperCase() + s.slice(1)}
+									{PAYMENT_STATUSES.map((paymentStatus) => (
+										<SelectItem key={paymentStatus} value={paymentStatus}>
+											{paymentStatus === 'All Payment Status'
+												? paymentStatus
+												: paymentStatus.charAt(0).toUpperCase() +
+													paymentStatus.slice(1)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -175,13 +143,33 @@ export function LeadList() {
 							</SelectTrigger>
 							<SelectContent className="rounded-[19px] border-none shadow-xl">
 								<SelectItem value="All Campaigns">All Campaigns</SelectItem>
-								{campaignOptions.map((c) => (
-									<SelectItem key={c} value={c}>
-										{c}
+								{campaignOptions.map((campaign) => (
+									<SelectItem key={campaign} value={campaign}>
+										{campaign}
 									</SelectItem>
 								))}
 							</SelectContent>
 						</Select>
+
+						{isAdmin && (
+							<Select
+								value={filters.deletedFilter}
+								onValueChange={(value) =>
+									filters.setDeletedFilter(value as DeletedLeadFilter)
+								}
+							>
+								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
+									<SelectValue placeholder="Active Leads" />
+								</SelectTrigger>
+								<SelectContent className="rounded-[19px] border-none shadow-xl">
+									{DELETED_FILTERS.map((filter) => (
+										<SelectItem key={filter.value} value={filter.value}>
+											{filter.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
 
 						{canFilterAgents && (
 							<Select
@@ -193,9 +181,9 @@ export function LeadList() {
 								</SelectTrigger>
 								<SelectContent className="rounded-[19px] border-none shadow-xl">
 									<SelectItem value="All Agents">All Agents</SelectItem>
-									{agents.map((a) => (
-										<SelectItem key={a.id} value={a.id}>
-											{a.name}
+									{agents.map((agent) => (
+										<SelectItem key={agent.id} value={agent.id}>
+											{agent.name}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -213,7 +201,6 @@ export function LeadList() {
 				</Button>
 			</div>
 
-			{/* Leads Grid */}
 			<div className="flex-1">
 				{isLoading ? (
 					<div className="flex h-40 items-center justify-center text-[#313957]">
@@ -228,9 +215,13 @@ export function LeadList() {
 						No leads found.
 					</div>
 				) : (
-					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 pb-10">
+					<div className="grid grid-cols-1 gap-6 pb-10 lg:grid-cols-2">
 						{leads.map((lead) => (
-							<LeadCard key={lead.id} lead={lead} />
+							<LeadCard
+								key={lead.id}
+								lead={lead}
+								onSoftDeleteSuccess={refresh}
+							/>
 						))}
 					</div>
 				)}
@@ -238,6 +229,5 @@ export function LeadList() {
 		</div>
 	);
 }
-
 
 
