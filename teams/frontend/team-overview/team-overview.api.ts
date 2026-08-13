@@ -20,7 +20,8 @@ export async function getTeamsApi(input: {
 		limit: String(input.limit),
 	});
 	if (input.search) params.set('search', input.search);
-	if (input.status && input.status !== 'all') params.set('status', input.status);
+	if (input.status && input.status !== 'all')
+		params.set('status', input.status);
 	if (input.teamLeadId && input.teamLeadId !== 'all') {
 		params.set('teamLeadId', input.teamLeadId);
 	}
@@ -32,7 +33,7 @@ export async function getTeamsApi(input: {
 
 export async function createTeamApi(input: {
 	name: string;
-	teamLeadId: string;
+	teamLeadIds: string[];
 	memberIds: string[];
 }) {
 	return apiClient<{ id: string }>('/teams/api', {

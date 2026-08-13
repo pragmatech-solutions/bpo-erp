@@ -14,6 +14,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { UserRole } from '@/common/constants/user-roles.enum';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import type { ManagedUser } from '@/users/backend/manage-users/manage-users.type';
 import { apiClient } from '@/lib/api-client';
 import { createTeamApi } from '@/teams/frontend/team-overview';
@@ -25,12 +26,12 @@ type UserListResponse = {
 	limit: number;
 };
 
-async function getUsers(role: UserRole, withoutTeam = false) {
+async function getUnassignedUsers(role: UserRole) {
 	const params = new URLSearchParams({
 		role,
 		limit: '50',
+		withoutTeam: 'true',
 	});
-	if (withoutTeam) params.set('withoutTeam', 'true');
 
 	return apiClient<UserListResponse>(`/users/api?${params.toString()}`);
 }
@@ -44,10 +45,53 @@ function initials(name: string) {
 		.toUpperCase();
 }
 
+function SelectedUserChips({
+	users,
+	onRemove,
+	showRole = false,
+}: {
+	users: ManagedUser[];
+	onRemove: (id: string) => void;
+	showRole?: boolean;
+}) {
+	if (users.length === 0) return null;
+
+	return (
+		<div className="mt-4 grid grid-cols-2 gap-3 lg:flex lg:flex-wrap">
+			{users.map((user) => (
+				<div
+					key={user.id}
+					className="flex min-w-0 items-center gap-2 rounded-[10px] border border-[#D4D7E3] px-3 py-2 text-[#26395C]"
+				>
+					<span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#C5BFF0] text-xs">
+						{initials(user.name)}
+					</span>
+					<span className="min-w-0">
+						<span className="block truncate">{user.name}</span>
+						{showRole && (
+							<span className="block truncate text-[11px] text-[#8897AD]">
+								{getUserRoleLabel(user.role)}
+							</span>
+						)}
+					</span>
+					<button
+						type="button"
+						onClick={() => onRemove(user.id)}
+						aria-label={`Remove ${user.name}`}
+					>
+						<X className="size-4 text-[#8897AD]" />
+					</button>
+				</div>
+			))}
+		</div>
+	);
+}
+
 export function CreateTeamForm() {
 	const router = useRouter();
 	const [name, setName] = useState('');
-	const [teamLeadId, setTeamLeadId] = useState('');
+	const [selectedTeamLeadId, setSelectedTeamLeadId] = useState('');
+	const [teamLeadIds, setTeamLeadIds] = useState<string[]>([]);
 	const [selectedMemberId, setSelectedMemberId] = useState('');
 	const [teamLeadOptions, setTeamLeadOptions] = useState<ManagedUser[]>([]);
 	const [memberOptions, setMemberOptions] = useState<ManagedUser[]>([]);
@@ -61,12 +105,18 @@ export function CreateTeamForm() {
 			try {
 				setIsLoading(true);
 				setErrorMessage('');
-				const [teamLeads, agents] = await Promise.all([
-					getUsers(UserRole.TEAM_LEAD),
-					getUsers(UserRole.AGENT, true),
+				const [teamLeads, agents, loanOfficers] = await Promise.all([
+					getUnassignedUsers(UserRole.TEAM_LEAD),
+					getUnassignedUsers(UserRole.AGENT),
+					getUnassignedUsers(UserRole.LOAN_OFFICER),
 				]);
 				setTeamLeadOptions(teamLeads.users);
-				setMemberOptions(agents.users);
+				// A team holds both agents and loan officers; each keeps its own role.
+				setMemberOptions(
+					[...agents.users, ...loanOfficers.users].sort((first, second) =>
+						first.name.localeCompare(second.name),
+					),
+				);
 			} catch (error) {
 				setErrorMessage(
 					error instanceof Error ? error.message : 'Unable to load users',
@@ -89,22 +139,55 @@ export function CreateTeamForm() {
 		[memberIds, memberOptions],
 	);
 
+	const selectedTeamLeads = useMemo(
+		() =>
+			teamLeadOptions.filter((teamLead) => teamLeadIds.includes(teamLead.id)),
+		[teamLeadIds, teamLeadOptions],
+	);
+
+	const availableTeamLeads = useMemo(
+		() =>
+			teamLeadOptions.filter((teamLead) => !teamLeadIds.includes(teamLead.id)),
+		[teamLeadIds, teamLeadOptions],
+	);
+
 	const addMember = (id: string) => {
-		setMemberIds((current) => (current.includes(id) ? current : [...current, id]));
+		setMemberIds((current) =>
+			current.includes(id) ? current : [...current, id],
+		);
 		setSelectedMemberId('');
 	};
 
 	const removeMember = (id: string) => {
-		const confirmed = window.confirm('Remove this user from the selected team members?');
+		const confirmed = window.confirm(
+			'Remove this user from the selected team members?',
+		);
 		if (!confirmed) return;
 		setMemberIds((current) => current.filter((memberId) => memberId !== id));
+	};
+
+	const addTeamLead = (id: string) => {
+		setTeamLeadIds((current) =>
+			current.includes(id) ? current : [...current, id],
+		);
+		setSelectedTeamLeadId('');
+	};
+
+	const removeTeamLead = (id: string) => {
+		const confirmed = window.confirm(
+			'Remove this user from the selected team leads?',
+		);
+		if (!confirmed) return;
+		setTeamLeadIds((current) =>
+			current.filter((teamLeadId) => teamLeadId !== id),
+		);
 	};
 
 	const submit = async () => {
 		try {
 			setIsSaving(true);
 			setErrorMessage('');
-			const team = await createTeamApi({ name, teamLeadId, memberIds });
+			const team = await createTeamApi({ name, teamLeadIds, memberIds });
 			router.push(`/teams/${team.id}`);
 		} catch (error) {
 			setErrorMessage(
@@ -135,7 +218,9 @@ export function CreateTeamForm() {
 					<h2 className="text-[18px] font-semibold text-[#0C1421] lg:text-[22px]">
 						Team Information
 					</h2>
-					<p className="text-[14px] text-[#313957] lg:text-[16px]">All fields marked with * are required</p>
+					<p className="text-[14px] text-[#313957] lg:text-[16px]">
+						All fields marked with * are required
+					</p>
 				</div>
 				<div className="flex flex-col gap-5 p-5 lg:gap-6 lg:p-8">
 					{isLoading ? (
@@ -164,19 +249,22 @@ export function CreateTeamForm() {
 
 							<div>
 								<label className="mb-2 block text-[15px] font-medium text-[#26395C]">
-									Team Lead *
+									Team Leads *
 								</label>
-								<Select value={teamLeadId} onValueChange={setTeamLeadId}>
+								<Select
+									value={selectedTeamLeadId}
+									onValueChange={(value) => addTeamLead(value)}
+								>
 									<SelectTrigger className="h-[56px] rounded-[12px] border-[#D4D7E3]">
-										<SelectValue placeholder="Select Team Lead" />
+										<SelectValue placeholder="Select Team Leads" />
 									</SelectTrigger>
 									<SelectContent>
-										{teamLeadOptions.length === 0 ? (
+										{availableTeamLeads.length === 0 ? (
 											<SelectItem value="none" disabled>
-												No team leads available
+												No unassigned team leads available
 											</SelectItem>
 										) : (
-											teamLeadOptions.map((userOption) => (
+											availableTeamLeads.map((userOption) => (
 												<SelectItem key={userOption.id} value={userOption.id}>
 													{userOption.name}
 												</SelectItem>
@@ -184,6 +272,10 @@ export function CreateTeamForm() {
 										)}
 									</SelectContent>
 								</Select>
+								<SelectedUserChips
+									users={selectedTeamLeads}
+									onRemove={removeTeamLead}
+								/>
 							</div>
 
 							<div>
@@ -200,37 +292,23 @@ export function CreateTeamForm() {
 									<SelectContent>
 										{availableMembers.length === 0 ? (
 											<SelectItem value="none" disabled>
-												No unassigned agents available
+												No unassigned agents or loan officers available
 											</SelectItem>
 										) : (
 											availableMembers.map((userOption) => (
 												<SelectItem key={userOption.id} value={userOption.id}>
-													{userOption.name}
+													{userOption.name} —{' '}
+													{getUserRoleLabel(userOption.role)}
 												</SelectItem>
 											))
 										)}
 									</SelectContent>
 								</Select>
-								<div className="mt-4 grid grid-cols-2 gap-3 lg:flex lg:flex-wrap">
-									{selectedMembers.map((member) => (
-										<div
-											key={member.id}
-											className="flex min-w-0 items-center gap-2 rounded-[10px] border border-[#D4D7E3] px-3 py-2 text-[#26395C]"
-										>
-											<span className="flex size-8 items-center justify-center rounded-full bg-[#C5BFF0] text-xs">
-												{initials(member.name)}
-											</span>
-											<span className="min-w-0 truncate">{member.name}</span>
-											<button
-												type="button"
-												onClick={() => removeMember(member.id)}
-												aria-label={`Remove ${member.name}`}
-											>
-												<X className="size-4 text-[#8897AD]" />
-											</button>
-										</div>
-									))}
-								</div>
+								<SelectedUserChips
+									users={selectedMembers}
+									onRemove={removeMember}
+									showRole
+								/>
 							</div>
 
 							<div className="grid grid-cols-2 gap-3 pt-4 lg:flex lg:justify-end">
@@ -243,7 +321,9 @@ export function CreateTeamForm() {
 								</Button>
 								<Button
 									onClick={submit}
-									disabled={isSaving || !name.trim() || !teamLeadId}
+									disabled={
+										isSaving || !name.trim() || teamLeadIds.length === 0
+									}
 									className="h-[48px] rounded-[12px] bg-[#2F61E8] px-6 text-[16px] lg:h-[56px] lg:px-10 lg:text-[18px]"
 								>
 									{isSaving ? 'Creating...' : 'Create Team'}
@@ -256,4 +336,3 @@ export function CreateTeamForm() {
 		</div>
 	);
 }
-

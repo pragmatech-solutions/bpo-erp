@@ -12,6 +12,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { UserRole } from '@/common/constants/user-roles.enum';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import type {
 	ManagedUser,
 	UserAccountStatus,
@@ -49,12 +50,7 @@ function statusLabel(status: UserAccountStatus) {
 	return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-function roleLabel(role: UserRole) {
-	if (role === UserRole.TEAM_LEAD) return 'Team Lead';
-	if (role === UserRole.QUALITY_ASSURANCE) return 'Quality Assurance';
-	if (role === UserRole.LOAN_OFFICER) return 'Loan Officer';
-	return role.charAt(0).toUpperCase() + role.slice(1);
-}
+const roleLabel = getUserRoleLabel;
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
 	return (
@@ -553,7 +549,8 @@ function ResetPasswordNotice({ management }: { management: ManagementHook }) {
 						Temporary password generated for {result.user.name}
 					</p>
 					<p className="mt-1 text-[13px] text-[#313957]">
-						Copy this password and share it with the user. It will not be shown again after this message is closed.
+						Copy this password and share it with the user. It will not be shown
+						again after this message is closed.
 					</p>
 				</div>
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -676,10 +673,3 @@ function UserRow({
 		</tr>
 	);
 }
-
-
-
-
-
-
-

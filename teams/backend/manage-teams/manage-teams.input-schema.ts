@@ -12,7 +12,9 @@ export const listTeamsInputSchema = z.object({
 
 export const createTeamInputSchema = z.object({
 	name: z.string().trim().min(1, 'Team name is required'),
-	teamLeadId: z.string().min(1, 'Team lead is required'),
+	teamLeadIds: z
+		.array(z.string().min(1))
+		.min(1, 'At least one team lead is required'),
 	memberIds: z.array(z.string().min(1)).default([]),
 });
 

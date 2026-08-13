@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
-import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
+import { buildTeamLeadLeadMatch } from '@/common/backend/get-team-member-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
@@ -47,18 +47,16 @@ export async function listLeads(
 			throw new Error('Forbidden: Team lead is not assigned to a team');
 		}
 
-		const teamAgentIds = await getTeamAgentObjectIds(currentUser.teamId);
-		const requestedAgentId = validatedInput.agentId;
+		const requestedMemberId =
+			validatedInput.agentId && validatedInput.agentId !== 'All Agents'
+				? validatedInput.agentId
+				: undefined;
 
-		if (requestedAgentId && requestedAgentId !== 'All Agents') {
-			const selectedAgentId = teamAgentIds.find(
-				(agentId) => agentId.toString() === requestedAgentId,
-			);
-
-			matchStage.created_by = selectedAgentId ? selectedAgentId : { $in: [] };
-		} else {
-			matchStage.created_by = { $in: teamAgentIds };
-		}
+		// Team scope can itself be an $or (agent-created OR loan-officer-assigned
+		// leads), so it goes under $and to avoid clobbering the search $or below.
+		matchStage.$and = [
+			await buildTeamLeadLeadMatch(currentUser.teamId, requestedMemberId),
+		];
 	} else if (currentUser.role === UserRole.AGENT) {
 		matchStage.created_by = new Types.ObjectId(currentUser.id);
 	} else if (currentUser.role === UserRole.LOAN_OFFICER) {

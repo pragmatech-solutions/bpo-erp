@@ -92,11 +92,6 @@ const UserSchema = new mongoose.Schema(
 const TeamSchema = new mongoose.Schema(
 	{
 		name: { type: String, required: true, unique: true },
-		team_lead: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: 'users',
-			required: true,
-		},
 		status: { type: String, default: 'active' },
 	},
 	{
@@ -336,6 +331,10 @@ async function seed() {
 	const createdLeads = [];
 	const createdLoanOfficers = [];
 
+	const teamObjectIds = TEAM_NAMES.map(() => new mongoose.Types.ObjectId());
+
+	// Teams are mixed: every loan officer is spread across the seeded teams so
+	// team dashboards exercise both agent-created and officer-assigned leads.
 	const loanOfficerUsers = Array.from({ length: 4 }, (_, index) => {
 		const officerNumber = index + 1;
 		return buildSeedUser({
@@ -346,37 +345,44 @@ async function seed() {
 			status: 'active',
 			availability_status: 'active',
 			role: 'loan_officer',
+			team_id: teamObjectIds[index % teamObjectIds.length],
 		});
 	});
 	const loanOfficers = await Users.insertMany(loanOfficerUsers);
 	createdLoanOfficers.push(...loanOfficers);
 
 	for (let teamIndex = 0; teamIndex < TEAM_NAMES.length; teamIndex += 1) {
-		const teamId = new mongoose.Types.ObjectId();
-		const teamLeadId = new mongoose.Types.ObjectId();
+		const teamId = teamObjectIds[teamIndex];
 		const teamNumber = teamIndex + 1;
 
-		const teamLead = await Users.create(
+		// The first team gets two leads to cover the multiple-leads-per-team case.
+		const teamLeadCount = teamIndex === 0 ? 2 : 1;
+		const teamLeadUsers = Array.from({ length: teamLeadCount }, (_, leadIndex) =>
 			buildSeedUser({
-				_id: teamLeadId,
-				localPart: `teamlead${teamNumber}`,
-				name: `Seed Team Lead ${teamNumber}`,
+				localPart:
+					leadIndex === 0
+						? `teamlead${teamNumber}`
+						: `teamlead${teamNumber}.${leadIndex + 1}`,
+				name:
+					leadIndex === 0
+						? `Seed Team Lead ${teamNumber}`
+						: `Seed Team Lead ${teamNumber}-${leadIndex + 1}`,
 				password: hashedPassword,
 				status: 'active',
 				role: 'team_lead',
 				team_id: teamId,
 			}),
 		);
+		const teamLeadDocuments = await Users.insertMany(teamLeadUsers);
 
 		const team = await Teams.create({
 			_id: teamId,
 			name: TEAM_NAMES[teamIndex],
-			team_lead: teamLeadId,
 			status: 'active',
 		});
 
 		createdTeams.push(team);
-		createdTeamLeads.push(teamLead);
+		createdTeamLeads.push(...teamLeadDocuments);
 
 		const teamAgents = [];
 		for (let agentIndex = 0; agentIndex < 10; agentIndex += 1) {

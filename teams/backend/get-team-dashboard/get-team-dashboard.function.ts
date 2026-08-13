@@ -16,11 +16,14 @@ import type {
 	TeamMemberDashboardItem,
 } from './get-team-dashboard.type';
 
-type TeamAgentDocument = {
+type TeamMemberDocument = {
 	_id: Types.ObjectId;
 	name: string;
 	email?: string;
+	role: UserRole;
 };
+
+const MEMBER_ROLES = [UserRole.AGENT, UserRole.LOAN_OFFICER];
 
 type TeamDocument = {
 	_id: Types.ObjectId;
@@ -37,10 +40,13 @@ type MemberStatsRow = {
 };
 
 function createLeadMatch(
-	agentIds: Types.ObjectId[],
+	ownerField: 'created_by' | 'loan_officer_id',
+	memberIds: Types.ObjectId[],
 	input: GetTeamDashboardInput,
 ): Record<string, unknown> {
-	const matchStage: Record<string, unknown> = { created_by: { $in: agentIds } };
+	const matchStage: Record<string, unknown> = {
+		[ownerField]: { $in: memberIds },
+	};
 	const dateFilter: Record<string, Date> = {};
 
 	if (input.startDate) dateFilter.$gte = input.startDate;
@@ -66,6 +72,56 @@ function getEmptyAnalytics() {
 	return { total: 0, pending: 0, billable: 0, nonBillable: 0 };
 }
 
+function createStatsGroupStage(ownerField: 'created_by' | 'loan_officer_id') {
+	return {
+		$group: {
+			_id: `$${ownerField}`,
+			total: { $sum: 1 },
+			pending: {
+				$sum: { $cond: [{ $eq: ['$status', LeadStatus.PENDING] }, 1, 0] },
+			},
+			billable: {
+				$sum: { $cond: [{ $eq: ['$status', LeadStatus.BILLABLE] }, 1, 0] },
+			},
+			nonBillable: {
+				$sum: {
+					$cond: [{ $eq: ['$status', LeadStatus.NON_BILLABLE] }, 1, 0],
+				},
+			},
+			campaigns: { $addToSet: '$campaign' },
+		},
+	};
+}
+
+async function aggregateMemberStats(
+	members: TeamMemberDocument[],
+	input: GetTeamDashboardInput,
+): Promise<MemberStatsRow[]> {
+	const agentIds = members
+		.filter((member) => member.role === UserRole.AGENT)
+		.map((member) => member._id);
+	const loanOfficerIds = members
+		.filter((member) => member.role === UserRole.LOAN_OFFICER)
+		.map((member) => member._id);
+
+	const [agentRows, loanOfficerRows] = await Promise.all([
+		agentIds.length > 0
+			? Leads.aggregate<MemberStatsRow>([
+					{ $match: createLeadMatch('created_by', agentIds, input) },
+					createStatsGroupStage('created_by'),
+				])
+			: Promise.resolve([]),
+		loanOfficerIds.length > 0
+			? Leads.aggregate<MemberStatsRow>([
+					{ $match: createLeadMatch('loan_officer_id', loanOfficerIds, input) },
+					createStatsGroupStage('loan_officer_id'),
+				])
+			: Promise.resolve([]),
+	]);
+
+	return [...agentRows, ...loanOfficerRows];
+}
+
 export async function getTeamDashboard(
 	input: GetTeamDashboardInput = {},
 ): Promise<TeamDashboardData> {
@@ -86,57 +142,41 @@ export async function getTeamDashboard(
 		.lean<TeamDocument>();
 	if (!team) throw new Error('Team not found');
 
-	const agents = await Users.find({
-		role: UserRole.AGENT,
+	const teamMembers = await Users.find({
+		role: { $in: MEMBER_ROLES },
 		status: 'active',
 		team_id: teamObjectId,
 	})
-		.select('_id name email')
+		.select('_id name email role')
 		.sort({ name: 1 })
-		.lean<TeamAgentDocument[]>();
+		.lean<TeamMemberDocument[]>();
 
-	const selectedAgent = agents.find(
-		(agent) => agent._id.toString() === validatedInput.agentId,
+	const selectedMember = teamMembers.find(
+		(member) => member._id.toString() === validatedInput.agentId,
 	);
-	const displayedAgents = validatedInput.agentId
-		? selectedAgent
-			? [selectedAgent]
+	const displayedMembers = validatedInput.agentId
+		? selectedMember
+			? [selectedMember]
 			: []
-		: agents;
-	const displayedAgentIds = displayedAgents.map((agent) => agent._id);
-	const leadMatch = createLeadMatch(displayedAgentIds, validatedInput);
+		: teamMembers;
 
-	const statsRows = await Leads.aggregate<MemberStatsRow>([
-		{ $match: leadMatch },
-		{
-			$group: {
-				_id: '$created_by',
-				total: { $sum: 1 },
-				pending: {
-					$sum: { $cond: [{ $eq: ['$status', LeadStatus.PENDING] }, 1, 0] },
-				},
-				billable: {
-					$sum: { $cond: [{ $eq: ['$status', LeadStatus.BILLABLE] }, 1, 0] },
-				},
-				nonBillable: {
-					$sum: {
-						$cond: [{ $eq: ['$status', LeadStatus.NON_BILLABLE] }, 1, 0],
-					},
-				},
-				campaigns: { $addToSet: '$campaign' },
-			},
-		},
-	]);
+	// Agents are measured by the leads they create, loan officers by the leads
+	// assigned to them, so each role needs its own grouping key.
+	const statsRows = await aggregateMemberStats(
+		displayedMembers,
+		validatedInput,
+	);
 
-	const statsByAgentId = new Map(
+	const statsByMemberId = new Map(
 		statsRows.map((row) => [row._id.toString(), row]),
 	);
-	const members: TeamMemberDashboardItem[] = displayedAgents.map((agent) => {
-		const stats = statsByAgentId.get(agent._id.toString());
+	const members: TeamMemberDashboardItem[] = displayedMembers.map((member) => {
+		const stats = statsByMemberId.get(member._id.toString());
 		return {
-			id: agent._id.toString(),
-			name: agent.name,
-			email: agent.email,
+			id: member._id.toString(),
+			name: member.name,
+			email: member.email,
+			role: member.role,
 			analytics: stats
 				? {
 						total: stats.total,
@@ -159,8 +199,12 @@ export async function getTeamDashboard(
 		getEmptyAnalytics(),
 	);
 
+	const memberObjectIds = teamMembers.map((member) => member._id);
 	const campaigns = await Leads.distinct('campaign', {
-		created_by: { $in: agents.map((agent) => agent._id) },
+		$or: [
+			{ created_by: { $in: memberObjectIds } },
+			{ loan_officer_id: { $in: memberObjectIds } },
+		],
 	});
 	const leads = await listLeads(validatedInput);
 

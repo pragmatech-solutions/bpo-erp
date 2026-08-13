@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { ArrowLeft, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { UserRole } from '@/common/constants/user-roles.enum';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import type { TeamPerformanceData } from '@/teams/backend/manage-teams/manage-teams.type';
 import { getTeamPerformanceApi } from '@/teams/frontend/team-overview';
 import { StatCards } from '@/teams/frontend/team-overview';
@@ -79,10 +81,16 @@ export function TeamPerformance({ id }: { id: string }) {
 						{data.name}
 					</h2>
 					<p className="text-[17px] text-[#0C1421]">
-						Team Lead: {data.teamLead?.name || 'Unassigned'}
+						{data.teamLeads.length > 1 ? 'Team Leads' : 'Team Lead'}:{' '}
+						{data.teamLeads.length === 0
+							? 'Unassigned'
+							: data.teamLeads.map((teamLead) => teamLead.name).join(', ')}
 					</p>
 					<p className="text-[17px] text-[#0C1421]">
 						Total Members: {String(data.memberCount).padStart(2, '0')}
+					</p>
+					<p className="text-[15px] text-[#8897AD]">
+						{data.agentCount} agents · {data.loanOfficerCount} loan officers
 					</p>
 				</div>
 			</div>
@@ -95,6 +103,7 @@ export function TeamPerformance({ id }: { id: string }) {
 						<thead className="bg-[#F1F5FB]">
 							<tr>
 								<th className="px-6 py-5 font-semibold">Members</th>
+								<th className="px-6 py-5 font-semibold">Role</th>
 								<th className="px-6 py-5 font-semibold">Total Leads</th>
 								<th className="px-6 py-5 font-semibold">Pending</th>
 								<th className="px-6 py-5 font-semibold">Billable</th>
@@ -106,7 +115,7 @@ export function TeamPerformance({ id }: { id: string }) {
 								<tr>
 									<td
 										className="px-6 py-10 text-center text-[#313957]"
-										colSpan={5}
+										colSpan={6}
 									>
 										No members found for this team.
 									</td>
@@ -125,6 +134,14 @@ export function TeamPerformance({ id }: { id: string }) {
 														{member.email || '—'}
 													</div>
 												</div>
+											</div>
+										</td>
+										<td className="px-6 py-5">
+											<div>{getUserRoleLabel(member.role)}</div>
+											<div className="text-sm text-[#8897AD]">
+												{member.role === UserRole.LOAN_OFFICER
+													? 'Leads handled'
+													: 'Leads created'}
 											</div>
 										</td>
 										<td className="px-6 py-5">{member.stats.total}</td>

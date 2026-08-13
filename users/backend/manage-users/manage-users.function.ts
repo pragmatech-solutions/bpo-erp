@@ -40,6 +40,9 @@ function mapUser(user: UserDocument): ManagedUser {
 	};
 }
 
+const MEMBER_ROLES = [UserRole.AGENT, UserRole.LOAN_OFFICER];
+const TEAM_ASSIGNABLE_ROLES = [...MEMBER_ROLES, UserRole.TEAM_LEAD];
+
 function getScopedUserFilter(
 	role: UserRole,
 	teamId?: string,
@@ -47,7 +50,7 @@ function getScopedUserFilter(
 	if (role === UserRole.ADMIN) return {};
 	if (role === UserRole.TEAM_LEAD && teamId) {
 		return {
-			role: UserRole.AGENT,
+			role: { $in: MEMBER_ROLES },
 			team_id: new Types.ObjectId(teamId),
 		};
 	}
@@ -107,7 +110,10 @@ export async function listManagedUsers(
 	};
 }
 
-async function getAdminUpdatePayload(input: UpdateUserInput) {
+async function getAdminUpdatePayload(
+	input: UpdateUserInput,
+	targetRole: UserRole,
+) {
 	const updatePayload: Record<string, unknown> = {};
 
 	if (input.role !== undefined) updatePayload.role = input.role;
@@ -121,6 +127,16 @@ async function getAdminUpdatePayload(input: UpdateUserInput) {
 				throw new Error('Team not found');
 			const teamExists = await Teams.exists({ _id: input.teamId });
 			if (!teamExists) throw new Error('Team not found');
+
+			// Only leads and members belong to a team; anyone else holding a
+			// team_id would be invisible in every team view.
+			const effectiveRole = input.role ?? targetRole;
+			if (!TEAM_ASSIGNABLE_ROLES.includes(effectiveRole)) {
+				throw new Error(
+					'Forbidden: Only team leads, agents and loan officers can belong to a team',
+				);
+			}
+
 			updatePayload.team_id = new Types.ObjectId(input.teamId);
 		}
 	}
@@ -146,7 +162,10 @@ export async function updateManagedUser(input: UpdateUserInput) {
 	let updatePayload: Record<string, unknown>;
 
 	if (currentUser.role === UserRole.ADMIN) {
-		updatePayload = await getAdminUpdatePayload(validatedInput);
+		updatePayload = await getAdminUpdatePayload(
+			validatedInput,
+			targetUser.role,
+		);
 	} else if (currentUser.role === UserRole.TEAM_LEAD) {
 		if (
 			validatedInput.role !== undefined ||
@@ -163,7 +182,7 @@ export async function updateManagedUser(input: UpdateUserInput) {
 			);
 		}
 		if (
-			targetUser.role !== UserRole.AGENT ||
+			!MEMBER_ROLES.includes(targetUser.role) ||
 			!currentUser.teamId ||
 			targetUser.team_id?.toString() !== currentUser.teamId
 		) {
