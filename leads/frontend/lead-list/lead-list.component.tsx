@@ -13,13 +13,13 @@ import {
 import { LeadCard } from '@/common/components/lead-card';
 import { DurationFilter } from './components/duration-filter.component';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import {
 	useLeadListHook,
 	type DeletedLeadFilter,
 	type LeadStatusFilter,
 	type PaymentStatusFilter,
 } from './lead-list.hook';
-
 
 const STATUSES: LeadStatusFilter[] = [
 	'All Status',
@@ -57,6 +57,7 @@ export function LeadList() {
 		filters,
 		resetFilters,
 		isAdmin,
+		isTeamLead,
 		canFilterAgents,
 		agents,
 		campaignOptions,
@@ -177,13 +178,20 @@ export function LeadList() {
 								onValueChange={filters.setAgentId}
 							>
 								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
-									<SelectValue placeholder="All Agents" />
+									<SelectValue
+										placeholder={isTeamLead ? 'All Members' : 'All Agents'}
+									/>
 								</SelectTrigger>
 								<SelectContent className="rounded-[19px] border-none shadow-xl">
-									<SelectItem value="All Agents">All Agents</SelectItem>
+									{/* "All Agents" is the sentinel the leads API expects. */}
+									<SelectItem value="All Agents">
+										{isTeamLead ? 'All Members' : 'All Agents'}
+									</SelectItem>
 									{agents.map((agent) => (
 										<SelectItem key={agent.id} value={agent.id}>
-											{agent.name}
+											{isTeamLead
+												? `${agent.name} — ${getUserRoleLabel(agent.role)}`
+												: agent.name}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -229,5 +237,3 @@ export function LeadList() {
 		</div>
 	);
 }
-
-

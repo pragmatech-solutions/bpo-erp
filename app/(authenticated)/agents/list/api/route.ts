@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listAgents } from '@/agents/backend/list-agents';
+import { listMembers } from '@/agents/backend/list-agents';
 
 function getErrorStatus(message: string) {
 	if (message === 'Unauthorized') return 401;
@@ -9,8 +9,8 @@ function getErrorStatus(message: string) {
 
 export async function GET() {
 	try {
-		const agents = await listAgents();
-		return NextResponse.json({ success: true, data: agents });
+		const members = await listMembers();
+		return NextResponse.json({ success: true, data: members });
 	} catch (error: unknown) {
 		const message =
 			error instanceof Error ? error.message : 'Failed to list agents';

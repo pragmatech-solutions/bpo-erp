@@ -23,6 +23,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import type {
 	TeamMemberPerformance,
 	TeamOverviewItem,
@@ -55,6 +56,15 @@ function initials(name: string) {
 		.join('')
 		.slice(0, 2)
 		.toUpperCase();
+}
+
+function teamLeadNames(team: TeamOverviewItem) {
+	if (team.teamLeads.length === 0) return 'Unassigned';
+	return team.teamLeads.map((teamLead) => teamLead.name).join(', ');
+}
+
+function memberBreakdown(team: TeamOverviewItem) {
+	return `${team.agentCount} agents · ${team.loanOfficerCount} loan officers`;
 }
 
 function StatCards({
@@ -384,12 +394,20 @@ function DesktopTeamSection({
 					</div>
 				</div>
 				<div className="min-w-0">
-					<div className="truncate text-[13px] font-medium">
-						{team.teamLead?.name || 'Unassigned'}
+					<div
+						className="truncate text-[13px] font-medium"
+						title={teamLeadNames(team)}
+					>
+						{teamLeadNames(team)}
 					</div>
-					<div className="text-[11px] text-black">Team Lead</div>
+					<div className="text-[11px] text-black">
+						{team.teamLeads.length > 1 ? 'Team Leads' : 'Team Lead'}
+					</div>
 				</div>
-				<DesktopSummaryStat value={team.memberCount} label="Members" />
+				<DesktopSummaryStat
+					value={team.memberCount}
+					label={memberBreakdown(team)}
+				/>
 				<DesktopSummaryStat value={team.stats.total} label="Total Leads" />
 				<DesktopSummaryStat
 					value={String(team.stats.pending).padStart(2, '0')}
@@ -441,11 +459,16 @@ function DesktopTeamSection({
 								key={member.id}
 								className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr] border-t border-[#D4D7E3] px-6 py-4 text-[13px] text-black"
 							>
-								<span className="flex items-center gap-2 truncate">
+								<span className="flex min-w-0 items-center gap-2">
 									<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#C5BFF0] text-[10px]">
 										{initials(member.name)}
 									</span>
-									{member.name}
+									<span className="min-w-0">
+										<span className="block truncate">{member.name}</span>
+										<span className="block truncate text-[11px] text-[#8897AD]">
+											{getUserRoleLabel(member.role)}
+										</span>
+									</span>
 								</span>
 								<span>{member.stats.total}</span>
 								<span className="text-[#F59E0B]">
@@ -575,7 +598,8 @@ function TeamMobileCard({
 							{team.name}
 						</h2>
 						<p className="truncate text-[12px] font-medium text-black">
-							Team Lead: {team.teamLead?.name || 'Unassigned'}
+							{team.teamLeads.length > 1 ? 'Team Leads' : 'Team Lead'}:{' '}
+							{teamLeadNames(team)}
 						</p>
 					</div>
 				</div>
@@ -588,7 +612,7 @@ function TeamMobileCard({
 
 			<div className="border-t border-[#D4D7E3] px-3 py-3">
 				<div className="grid grid-cols-6 items-start gap-1">
-					<TeamStat value={team.memberCount} label="Members" />
+					<TeamStat value={team.memberCount} label={memberBreakdown(team)} />
 					<TeamStat value={team.stats.total} label="Total Leads" />
 					<TeamStat
 						value={String(team.stats.pending).padStart(2, '0')}
@@ -634,7 +658,12 @@ function TeamMobileCard({
 									key={member.id}
 									className="grid grid-cols-[1.3fr_1fr_1fr_1fr_1fr_1fr] border-t border-[#D4D7E3] px-2 py-2 text-[9px] text-black"
 								>
-									<span className="truncate">{member.name}</span>
+									<span className="min-w-0">
+										<span className="block truncate">{member.name}</span>
+										<span className="block truncate text-[8px] text-[#8897AD]">
+											{getUserRoleLabel(member.role)}
+										</span>
+									</span>
 									<span>{member.stats.total}</span>
 									<span className="text-[#F59E0B]">
 										{String(member.stats.pending).padStart(2, '0')}

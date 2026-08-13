@@ -65,12 +65,14 @@ export function useLeadListHook() {
 		getServerRoleSnapshot,
 	);
 	const isAdmin = currentRole === UserRole.ADMIN;
+	// Team leads filter across agents and loan officers; everyone else sees
+	// agents only.
+	const isTeamLead = currentRole === UserRole.TEAM_LEAD;
 	const canFilterAgents =
 		currentRole === UserRole.ADMIN ||
 		currentRole === UserRole.TEAM_LEAD ||
 		currentRole === UserRole.QUALITY_ASSURANCE;
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
-
 
 	useEffect(() => {
 		async function loadCampaignOptions() {
@@ -210,6 +212,7 @@ export function useLeadListHook() {
 		isLoading,
 		errorMessage,
 		isAdmin,
+		isTeamLead,
 		canFilterAgents,
 		agents,
 		campaignOptions,
@@ -235,8 +238,3 @@ export function useLeadListHook() {
 		refresh: fetchLeads,
 	};
 }
-
-
-
-
-
