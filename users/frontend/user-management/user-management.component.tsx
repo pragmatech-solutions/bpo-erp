@@ -11,6 +11,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Pagination } from '@/common/components/pagination';
+import { PAGE_SIZE_OPTIONS } from '@/common/constants/pagination';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import type {
@@ -116,9 +118,6 @@ function StatusDot({ status }: { status: UserAccountStatus }) {
 export function UserManagement() {
 	const management = useUserManagementHook();
 	const [showMobileFilters, setShowMobileFilters] = useState(false);
-	const from =
-		management.total === 0 ? 0 : (management.page - 1) * management.limit + 1;
-	const to = Math.min(management.total, management.page * management.limit);
 
 	return (
 		<div className="flex flex-col gap-4 lg:gap-6">
@@ -296,60 +295,35 @@ export function UserManagement() {
 						</tbody>
 					</table>
 				</div>
-				<Pagination management={management} from={from} to={to} />
+				<Pagination
+					page={management.page}
+					totalPages={management.totalPages}
+					total={management.total}
+					limit={management.limit}
+					itemLabel="users"
+					onPageChange={management.setPage}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					onPageSizeChange={management.setLimit}
+				/>
 			</div>
 
 			<div className="lg:hidden">
-				<Pagination management={management} from={from} to={to} />
+				<Pagination
+					page={management.page}
+					totalPages={management.totalPages}
+					total={management.total}
+					limit={management.limit}
+					itemLabel="users"
+					onPageChange={management.setPage}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					onPageSizeChange={management.setLimit}
+				/>
 			</div>
 		</div>
 	);
 }
 
 type ManagementHook = ReturnType<typeof useUserManagementHook>;
-
-function Pagination({
-	management,
-	from,
-	to,
-}: {
-	management: ManagementHook;
-	from: number;
-	to: number;
-}) {
-	return (
-		<div className="flex flex-col gap-3 border-t border-[#D4D7E3] bg-white px-4 py-4 text-[#8897AD] lg:flex-row lg:items-center lg:justify-between lg:px-6">
-			<span>
-				Showing {from} to {to} of {management.total} users
-			</span>
-			<div className="flex items-center gap-2">
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() => management.setPage(Math.max(1, management.page - 1))}
-					disabled={management.page === 1}
-				>
-					&lt;
-				</Button>
-				<span className="text-[#26395C]">
-					{management.page} / {management.totalPages}
-				</span>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() =>
-						management.setPage(
-							Math.min(management.totalPages, management.page + 1),
-						)
-					}
-					disabled={management.page === management.totalPages}
-				>
-					&gt;
-				</Button>
-			</div>
-		</div>
-	);
-}
 
 function AdminRoleSelect({
 	user,

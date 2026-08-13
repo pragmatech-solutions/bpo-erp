@@ -1,15 +1,19 @@
-import { Types } from 'mongoose';
+import { Types, type PipelineStage } from 'mongoose';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
 import { buildTeamLeadLeadMatch } from '@/common/backend/get-team-member-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { listLeadsInputSchema } from './list-leads.input-schema';
-import type { ListedLead, ListLeadsInput } from './list-leads.type';
+import type {
+	ListedLead,
+	ListLeadsInput,
+	ListLeadsResult,
+} from './list-leads.type';
 
 export async function listLeads(
 	input: ListLeadsInput = {},
-): Promise<ListedLead[]> {
+): Promise<ListLeadsResult> {
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 
@@ -90,9 +94,14 @@ export async function listLeads(
 		matchStage.updated_at = dateFilter;
 	}
 
-	const leads = await Leads.aggregate([
+	const skip = (validatedInput.page - 1) * validatedInput.limit;
+
+	// $skip/$limit run before the lookups so joins only happen for the current
+	// page of leads.
+	const leadsPipeline: PipelineStage[] = [
 		{ $match: matchStage },
 		{ $sort: { updated_at: -1 } },
+		{ $skip: skip },
 		{ $limit: validatedInput.limit },
 		{
 			$lookup: {
@@ -194,7 +203,19 @@ export async function listLeads(
 				_id: 0,
 			},
 		},
+	];
+
+	// The count reuses the exact same match stage, so the total always reflects
+	// the caller's role scope and filters rather than the whole collection.
+	const [leads, total] = await Promise.all([
+		Leads.aggregate(leadsPipeline),
+		Leads.countDocuments(matchStage),
 	]);
 
-	return leads as ListedLead[];
+	return {
+		leads: leads as ListedLead[],
+		total,
+		page: validatedInput.page,
+		limit: validatedInput.limit,
+	};
 }

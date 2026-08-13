@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants/pagination';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import type { TeamOverviewItem } from '@/teams/backend/manage-teams/manage-teams.type';
@@ -34,7 +35,7 @@ export function useUserManagementHook() {
 		const info = getCurrentLoggedInUserInformation();
 		return info?.currentUser.role;
 	});
-	const limit = 6;
+	const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 	const isAdmin = currentRole === UserRole.ADMIN;
 	const isTeamLead = currentRole === UserRole.TEAM_LEAD;
 
@@ -186,6 +187,10 @@ export function useUserManagementHook() {
 		setPage,
 		total,
 		limit,
+		setLimit: (value: number) => {
+			setLimit(value);
+			setPage(1);
+		},
 		totalPages,
 		isLoading,
 		isSaving,

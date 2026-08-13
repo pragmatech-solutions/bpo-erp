@@ -206,7 +206,7 @@ export async function getTeamDashboard(
 			{ loan_officer_id: { $in: memberObjectIds } },
 		],
 	});
-	const leads = await listLeads(validatedInput);
+	const { leads } = await listLeads(validatedInput);
 
 	return {
 		team: { id: team._id.toString(), name: team.name },

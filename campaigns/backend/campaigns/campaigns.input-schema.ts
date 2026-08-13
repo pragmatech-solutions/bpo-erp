@@ -1,10 +1,20 @@
 import { z } from 'zod';
+import {
+	DEFAULT_PAGE,
+	DEFAULT_PAGE_SIZE,
+	MAX_PAGE_SIZE,
+} from '@/common/constants/pagination';
 
 export const listCampaignsInputSchema = z.object({
 	status: z.enum(['all', 'active', 'disabled']).default('all'),
 	search: z.string().optional(),
-	page: z.number().int().positive().default(1),
-	limit: z.number().int().positive().max(50).default(6),
+	page: z.number().int().positive().default(DEFAULT_PAGE),
+	limit: z
+		.number()
+		.int()
+		.positive()
+		.max(MAX_PAGE_SIZE)
+		.default(DEFAULT_PAGE_SIZE),
 });
 
 export const createCampaignInputSchema = z.object({
