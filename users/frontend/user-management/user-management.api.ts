@@ -16,6 +16,16 @@ export type UpdateManagedUserInput = {
 	teamId?: string | null;
 };
 
+export type ResetUserPasswordResponse = {
+	user: {
+		id: string;
+		name: string;
+		username: string;
+		email?: string;
+	};
+	temporaryPassword: string;
+};
+
 export async function getManagedUsersApi(input: {
 	role?: UserRole | 'all';
 	status?: UserStatusFilter;
@@ -46,4 +56,13 @@ export async function updateManagedUserApi(
 		method: 'PATCH',
 		body: JSON.stringify(input),
 	});
+}
+
+export async function resetManagedUserPasswordApi(id: string) {
+	return apiClient<ResetUserPasswordResponse>(
+		`/users/${id}/reset-password/api`,
+		{
+			method: 'POST',
+		},
+	);
 }

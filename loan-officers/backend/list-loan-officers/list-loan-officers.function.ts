@@ -1,6 +1,7 @@
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
 import { connectToDatabase } from '@/common/database';
 import { UserRole } from '@/common/constants/user-roles.enum';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import { Users } from '@/common/models/users.schema';
 import type { LoanOfficerOption } from './list-loan-officers.type';
 
@@ -28,6 +29,7 @@ export async function listLoanOfficers(): Promise<LoanOfficerOption[]> {
 	const loanOfficers = await Users.find({
 		role: UserRole.LOAN_OFFICER,
 		status: 'active',
+		availability_status: UserAvailabilityStatus.ACTIVE,
 	})
 		.select('_id name phone_number')
 		.sort({ name: 1 })

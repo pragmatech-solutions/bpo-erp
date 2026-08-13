@@ -1,5 +1,6 @@
 import { Schema, model, models } from 'mongoose';
 import { UserRole } from '../constants/user-roles.enum';
+import { UserAvailabilityStatus } from '../constants/user-availability-status.enum';
 
 const UserSchema = new Schema(
 	{
@@ -12,6 +13,11 @@ const UserSchema = new Schema(
 			type: String,
 			default: 'inactive',
 			enum: ['active', 'inactive', 'blocked'],
+		},
+		availability_status: {
+			type: String,
+			default: UserAvailabilityStatus.INACTIVE,
+			enum: Object.values(UserAvailabilityStatus),
 		},
 		role: {
 			type: String,

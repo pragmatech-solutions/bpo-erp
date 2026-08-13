@@ -17,6 +17,7 @@ const CAMPAIGNS = [
 ];
 const LOAN_TYPES = ['Conventional', 'FHA', 'VA', 'VA eligible'];
 const LEAD_STATUSES = ['pending', 'billable', 'non billable'];
+const USER_AVAILABILITY_STATUSES = ['active', 'inactive'];
 const CALL_TRANSFER_LOAN_TYPES = ['Conventional', 'Veteran', 'FHA', 'Streamline'];
 const CALL_TRANSFER_LOAN_PURPOSES = [
 	'Rate and Term',
@@ -63,6 +64,11 @@ const UserSchema = new mongoose.Schema(
 			type: String,
 			default: 'inactive',
 			enum: ['active', 'inactive', 'blocked'],
+		},
+		availability_status: {
+			type: String,
+			default: 'inactive',
+			enum: USER_AVAILABILITY_STATUSES,
 		},
 		role: {
 			type: String,
@@ -184,6 +190,7 @@ function buildSeedUser({ localPart, ...fields }) {
 		...fields,
 		username: fields.username || getSeedUsername(localPart),
 		email: fields.email ?? getSeedEmail(localPart),
+		availability_status: fields.availability_status || 'inactive',
 	};
 }
 
@@ -337,6 +344,7 @@ async function seed() {
 			password: hashedPassword,
 			phone_number: `+1 888 555 010${officerNumber}`,
 			status: 'active',
+			availability_status: 'active',
 			role: 'loan_officer',
 		});
 	});

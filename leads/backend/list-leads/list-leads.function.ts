@@ -22,11 +22,19 @@ export async function listLeads(
 	if (validatedInput.endDate) dateFilter.$lte = validatedInput.endDate;
 
 	const matchStage: Record<string, unknown> = {};
+	const isAdmin = currentUser.role === UserRole.ADMIN;
 
-	if (
-		currentUser.role === UserRole.ADMIN ||
-		currentUser.role === UserRole.QUALITY_ASSURANCE
-	) {
+	if (isAdmin) {
+		if (validatedInput.deletedFilter === 'active') {
+			matchStage.deleted_at = { $exists: false };
+		} else if (validatedInput.deletedFilter === 'deleted') {
+			matchStage.deleted_at = { $exists: true };
+		}
+	} else {
+		matchStage.deleted_at = { $exists: false };
+	}
+
+	if (isAdmin || currentUser.role === UserRole.QUALITY_ASSURANCE) {
 		if (
 			validatedInput.agentId &&
 			validatedInput.agentId !== 'All Agents' &&
@@ -107,6 +115,15 @@ export async function listLeads(
 		},
 		{ $unwind: { path: '$loan_officer', preserveNullAndEmptyArrays: true } },
 		{
+			$lookup: {
+				from: 'users',
+				localField: 'deleted_by',
+				foreignField: '_id',
+				as: 'deleted_by',
+			},
+		},
+		{ $unwind: { path: '$deleted_by', preserveNullAndEmptyArrays: true } },
+		{
 			$project: {
 				id: { $toString: '$_id' },
 				leadType: '$lead_type',
@@ -144,6 +161,28 @@ export async function listLeads(
 					loanPurpose: '$call_transfer.loan_purpose',
 					credit: '$call_transfer.credit',
 				},
+				deletedAt: {
+					$cond: [
+						{ $ifNull: ['$deleted_at', false] },
+						{
+							$dateToString: {
+								date: '$deleted_at',
+								format: '%Y-%m-%dT%H:%M:%S.%LZ',
+							},
+						},
+						undefined,
+					],
+				},
+				deletedBy: {
+					$cond: [
+						{ $ifNull: ['$deleted_by._id', false] },
+						{
+							id: { $toString: '$deleted_by._id' },
+							name: { $ifNull: ['$deleted_by.name', 'Unknown'] },
+						},
+						undefined,
+					],
+				},
 				updatedAt: {
 					$dateToString: {
 						date: '$updated_at',
@@ -161,6 +200,3 @@ export async function listLeads(
 
 	return leads as ListedLead[];
 }
-
-
-

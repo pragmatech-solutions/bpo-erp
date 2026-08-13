@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 import { getLeadsApi } from './lead-list.api';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
@@ -15,6 +15,7 @@ export type DurationPreset =
 	| 'Today'
 	| 'Yesterday'
 	| 'Last 7 Days'
+	| 'Week to Date'
 	| 'Last 30 Days'
 	| 'This Month'
 	| 'Last Month'
@@ -23,7 +24,21 @@ export type DurationPreset =
 
 export type LeadStatusFilter = LeadStatus | 'All Status';
 export type PaymentStatusFilter = 'paid' | 'unpaid' | 'All Payment Status';
+export type DeletedLeadFilter = 'active' | 'deleted' | 'all';
 
+function subscribeToCurrentUser(callback: () => void) {
+	window.addEventListener('storage', callback);
+	return () => window.removeEventListener('storage', callback);
+}
+
+function getCurrentRoleSnapshot() {
+	const userInfo = getCurrentLoggedInUserInformation();
+	return (userInfo?.currentUser?.role as UserRole | undefined) || null;
+}
+
+function getServerRoleSnapshot() {
+	return null;
+}
 export function useLeadListHook() {
 	const [leads, setLeads] = useState<ListedLead[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -36,22 +51,26 @@ export function useLeadListHook() {
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [campaign, setCampaign] = useState<string>('All Campaigns');
 	const [agentId, setAgentId] = useState<string>('All Agents');
+	const [deletedFilter, setDeletedFilter] =
+		useState<DeletedLeadFilter>('active');
 	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;
 		end?: Date;
 	} | null>(null);
 
-	const [canFilterAgents] = useState(() => {
-		const userInfo = getCurrentLoggedInUserInformation();
-		const role = userInfo?.currentUser?.role;
-		return (
-			role === UserRole.ADMIN ||
-			role === UserRole.TEAM_LEAD ||
-			role === UserRole.QUALITY_ASSURANCE
-		);
-	});
+	const currentRole = useSyncExternalStore(
+		subscribeToCurrentUser,
+		getCurrentRoleSnapshot,
+		getServerRoleSnapshot,
+	);
+	const isAdmin = currentRole === UserRole.ADMIN;
+	const canFilterAgents =
+		currentRole === UserRole.ADMIN ||
+		currentRole === UserRole.TEAM_LEAD ||
+		currentRole === UserRole.QUALITY_ASSURANCE;
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
+
 
 	useEffect(() => {
 		async function loadCampaignOptions() {
@@ -87,6 +106,8 @@ export function useLeadListHook() {
 
 		const now = new Date();
 		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+		const endOfToday = new Date(today);
+		endOfToday.setHours(23, 59, 59, 999);
 
 		switch (duration) {
 			case 'Today':
@@ -101,6 +122,14 @@ export function useLeadListHook() {
 				startDate = new Date(today);
 				startDate.setDate(startDate.getDate() - 7);
 				break;
+			case 'Week to Date': {
+				const dayOfWeek = today.getDay();
+				const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+				startDate = new Date(today);
+				startDate.setDate(startDate.getDate() - daysSinceMonday);
+				endDate = endOfToday;
+				break;
+			}
 			case 'Last 30 Days':
 				startDate = new Date(today);
 				startDate.setDate(startDate.getDate() - 30);
@@ -133,6 +162,7 @@ export function useLeadListHook() {
 			endDate,
 			campaign: campaign === 'All Campaigns' ? undefined : campaign,
 			agentId: agentId === 'All Agents' ? undefined : agentId,
+			deletedFilter: isAdmin ? deletedFilter : undefined,
 		});
 
 		if (!response.success || !response.data) {
@@ -153,6 +183,8 @@ export function useLeadListHook() {
 		customDateRange,
 		campaign,
 		agentId,
+		deletedFilter,
+		isAdmin,
 	]);
 
 	useEffect(() => {
@@ -169,6 +201,7 @@ export function useLeadListHook() {
 		setDuration('All');
 		setCampaign('All Campaigns');
 		setAgentId('All Agents');
+		setDeletedFilter('active');
 		setCustomDateRange(null);
 	};
 
@@ -176,6 +209,7 @@ export function useLeadListHook() {
 		leads,
 		isLoading,
 		errorMessage,
+		isAdmin,
 		canFilterAgents,
 		agents,
 		campaignOptions,
@@ -192,6 +226,8 @@ export function useLeadListHook() {
 			setCampaign,
 			agentId,
 			setAgentId,
+			deletedFilter,
+			setDeletedFilter,
 			customDateRange,
 			setCustomDateRange,
 		},
@@ -199,7 +235,6 @@ export function useLeadListHook() {
 		refresh: fetchLeads,
 	};
 }
-
 
 
 
