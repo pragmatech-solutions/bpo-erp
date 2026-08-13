@@ -8,7 +8,9 @@ import { getTeamsApi } from '@/teams/frontend/team-overview';
 import type { ManagedUser } from '@/users/backend/manage-users/manage-users.type';
 import {
 	getManagedUsersApi,
+	resetManagedUserPasswordApi,
 	updateManagedUserApi,
+	type ResetUserPasswordResponse,
 	type UpdateManagedUserInput,
 	type UserStatusFilter,
 } from './user-management.api';
@@ -24,7 +26,10 @@ export function useUserManagementHook() {
 	const [total, setTotal] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isResettingPassword, setIsResettingPassword] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
+	const [resetPasswordResult, setResetPasswordResult] =
+		useState<ResetUserPasswordResponse | null>(null);
 	const [currentRole] = useState(() => {
 		const info = getCurrentLoggedInUserInformation();
 		return info?.currentUser.role;
@@ -134,6 +139,26 @@ export function useUserManagementHook() {
 		}
 	};
 
+	const resetUserPassword = async (user: ManagedUser) => {
+		const confirmed = window.confirm(
+			`Reset password for ${user.name}? A new temporary password will be generated.`,
+		);
+		if (!confirmed) return;
+
+		try {
+			setIsResettingPassword(true);
+			setErrorMessage('');
+			const result = await resetManagedUserPasswordApi(user.id);
+			setResetPasswordResult(result);
+		} catch (error) {
+			setErrorMessage(
+				error instanceof Error ? error.message : 'Unable to reset password',
+			);
+		} finally {
+			setIsResettingPassword(false);
+		}
+	};
+
 	return {
 		users,
 		teams,
@@ -164,8 +189,12 @@ export function useUserManagementHook() {
 		totalPages,
 		isLoading,
 		isSaving,
+		isResettingPassword,
 		errorMessage,
+		resetPasswordResult,
+		setResetPasswordResult,
 		updateUser,
+		resetUserPassword,
 		isAdmin,
 		isTeamLead,
 	};

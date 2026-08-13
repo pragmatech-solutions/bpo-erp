@@ -100,7 +100,7 @@ export function LoginForm() {
 									</Button>
 								</div>
 								<Link
-									href="#"
+									href="/forgot-password"
 									className="text-right text-[14px] text-[#1E4AE9] md:text-[16px]"
 								>
 									Forgot Password?
@@ -130,3 +130,5 @@ export function LoginForm() {
 		</div>
 	);
 }
+
+

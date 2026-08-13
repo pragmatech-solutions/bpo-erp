@@ -1,10 +1,15 @@
-﻿import { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { connectToDatabase } from '@/common/database';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
 import { UserRole } from '@/common/constants/user-roles.enum';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import { LoanType } from '@/common/constants/loan-type.enum';
 import { Leads } from '@/common/models/leads.schema';
 import { Users } from '@/common/models/users.schema';
+import {
+	ensureLeadContactNumberIsUnique,
+	isDuplicateLeadContactNumberError,
+} from '@/leads/backend/lead-contact-number';
 import {
 	createCallTransferLeadInputSchema,
 	type CreateCallTransferLeadInput,
@@ -45,6 +50,10 @@ export async function createCallTransferLead(input: CreateCallTransferLeadInput)
 	}
 
 	const validatedData = createCallTransferLeadInputSchema.parse(input);
+	const normalizedCustomerNumber = await ensureLeadContactNumberIsUnique(
+		validatedData.origin_phone,
+	);
+
 	if (!Types.ObjectId.isValid(validatedData.loan_officer_id)) {
 		throw new Error('Loan officer not found');
 	}
@@ -53,6 +62,7 @@ export async function createCallTransferLead(input: CreateCallTransferLeadInput)
 		_id: validatedData.loan_officer_id,
 		role: UserRole.LOAN_OFFICER,
 		status: 'active',
+		availability_status: UserAvailabilityStatus.ACTIVE,
 	})
 		.select('_id name phone_number')
 		.lean<LoanOfficerDocument>();
@@ -67,6 +77,7 @@ export async function createCallTransferLead(input: CreateCallTransferLeadInput)
 			validatedData.last_name,
 		),
 		customer_number: validatedData.origin_phone,
+		customer_number_normalized: normalizedCustomerNumber,
 		username: buildUsername(validatedData),
 		campaign: 'Call Transfer',
 		loan_type: loanTypeMap[validatedData.loan_type],
@@ -97,7 +108,14 @@ export async function createCallTransferLead(input: CreateCallTransferLeadInput)
 		},
 	});
 
-	await newLead.save();
+	try {
+		await newLead.save();
+	} catch (error) {
+		if (isDuplicateLeadContactNumberError(error)) {
+			throw new Error('Lead with this contact number already exists');
+		}
+		throw error;
+	}
 
 	return newLead;
 }

@@ -1,9 +1,14 @@
-﻿import { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { connectToDatabase } from '@/common/database';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
 import { UserRole } from '@/common/constants/user-roles.enum';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import { Leads } from '@/common/models/leads.schema';
 import { Users } from '@/common/models/users.schema';
+import {
+	ensureLeadContactNumberIsUnique,
+	isDuplicateLeadContactNumberError,
+} from '@/leads/backend/lead-contact-number';
 import type { CreateLeadInput } from './create-lead.type';
 import { createLeadInputSchema } from './create-lead.input-schema';
 
@@ -19,6 +24,9 @@ export async function createLead(input: CreateLeadInput) {
 	}
 
 	const validatedData = createLeadInputSchema.parse(input);
+	const normalizedCustomerNumber = await ensureLeadContactNumberIsUnique(
+		validatedData.customer_number,
+	);
 	const { loan_officer_id, ...leadData } = validatedData;
 	let loanOfficerFields = {};
 
@@ -31,6 +39,7 @@ export async function createLead(input: CreateLeadInput) {
 			_id: loan_officer_id,
 			role: UserRole.LOAN_OFFICER,
 			status: 'active',
+			availability_status: UserAvailabilityStatus.ACTIVE,
 		})
 			.select('_id name')
 			.lean<{ _id: Types.ObjectId; name: string }>();
@@ -45,11 +54,19 @@ export async function createLead(input: CreateLeadInput) {
 	const newLead = new Leads({
 		...leadData,
 		...loanOfficerFields,
+		customer_number_normalized: normalizedCustomerNumber,
 		created_by: new Types.ObjectId(currentUser.id),
 		status: 'pending',
 	});
 
-	await newLead.save();
+	try {
+		await newLead.save();
+	} catch (error) {
+		if (isDuplicateLeadContactNumberError(error)) {
+			throw new Error('Lead with this contact number already exists');
+		}
+		throw error;
+	}
 
 	return newLead;
 }

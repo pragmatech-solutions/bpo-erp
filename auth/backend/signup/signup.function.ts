@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/common/database';
 import { Users } from '@/common/models/users.schema';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import { SignupInput } from './signup.input-schema';
 import { UserResponse } from '../login/login.type';
 
@@ -61,6 +62,7 @@ export async function signupUser(input: SignupInput): Promise<UserResponse> {
 			phone_number: normalizedPhoneNumber,
 			role,
 			status: 'inactive',
+			availability_status: UserAvailabilityStatus.INACTIVE,
 			created_at: now,
 			updated_at: now,
 		});
@@ -72,6 +74,7 @@ export async function signupUser(input: SignupInput): Promise<UserResponse> {
 			phone_number: normalizedPhoneNumber,
 			role,
 			status: 'inactive',
+			availability_status: UserAvailabilityStatus.INACTIVE,
 		};
 	} catch (error: unknown) {
 		if (isDuplicateKeyError(error)) {

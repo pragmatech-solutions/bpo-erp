@@ -9,6 +9,7 @@ export type ListLeadsInput = {
 	campaign?: string;
 	agentId?: string;
 	paymentStatus?: 'paid' | 'unpaid';
+	deletedFilter?: 'active' | 'deleted' | 'all';
 };
 
 export type ListedCallTransferLeadDetails = {
@@ -45,6 +46,11 @@ export type ListedLead = {
 	statusReason?: string;
 	paymentStatus?: 'paid' | 'unpaid';
 	updatedAt: string;
+	deletedAt?: string;
+	deletedBy?: {
+		id: string;
+		name: string;
+	};
 	campaign: string;
 	callTransfer?: ListedCallTransferLeadDetails;
 	created_by: {
