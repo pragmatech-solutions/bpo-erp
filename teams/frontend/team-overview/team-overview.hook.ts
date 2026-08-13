@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants/pagination';
 import type {
 	TeamLeadOption,
 	TeamOverviewItem,
@@ -72,7 +73,7 @@ export function useTeamOverviewHook() {
 		billable: 0,
 		nonBillable: 0,
 	});
-	const limit = 8;
+	const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 
 	const totalPages = useMemo(
 		() => Math.max(1, Math.ceil(total / limit)),
@@ -146,6 +147,10 @@ export function useTeamOverviewHook() {
 		setPage,
 		total,
 		limit,
+		setLimit: (value: number) => {
+			setLimit(value);
+			setPage(1);
+		},
 		totalPages,
 		isLoading,
 		errorMessage,

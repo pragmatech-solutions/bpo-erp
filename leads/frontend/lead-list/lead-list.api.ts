@@ -7,6 +7,9 @@ import type {
 export type LeadListApiResponse = {
 	success: boolean;
 	data?: ListedLead[];
+	total?: number;
+	page?: number;
+	limit?: number;
 	error?: string;
 };
 
@@ -15,6 +18,7 @@ export async function getLeadsApi(
 ): Promise<LeadListApiResponse> {
 	try {
 		const query = new URLSearchParams();
+		if (input.page) query.append('page', String(input.page));
 		if (input.limit) query.append('limit', String(input.limit));
 		if (input.startDate)
 			query.append('startDate', input.startDate.toISOString());
@@ -36,5 +40,3 @@ export async function getLeadsApi(
 		return { success: false, error: message };
 	}
 }
-
-
