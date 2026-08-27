@@ -9,7 +9,6 @@ export async function getTeamAgentObjectIds(teamId: string) {
 
 	const agents = await Users.find({
 		role: UserRole.AGENT,
-		status: 'active',
 		team_id: new Types.ObjectId(teamId),
 	})
 		.select('_id')

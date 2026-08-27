@@ -47,6 +47,12 @@ function formatStatus(status: string) {
 		.join(' ');
 }
 
+function formatAgentFilterLabel(agent: { name: string; status?: string }) {
+	if (!agent.status || agent.status === 'active') return agent.name;
+
+	return agent.name + ' (' + formatStatus(agent.status) + ')';
+}
+
 export function TeamDashboard() {
 	const { data, agents, isLoading, errorMessage, filters, resetFilters } =
 		useTeamDashboardHook();
@@ -148,7 +154,7 @@ export function TeamDashboard() {
 							<SelectItem value="All Agents">All Agents</SelectItem>
 							{agents.map((agent) => (
 								<SelectItem key={agent.id} value={agent.id}>
-									{agent.name}
+									{formatAgentFilterLabel(agent)}
 								</SelectItem>
 							))}
 						</SelectContent>

@@ -49,6 +49,12 @@ function formatStatusLabel(status: LeadStatusFilter) {
 		.join(' ');
 }
 
+function formatAgentFilterLabel(agent: { name: string; status?: string }) {
+	if (!agent.status || agent.status === 'active') return agent.name;
+
+	return agent.name + ' (' + agent.status.charAt(0).toUpperCase() + agent.status.slice(1) + ')';
+}
+
 export function LeadList() {
 	const {
 		leads,
@@ -58,7 +64,9 @@ export function LeadList() {
 		resetFilters,
 		isAdmin,
 		canFilterAgents,
+		canViewPaymentStatus,
 		agents,
+		teams,
 		campaignOptions,
 		refresh,
 	} = useLeadListHook();
@@ -111,7 +119,7 @@ export function LeadList() {
 							</SelectContent>
 						</Select>
 
-						{filters.status === LeadStatus.BILLABLE && (
+						{canViewPaymentStatus && filters.status === LeadStatus.BILLABLE && (
 							<Select
 								value={filters.paymentStatus}
 								onValueChange={(value) =>
@@ -152,6 +160,21 @@ export function LeadList() {
 						</Select>
 
 						{isAdmin && (
+							<Select value={filters.teamId} onValueChange={filters.setTeamId}>
+								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
+									<SelectValue placeholder="All Teams" />
+								</SelectTrigger>
+								<SelectContent className="rounded-[19px] border-none shadow-xl">
+									<SelectItem value="All Teams">All Teams</SelectItem>
+									{teams.map((team) => (
+										<SelectItem key={team.id} value={team.id}>
+											{team.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
+						{isAdmin && (
 							<Select
 								value={filters.deletedFilter}
 								onValueChange={(value) =>
@@ -183,7 +206,7 @@ export function LeadList() {
 									<SelectItem value="All Agents">All Agents</SelectItem>
 									{agents.map((agent) => (
 										<SelectItem key={agent.id} value={agent.id}>
-											{agent.name}
+											{formatAgentFilterLabel(agent)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -229,5 +252,3 @@ export function LeadList() {
 		</div>
 	);
 }
-
-

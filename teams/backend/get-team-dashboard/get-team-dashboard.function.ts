@@ -20,6 +20,7 @@ type TeamAgentDocument = {
 	_id: Types.ObjectId;
 	name: string;
 	email?: string;
+	status?: 'active' | 'inactive' | 'blocked';
 };
 
 type TeamDocument = {
@@ -81,6 +82,7 @@ export async function getTeamDashboard(
 
 	const validatedInput = getTeamDashboardInputSchema.parse(input);
 	const teamObjectId = new Types.ObjectId(currentUser.teamId);
+	const teamLeadObjectId = new Types.ObjectId(currentUser.id);
 	const team = await Teams.findById(teamObjectId)
 		.select('_id name')
 		.lean<TeamDocument>();
@@ -88,10 +90,9 @@ export async function getTeamDashboard(
 
 	const agents = await Users.find({
 		role: UserRole.AGENT,
-		status: 'active',
 		team_id: teamObjectId,
 	})
-		.select('_id name email')
+		.select('_id name email status')
 		.sort({ name: 1 })
 		.lean<TeamAgentDocument[]>();
 
@@ -104,7 +105,10 @@ export async function getTeamDashboard(
 			: []
 		: agents;
 	const displayedAgentIds = displayedAgents.map((agent) => agent._id);
-	const leadMatch = createLeadMatch(displayedAgentIds, validatedInput);
+	const dashboardCreatorIds = validatedInput.agentId
+		? displayedAgentIds
+		: [...displayedAgentIds, teamLeadObjectId];
+	const leadMatch = createLeadMatch(dashboardCreatorIds, validatedInput);
 
 	const statsRows = await Leads.aggregate<MemberStatsRow>([
 		{ $match: leadMatch },
@@ -149,18 +153,18 @@ export async function getTeamDashboard(
 		};
 	});
 
-	const analytics = members.reduce(
-		(totals, member) => ({
-			total: totals.total + member.analytics.total,
-			pending: totals.pending + member.analytics.pending,
-			billable: totals.billable + member.analytics.billable,
-			nonBillable: totals.nonBillable + member.analytics.nonBillable,
+	const analytics = statsRows.reduce(
+		(totals, row) => ({
+			total: totals.total + row.total,
+			pending: totals.pending + row.pending,
+			billable: totals.billable + row.billable,
+			nonBillable: totals.nonBillable + row.nonBillable,
 		}),
 		getEmptyAnalytics(),
 	);
 
 	const campaigns = await Leads.distinct('campaign', {
-		created_by: { $in: agents.map((agent) => agent._id) },
+		created_by: { $in: dashboardCreatorIds },
 	});
 	const leads = await listLeads(validatedInput);
 

@@ -5,6 +5,7 @@ import type {
 	TeamLeadOption,
 	TeamOverviewItem,
 } from '@/teams/backend/manage-teams/manage-teams.type';
+import { getPacificDateRangeForPreset } from '@/common/utils/pacific-time';
 import { getTeamsApi } from './team-overview.api';
 
 export type TeamDurationPreset =
@@ -19,40 +20,11 @@ export type TeamDurationPreset =
 export type TeamStatusFilter = 'all' | 'active' | 'inactive';
 
 function getDurationRange(duration: TeamDurationPreset) {
-	const now = new Date();
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-	let startDate: Date | undefined;
-	let endDate: Date | undefined;
-
-	switch (duration) {
-		case 'Today':
-			startDate = today;
-			break;
-		case 'Yesterday':
-			startDate = new Date(today);
-			startDate.setDate(startDate.getDate() - 1);
-			endDate = today;
-			break;
-		case 'Last 7 Days':
-			startDate = new Date(today);
-			startDate.setDate(startDate.getDate() - 7);
-			break;
-		case 'Last 30 Days':
-			startDate = new Date(today);
-			startDate.setDate(startDate.getDate() - 30);
-			break;
-		case 'This Month':
-			startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-			break;
-		case 'Last Month':
-			startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-			endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-			break;
-		default:
-			break;
+	if (duration === 'All') {
+		return { startDate: undefined, endDate: undefined };
 	}
 
-	return { startDate, endDate };
+	return getPacificDateRangeForPreset(duration);
 }
 
 export function useTeamOverviewHook() {

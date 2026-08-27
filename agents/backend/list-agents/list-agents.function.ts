@@ -13,7 +13,6 @@ export async function listAgents(): Promise<AgentListItem[]> {
 
 	const agentFilter: Record<string, unknown> = {
 		role: UserRole.AGENT,
-		status: 'active',
 	};
 
 	if (currentUser.role === UserRole.TEAM_LEAD) {
@@ -27,6 +26,8 @@ export async function listAgents(): Promise<AgentListItem[]> {
 		currentUser.role !== UserRole.QUALITY_ASSURANCE
 	) {
 		throw new Error('Forbidden: Admin, QA, or team lead access only');
+	} else {
+		agentFilter.status = 'active';
 	}
 
 	const agents = await Users.find(agentFilter).sort({ name: 1 }).lean();
@@ -34,6 +35,7 @@ export async function listAgents(): Promise<AgentListItem[]> {
 	return agents.map((agent) => ({
 		id: String(agent._id),
 		name: String(agent.name),
+		status: agent.status as AgentListItem['status'],
 	}));
 }
 

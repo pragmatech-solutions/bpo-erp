@@ -3,6 +3,7 @@ import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authen
 import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
+import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { listLeadsInputSchema } from './list-leads.input-schema';
 import type { ListedLead, ListLeadsInput } from './list-leads.type';
@@ -23,6 +24,9 @@ export async function listLeads(
 
 	const matchStage: Record<string, unknown> = {};
 	const isAdmin = currentUser.role === UserRole.ADMIN;
+	const canViewPaymentStatus =
+		currentUser.role === UserRole.ADMIN ||
+		currentUser.role === UserRole.TEAM_LEAD;
 
 	if (isAdmin) {
 		if (validatedInput.deletedFilter === 'active') {
@@ -34,7 +38,41 @@ export async function listLeads(
 		matchStage.deleted_at = { $exists: false };
 	}
 
-	if (isAdmin || currentUser.role === UserRole.QUALITY_ASSURANCE) {
+	if (isAdmin) {
+		const requestedAgentId = validatedInput.agentId;
+		const requestedTeamId = validatedInput.teamId;
+		let teamCreatorIds: Types.ObjectId[] | undefined;
+
+		if (
+			requestedTeamId &&
+			requestedTeamId !== 'All Teams' &&
+			Types.ObjectId.isValid(requestedTeamId)
+		) {
+			const teamUsers = await Users.find({
+				team_id: new Types.ObjectId(requestedTeamId),
+			})
+				.select('_id')
+				.lean<{ _id: Types.ObjectId }[]>();
+			teamCreatorIds = teamUsers.map((user) => user._id);
+		}
+
+		if (
+			requestedAgentId &&
+			requestedAgentId !== 'All Agents' &&
+			Types.ObjectId.isValid(requestedAgentId)
+		) {
+			const agentObjectId = new Types.ObjectId(requestedAgentId);
+			const agentMatchesTeam = teamCreatorIds
+				? teamCreatorIds.some(
+						(creatorId) => creatorId.toString() === agentObjectId.toString(),
+					)
+				: true;
+
+			matchStage.created_by = agentMatchesTeam ? agentObjectId : { $in: [] };
+		} else if (teamCreatorIds) {
+			matchStage.created_by = { $in: teamCreatorIds };
+		}
+	} else if (currentUser.role === UserRole.QUALITY_ASSURANCE) {
 		if (
 			validatedInput.agentId &&
 			validatedInput.agentId !== 'All Agents' &&
@@ -48,16 +86,18 @@ export async function listLeads(
 		}
 
 		const teamAgentIds = await getTeamAgentObjectIds(currentUser.teamId);
+		const teamLeadId = new Types.ObjectId(currentUser.id);
+		const teamCreatorIds = [...teamAgentIds, teamLeadId];
 		const requestedAgentId = validatedInput.agentId;
 
 		if (requestedAgentId && requestedAgentId !== 'All Agents') {
-			const selectedAgentId = teamAgentIds.find(
-				(agentId) => agentId.toString() === requestedAgentId,
+			const selectedCreatorId = teamCreatorIds.find(
+				(creatorId) => creatorId.toString() === requestedAgentId,
 			);
 
-			matchStage.created_by = selectedAgentId ? selectedAgentId : { $in: [] };
+			matchStage.created_by = selectedCreatorId ? selectedCreatorId : { $in: [] };
 		} else {
-			matchStage.created_by = { $in: teamAgentIds };
+			matchStage.created_by = { $in: teamCreatorIds };
 		}
 	} else if (currentUser.role === UserRole.AGENT) {
 		matchStage.created_by = new Types.ObjectId(currentUser.id);
@@ -71,7 +111,7 @@ export async function listLeads(
 		matchStage.status = validatedInput.status;
 	}
 
-	if (validatedInput.paymentStatus) {
+	if (canViewPaymentStatus && validatedInput.paymentStatus) {
 		matchStage.payment_status = validatedInput.paymentStatus;
 	}
 
@@ -198,5 +238,14 @@ export async function listLeads(
 		},
 	]);
 
-	return leads as ListedLead[];
+	const listedLeads = leads as ListedLead[];
+
+	if (!canViewPaymentStatus) {
+		return listedLeads.map((lead) => ({
+			...lead,
+			paymentStatus: undefined,
+		}));
+	}
+
+	return listedLeads;
 }

@@ -26,6 +26,7 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { cn } from '@/lib/utils';
 import { softDeleteLeadApi } from './soft-delete-lead.api';
+import { formatDateInPacificTime } from '@/common/utils/pacific-time';
 
 interface LeadCardProps {
 	lead: ListedLead;
@@ -85,7 +86,13 @@ function DetailItem({ label, value, icon }: DetailItemProps) {
 	);
 }
 
-function LeadBadges({ lead }: { lead: ListedLead }) {
+function LeadBadges({
+	lead,
+	canViewPaymentStatus,
+}: {
+	lead: ListedLead;
+	canViewPaymentStatus: boolean;
+}) {
 	const isCallTransfer = lead.leadType === 'call_transfer';
 
 	return (
@@ -103,19 +110,25 @@ function LeadBadges({ lead }: { lead: ListedLead }) {
 			) : null}
 
 			{lead.status === LeadStatus.BILLABLE ? (
-				<span className="inline-flex overflow-hidden rounded-full text-[10px] lg:text-[12px]">
-					<span className="bg-[#D1FAE5] px-3 py-1 text-[#10B981]">
+				canViewPaymentStatus ? (
+					<span className="inline-flex overflow-hidden rounded-full text-[10px] lg:text-[12px]">
+						<span className="bg-[#D1FAE5] px-3 py-1 text-[#10B981]">
+							Billable
+						</span>
+						<span
+							className={cn(
+								'px-3 py-1 text-white',
+								lead.paymentStatus === 'paid' ? 'bg-[#10B981]' : 'bg-[#F43F5E]',
+							)}
+						>
+							{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
+						</span>
+					</span>
+				) : (
+					<span className="rounded-full bg-[#D1FAE5] px-3 py-1 text-[10px] text-[#10B981] lg:text-[12px]">
 						Billable
 					</span>
-					<span
-						className={cn(
-							'px-3 py-1 text-white',
-							lead.paymentStatus === 'paid' ? 'bg-[#10B981]' : 'bg-[#F43F5E]',
-						)}
-					>
-						{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
-					</span>
-				</span>
+				)
 			) : (
 				<span
 					className={cn(
@@ -129,7 +142,6 @@ function LeadBadges({ lead }: { lead: ListedLead }) {
 		</div>
 	);
 }
-
 function CallTransferDetails({ lead }: { lead: ListedLead }) {
 	const details = lead.callTransfer;
 	if (lead.leadType !== 'call_transfer' || !details) return null;
@@ -176,6 +188,8 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 		currentRole === UserRole.QUALITY_ASSURANCE ||
 		currentRole === UserRole.LOAN_OFFICER;
 	const canSoftDelete = currentRole === UserRole.ADMIN && !lead.deletedAt;
+	const canViewPaymentStatus =
+		currentRole === UserRole.ADMIN || currentRole === UserRole.TEAM_LEAD;
 
 	const handleClick = () => {
 		if (canEdit) {
@@ -232,7 +246,7 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 				</div>
 
 				<div className="flex flex-col items-end gap-2">
-					<LeadBadges lead={lead} />
+					<LeadBadges lead={lead} canViewPaymentStatus={canViewPaymentStatus} />
 					{canSoftDelete ? (
 						<Button
 							type="button"
@@ -272,7 +286,7 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 				<DetailItem label="Username" value={lead.username} icon={<User size={14} />} />
 				<DetailItem
 					label="Updated At"
-					value={new Date(lead.updatedAt).toLocaleDateString('en-GB')}
+					value={formatDateInPacificTime(lead.updatedAt)}
 					icon={<Calendar size={14} />}
 				/>
 			</div>
@@ -280,7 +294,7 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 			{lead.deletedAt ? (
 				<div className="mt-5 rounded-[12px] border border-[#CBD5E1] bg-[#F1F5F9] px-4 py-3 text-[12px] font-medium text-[#475569] lg:text-[14px]">
 					Deleted by {lead.deletedBy?.name || 'Unknown'} on{' '}
-					{new Date(lead.deletedAt).toLocaleDateString('en-GB')}
+					{formatDateInPacificTime(lead.deletedAt)}
 				</div>
 			) : null}
 

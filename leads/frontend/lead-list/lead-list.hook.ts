@@ -9,7 +9,13 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 import { getAgentsApi } from '@/agents/frontend/list-agents';
 import type { AgentListItem } from '@/agents/backend/list-agents/list-agents.type';
 import { getCampaignOptionsApi } from '@/campaigns/frontend/campaign-options';
+import { getTeamsApi } from '@/teams/frontend/team-overview';
+import type { TeamOverviewItem } from '@/teams/backend/manage-teams/manage-teams.type';
 import { CAMPAIGNS } from '@/common/constants/campaigns';
+import {
+	getPacificDateRangeForPreset,
+	getPacificDateRangeFromCalendarDates,
+} from '@/common/utils/pacific-time';
 
 export type DurationPreset =
 	| 'Today'
@@ -51,6 +57,7 @@ export function useLeadListHook() {
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [campaign, setCampaign] = useState<string>('All Campaigns');
 	const [agentId, setAgentId] = useState<string>('All Agents');
+	const [teamId, setTeamId] = useState<string>('All Teams');
 	const [deletedFilter, setDeletedFilter] =
 		useState<DeletedLeadFilter>('active');
 	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
@@ -65,11 +72,14 @@ export function useLeadListHook() {
 		getServerRoleSnapshot,
 	);
 	const isAdmin = currentRole === UserRole.ADMIN;
+	const canViewPaymentStatus =
+		currentRole === UserRole.ADMIN || currentRole === UserRole.TEAM_LEAD;
 	const canFilterAgents =
 		currentRole === UserRole.ADMIN ||
 		currentRole === UserRole.TEAM_LEAD ||
 		currentRole === UserRole.QUALITY_ASSURANCE;
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
+	const [teams, setTeams] = useState<TeamOverviewItem[]>([]);
 
 
 	useEffect(() => {
@@ -98,53 +108,47 @@ export function useLeadListHook() {
 			fetchAgents();
 		}
 	}, [canFilterAgents]);
+	useEffect(() => {
+		if (!isAdmin) return;
+
+		async function loadTeams() {
+			try {
+				const data = await getTeamsApi({ page: 1, limit: 50 });
+				setTeams(data.teams);
+			} catch {
+				setTeams([]);
+			}
+		}
+
+		loadTeams();
+	}, [isAdmin]);
 
 	const fetchLeads = useCallback(async () => {
 		setIsLoading(true);
 		let startDate: Date | undefined;
 		let endDate: Date | undefined;
 
-		const now = new Date();
-		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-		const endOfToday = new Date(today);
-		endOfToday.setHours(23, 59, 59, 999);
-
 		switch (duration) {
 			case 'Today':
-				startDate = today;
-				break;
 			case 'Yesterday':
-				startDate = new Date(today);
-				startDate.setDate(startDate.getDate() - 1);
-				endDate = today;
-				break;
 			case 'Last 7 Days':
-				startDate = new Date(today);
-				startDate.setDate(startDate.getDate() - 7);
-				break;
-			case 'Week to Date': {
-				const dayOfWeek = today.getDay();
-				const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-				startDate = new Date(today);
-				startDate.setDate(startDate.getDate() - daysSinceMonday);
-				endDate = endOfToday;
+			case 'Week to Date':
+			case 'Last 30 Days':
+			case 'This Month':
+			case 'Last Month': {
+				const pacificRange = getPacificDateRangeForPreset(duration);
+				startDate = pacificRange.startDate;
+				endDate = pacificRange.endDate;
 				break;
 			}
-			case 'Last 30 Days':
-				startDate = new Date(today);
-				startDate.setDate(startDate.getDate() - 30);
-				break;
-			case 'This Month':
-				startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-				break;
-			case 'Last Month':
-				startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-				endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-				break;
 			case 'Custom Range':
 				if (customDateRange) {
-					startDate = customDateRange.start;
-					endDate = customDateRange.end;
+					const pacificRange = getPacificDateRangeFromCalendarDates(
+						customDateRange.start,
+						customDateRange.end,
+					);
+					startDate = pacificRange.startDate;
+					endDate = pacificRange.endDate;
 				}
 				break;
 			default:
@@ -157,11 +161,14 @@ export function useLeadListHook() {
 			search: search || undefined,
 			status: status === 'All Status' ? undefined : status,
 			paymentStatus:
-				paymentStatus === 'All Payment Status' ? undefined : paymentStatus,
+				canViewPaymentStatus && paymentStatus !== 'All Payment Status'
+					? paymentStatus
+					: undefined,
 			startDate,
 			endDate,
 			campaign: campaign === 'All Campaigns' ? undefined : campaign,
 			agentId: agentId === 'All Agents' ? undefined : agentId,
+			teamId: isAdmin && teamId !== 'All Teams' ? teamId : undefined,
 			deletedFilter: isAdmin ? deletedFilter : undefined,
 		});
 
@@ -179,10 +186,12 @@ export function useLeadListHook() {
 		search,
 		status,
 		paymentStatus,
+		canViewPaymentStatus,
 		duration,
 		customDateRange,
 		campaign,
 		agentId,
+		teamId,
 		deletedFilter,
 		isAdmin,
 	]);
@@ -201,6 +210,7 @@ export function useLeadListHook() {
 		setDuration('All');
 		setCampaign('All Campaigns');
 		setAgentId('All Agents');
+		setTeamId('All Teams');
 		setDeletedFilter('active');
 		setCustomDateRange(null);
 	};
@@ -211,7 +221,9 @@ export function useLeadListHook() {
 		errorMessage,
 		isAdmin,
 		canFilterAgents,
+		canViewPaymentStatus,
 		agents,
+		teams,
 		campaignOptions,
 		filters: {
 			search,
@@ -226,6 +238,8 @@ export function useLeadListHook() {
 			setCampaign,
 			agentId,
 			setAgentId,
+			teamId,
+			setTeamId,
 			deletedFilter,
 			setDeletedFilter,
 			customDateRange,
@@ -235,8 +249,3 @@ export function useLeadListHook() {
 		refresh: fetchLeads,
 	};
 }
-
-
-
-
-

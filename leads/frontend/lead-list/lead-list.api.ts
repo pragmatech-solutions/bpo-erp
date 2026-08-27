@@ -24,6 +24,7 @@ export async function getLeadsApi(
 		if (input.search) query.append('search', input.search);
 		if (input.campaign) query.append('campaign', input.campaign);
 		if (input.agentId) query.append('agentId', input.agentId);
+		if (input.teamId) query.append('teamId', input.teamId);
 		if (input.deletedFilter) query.append('deletedFilter', input.deletedFilter);
 
 		// apiClient is a function in this project, not an object with a .get method
@@ -36,5 +37,3 @@ export async function getLeadsApi(
 		return { success: false, error: message };
 	}
 }
-
-
