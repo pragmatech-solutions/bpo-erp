@@ -17,6 +17,7 @@ import {
 	type GetTeamPerformanceInput,
 	type ListTeamsInput,
 } from './manage-teams.input-schema';
+import type { UserAccountStatus } from '@/users/backend/manage-users/manage-users.type';
 import type {
 	LeadStats,
 	TeamMemberPerformance,
@@ -37,6 +38,7 @@ type UserDocument = {
 	name: string;
 	email?: string;
 	role: UserRole;
+	status?: UserAccountStatus;
 };
 
 const MEMBER_ROLES = [UserRole.AGENT, UserRole.LOAN_OFFICER];
@@ -337,6 +339,7 @@ async function buildMemberPerformance(
 		name: member.name,
 		email: member.email,
 		role: member.role,
+		status: member.status || 'inactive',
 		stats: await getLeadStatsForMembers(
 			isLoanOfficer ? [] : [member._id],
 			isLoanOfficer ? [member._id] : [],
@@ -379,7 +382,7 @@ export async function getTeamPerformance(
 			team_id: team._id,
 			role: { $in: MEMBER_ROLES },
 		})
-			.select('_id name email role')
+			.select('_id name email role status')
 			.sort({ name: 1 })
 			.lean<UserDocument[]>(),
 	]);

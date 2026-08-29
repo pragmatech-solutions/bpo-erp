@@ -69,6 +69,16 @@ function memberBreakdown(team: TeamOverviewItem) {
 	return `${team.agentCount} agents · ${team.loanOfficerCount} loan officers`;
 }
 
+function formatAccountStatus(status: string) {
+	return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function getAccountStatusDotClass(status: string) {
+	if (status === 'blocked') return 'bg-[#F43F5E]';
+	if (status === 'inactive') return 'bg-[#F59E0B]';
+	return 'bg-[#10B981]';
+}
+
 function StatCards({
 	stats,
 }: {
@@ -499,8 +509,8 @@ function DesktopTeamSection({
 									{String(member.stats.nonBillable).padStart(2, '0')}
 								</span>
 								<span className="flex items-center gap-2">
-									<span className="size-2 rounded-full bg-[#10B981]" />
-									Active
+									<span className={getAccountStatusDotClass(member.status) + ' size-2 rounded-full'} />
+									{formatAccountStatus(member.status)}
 								</span>
 							</div>
 						))
@@ -652,8 +662,8 @@ function TeamMobileCard({
 										{String(member.stats.nonBillable).padStart(2, '0')}
 									</span>
 									<span className="flex items-center gap-1">
-										<span className="size-1.5 rounded-full bg-[#10B981]" />
-										Active
+										<span className={getAccountStatusDotClass(member.status) + ' size-1.5 rounded-full'} />
+										{formatAccountStatus(member.status)}
 									</span>
 								</div>
 							))

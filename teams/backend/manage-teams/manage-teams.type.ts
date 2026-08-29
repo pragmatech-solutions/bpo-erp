@@ -1,4 +1,5 @@
 import type { UserRole } from '@/common/constants/user-roles.enum';
+import type { UserAccountStatus } from '@/users/backend/manage-users/manage-users.type';
 
 export type LeadStats = {
 	total: number;
@@ -38,6 +39,7 @@ export type TeamMemberPerformance = {
 	name: string;
 	email?: string;
 	role: UserRole;
+	status: UserAccountStatus;
 	stats: LeadStats;
 };
 
