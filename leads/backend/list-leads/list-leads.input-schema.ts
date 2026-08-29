@@ -23,4 +23,5 @@ export const listLeadsInputSchema = z.object({
 	agentId: z.string().optional(),
 	teamId: z.string().optional(),
 	deletedFilter: z.enum(['active', 'deleted', 'all']).default('active'),
+	leadType: z.enum(['standard', 'call_transfer']).optional(),
 });

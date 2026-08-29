@@ -17,6 +17,20 @@ import type {
 	ListLeadsResult,
 } from './list-leads.type';
 
+function addAndCondition(
+	matchStage: Record<string, unknown>,
+	condition: Record<string, unknown>,
+) {
+	const existingConditions = matchStage.$and;
+
+	if (Array.isArray(existingConditions)) {
+		existingConditions.push(condition);
+		return;
+	}
+
+	matchStage.$and = [condition];
+}
+
 export async function listLeads(
 	input: ListLeadsInput = {},
 ): Promise<ListLeadsResult> {
@@ -143,6 +157,18 @@ export async function listLeads(
 
 	if (validatedInput.campaign) {
 		matchStage.campaign = validatedInput.campaign;
+	}
+
+	if (validatedInput.leadType === 'call_transfer') {
+		matchStage.lead_type = 'call_transfer';
+	} else if (validatedInput.leadType === 'standard') {
+		addAndCondition(matchStage, {
+			$or: [
+				{ lead_type: 'standard' },
+				{ lead_type: { $exists: false } },
+				{ lead_type: null },
+			],
+		});
 	}
 
 	if (validatedInput.search) {

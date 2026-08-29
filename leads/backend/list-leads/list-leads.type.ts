@@ -1,5 +1,7 @@
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 
+export type LeadTypeFilter = 'standard' | 'call_transfer';
+
 export type ListLeadsInput = {
 	page?: number;
 	limit?: number;
@@ -12,6 +14,7 @@ export type ListLeadsInput = {
 	teamId?: string;
 	paymentStatus?: 'paid' | 'unpaid';
 	deletedFilter?: 'active' | 'deleted' | 'all';
+	leadType?: LeadTypeFilter;
 };
 
 export type ListedCallTransferLeadDetails = {

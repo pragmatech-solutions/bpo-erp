@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/common/database';
 import { Users } from '@/common/models/users.schema';
 import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
+import { UserRole } from '@/common/constants/user-roles.enum';
 import { SignupInput } from './signup.input-schema';
 import { UserResponse } from '../login/login.type';
 
@@ -35,7 +36,8 @@ function getDuplicateKeyMessage(error: MongoDuplicateKeyError) {
 export async function signupUser(input: SignupInput): Promise<UserResponse> {
 	await connectToDatabase();
 
-	const { name, username, email, password, role, phone_number } = input;
+	const { name, username, email, password, phone_number } = input;
+	const role = UserRole.AGENT;
 	const normalizedUsername = username.trim().toLowerCase();
 	const normalizedEmail = email?.trim().toLowerCase();
 	const normalizedPhoneNumber = phone_number?.trim() || undefined;

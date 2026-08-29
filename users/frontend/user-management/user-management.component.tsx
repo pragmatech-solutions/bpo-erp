@@ -21,7 +21,11 @@ import type {
 } from '@/users/backend/manage-users/manage-users.type';
 import { useUserManagementHook } from './user-management.hook';
 
-const teamLeadAccountStatuses: UserAccountStatus[] = ['active', 'inactive'];
+const teamLeadAccountStatuses: UserAccountStatus[] = [
+	'active',
+	'inactive',
+	'blocked',
+];
 const adminAccountStatuses: UserAccountStatus[] = [
 	'active',
 	'inactive',

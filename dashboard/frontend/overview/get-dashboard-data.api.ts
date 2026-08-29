@@ -24,6 +24,7 @@ export async function getDashboardDataApi(
 		if (input.agentId) query.append('agentId', input.agentId);
 		if (input.teamId) query.append('teamId', input.teamId);
 		if (input.deletedFilter) query.append('deletedFilter', input.deletedFilter);
+		if (input.leadType) query.append('leadType', input.leadType);
 
 		const endpoint = query.size
 			? `/dashboard/api?${query.toString()}`

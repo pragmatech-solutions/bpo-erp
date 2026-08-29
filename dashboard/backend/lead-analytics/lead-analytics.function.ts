@@ -15,6 +15,20 @@ import { listLeadsInputSchema } from '@/leads/backend/list-leads/list-leads.inpu
 import type { ListLeadsInput } from '@/leads/backend/list-leads/list-leads.type';
 import type { DashboardData } from './lead-analytics.type';
 
+function addAndCondition(
+	matchStage: Record<string, unknown>,
+	condition: Record<string, unknown>,
+) {
+	const existingConditions = matchStage.$and;
+
+	if (Array.isArray(existingConditions)) {
+		existingConditions.push(condition);
+		return;
+	}
+
+	matchStage.$and = [condition];
+}
+
 async function buildDashboardMatchStage(
 	input: ListLeadsInput,
 ): Promise<Record<string, unknown>> {
@@ -116,6 +130,17 @@ async function buildDashboardMatchStage(
 		matchStage.payment_status = validatedInput.paymentStatus;
 	}
 	if (validatedInput.campaign) matchStage.campaign = validatedInput.campaign;
+	if (validatedInput.leadType === 'call_transfer') {
+		matchStage.lead_type = 'call_transfer';
+	} else if (validatedInput.leadType === 'standard') {
+		addAndCondition(matchStage, {
+			$or: [
+				{ lead_type: 'standard' },
+				{ lead_type: { $exists: false } },
+				{ lead_type: null },
+			],
+		});
+	}
 	if (Object.keys(dateFilter).length > 0) matchStage.updated_at = dateFilter;
 
 	return matchStage;

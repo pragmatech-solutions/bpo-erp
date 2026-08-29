@@ -16,6 +16,7 @@ import {
 	useOverviewHook,
 	type DashboardDeletedLeadFilter,
 	type DashboardLeadStatusFilter,
+	type DashboardLeadTypeFilter,
 	type DashboardPaymentStatusFilter,
 } from './overview.hook';
 
@@ -32,6 +33,11 @@ const PAYMENT_STATUSES: DashboardPaymentStatusFilter[] = [
 	'unpaid',
 ];
 
+const LEAD_TYPES: Array<{ label: string; value: DashboardLeadTypeFilter }> = [
+	{ label: 'All Lead Types', value: 'All Lead Types' },
+	{ label: 'Call Transfer', value: 'call_transfer' },
+	{ label: 'Standard Leads', value: 'standard' },
+];
 const DELETED_FILTERS: Array<{
 	label: string;
 	value: DashboardDeletedLeadFilter;
@@ -200,6 +206,23 @@ export function Overview() {
 							</Select>
 						)}
 
+						<Select
+							value={filters.leadType}
+							onValueChange={(value) =>
+								filters.setLeadType(value as DashboardLeadTypeFilter)
+							}
+						>
+							<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
+								<SelectValue placeholder="All Lead Types" />
+							</SelectTrigger>
+							<SelectContent className="rounded-[19px] border-none shadow-xl">
+								{LEAD_TYPES.map((leadType) => (
+									<SelectItem key={leadType.value} value={leadType.value}>
+										{leadType.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 						<Select
 							value={filters.campaign}
 							onValueChange={filters.setCampaign}

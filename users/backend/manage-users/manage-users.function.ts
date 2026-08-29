@@ -173,13 +173,8 @@ export async function updateManagedUser(input: UpdateUserInput) {
 		) {
 			throw new Error('Forbidden: Team leads can only update account status');
 		}
-		if (
-			validatedInput.status !== 'active' &&
-			validatedInput.status !== 'inactive'
-		) {
-			throw new Error(
-				'Forbidden: User account status can only be active or inactive',
-			);
+		if (!validatedInput.status) {
+			throw new Error('Forbidden: Team leads can only update account status');
 		}
 		if (
 			!MEMBER_ROLES.includes(targetUser.role) ||

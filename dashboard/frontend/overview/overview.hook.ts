@@ -39,6 +39,10 @@ export type DashboardPaymentStatusFilter =
 	| 'paid'
 	| 'unpaid'
 	| 'All Payment Status';
+export type DashboardLeadTypeFilter =
+	| 'All Lead Types'
+	| 'standard'
+	| 'call_transfer';
 export type DashboardDeletedLeadFilter = 'active' | 'deleted' | 'all';
 
 function subscribeToCurrentUser(callback: () => void) {
@@ -101,6 +105,8 @@ export function useOverviewHook() {
 	const [teamId, setTeamId] = useState<string>('All Teams');
 	const [deletedFilter, setDeletedFilter] =
 		useState<DashboardDeletedLeadFilter>('active');
+	const [leadType, setLeadType] =
+		useState<DashboardLeadTypeFilter>('All Lead Types');
 	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;
@@ -180,6 +186,7 @@ export function useOverviewHook() {
 			agentId: agentId === 'All Agents' ? undefined : agentId,
 			teamId: isAdmin && teamId !== 'All Teams' ? teamId : undefined,
 			deletedFilter: isAdmin ? deletedFilter : undefined,
+			leadType: leadType === 'All Lead Types' ? undefined : leadType,
 		});
 
 		if (!response.success || !response.data) {
@@ -202,6 +209,7 @@ export function useOverviewHook() {
 		agentId,
 		teamId,
 		deletedFilter,
+		leadType,
 		isAdmin,
 	]);
 
@@ -229,6 +237,8 @@ export function useOverviewHook() {
 			setTeamId,
 			deletedFilter,
 			setDeletedFilter,
+			leadType,
+			setLeadType,
 			customDateRange,
 			setCustomDateRange,
 		}),
@@ -240,6 +250,7 @@ export function useOverviewHook() {
 			agentId,
 			teamId,
 			deletedFilter,
+			leadType,
 			customDateRange,
 		],
 	);
@@ -252,6 +263,7 @@ export function useOverviewHook() {
 		setAgentId('All Agents');
 		setTeamId('All Teams');
 		setDeletedFilter('active');
+		setLeadType('All Lead Types');
 		setCustomDateRange(null);
 	};
 

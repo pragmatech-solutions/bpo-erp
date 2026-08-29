@@ -19,6 +19,7 @@ export async function GET(req: Request) {
 		const agentId = searchParams.get('agentId') || undefined;
 		const teamId = searchParams.get('teamId') || undefined;
 		const deletedFilter = searchParams.get('deletedFilter') || undefined;
+		const leadType = searchParams.get('leadType') || undefined;
 
 		const validatedInput = listLeadsInputSchema.parse({
 			startDate,
@@ -29,6 +30,7 @@ export async function GET(req: Request) {
 			agentId,
 			teamId,
 			deletedFilter,
+			leadType,
 		});
 
 		const data = await getLeadAnalytics(validatedInput);
