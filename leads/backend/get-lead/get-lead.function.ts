@@ -59,6 +59,9 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 	const currentUser = await getCurrentAuthenticatedUser();
 
 	if (!currentUser) throw new Error('Unauthorized');
+	const canViewPaymentStatus =
+		currentUser.role === UserRole.ADMIN ||
+		currentUser.role === UserRole.TEAM_LEAD;
 
 	const lead = await Leads.findById(input.id)
 		.populate('created_by', 'name')
@@ -87,6 +90,7 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		);
 		const loanOfficerId = lead.loan_officer_id?._id.toString();
 		const canReadLead =
+			lead.created_by._id.toString() === currentUser.id ||
 			agentIds.some(
 				(agentId) => agentId.toString() === lead.created_by._id.toString(),
 			) ||
@@ -143,7 +147,7 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 			: undefined,
 		status: lead.status,
 		statusReason: lead.status_reason,
-		paymentStatus: lead.payment_status,
+		paymentStatus: canViewPaymentStatus ? lead.payment_status : undefined,
 		updatedAt: lead.updated_at.toISOString(),
 		created_by: {
 			id: lead.created_by._id.toString(),

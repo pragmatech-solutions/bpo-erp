@@ -32,6 +32,10 @@ interface LeadCardProps {
 	onSoftDeleteSuccess?: () => void;
 }
 
+function formatDate(value: string) {
+	return new Intl.DateTimeFormat('en-GB').format(new Date(value));
+}
+
 type DetailItemProps = {
 	label: string;
 	value?: string | number | null;
@@ -85,7 +89,13 @@ function DetailItem({ label, value, icon }: DetailItemProps) {
 	);
 }
 
-function LeadBadges({ lead }: { lead: ListedLead }) {
+function LeadBadges({
+	lead,
+	canViewPaymentStatus,
+}: {
+	lead: ListedLead;
+	canViewPaymentStatus: boolean;
+}) {
 	const isCallTransfer = lead.leadType === 'call_transfer';
 
 	return (
@@ -103,19 +113,25 @@ function LeadBadges({ lead }: { lead: ListedLead }) {
 			) : null}
 
 			{lead.status === LeadStatus.BILLABLE ? (
-				<span className="inline-flex overflow-hidden rounded-full text-[10px] lg:text-[12px]">
-					<span className="bg-[#D1FAE5] px-3 py-1 text-[#10B981]">
+				canViewPaymentStatus ? (
+					<span className="inline-flex overflow-hidden rounded-full text-[10px] lg:text-[12px]">
+						<span className="bg-[#D1FAE5] px-3 py-1 text-[#10B981]">
+							Billable
+						</span>
+						<span
+							className={cn(
+								'px-3 py-1 text-white',
+								lead.paymentStatus === 'paid' ? 'bg-[#10B981]' : 'bg-[#F43F5E]',
+							)}
+						>
+							{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
+						</span>
+					</span>
+				) : (
+					<span className="rounded-full bg-[#D1FAE5] px-3 py-1 text-[10px] text-[#10B981] lg:text-[12px]">
 						Billable
 					</span>
-					<span
-						className={cn(
-							'px-3 py-1 text-white',
-							lead.paymentStatus === 'paid' ? 'bg-[#10B981]' : 'bg-[#F43F5E]',
-						)}
-					>
-						{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
-					</span>
-				</span>
+				)
 			) : (
 				<span
 					className={cn(
@@ -129,7 +145,6 @@ function LeadBadges({ lead }: { lead: ListedLead }) {
 		</div>
 	);
 }
-
 function CallTransferDetails({ lead }: { lead: ListedLead }) {
 	const details = lead.callTransfer;
 	if (lead.leadType !== 'call_transfer' || !details) return null;
@@ -141,24 +156,96 @@ function CallTransferDetails({ lead }: { lead: ListedLead }) {
 				<span>Call Transfer Details</span>
 			</div>
 			<div className="grid grid-cols-1 gap-4 text-[#313957] sm:grid-cols-2 xl:grid-cols-3">
-				<DetailItem label="First Name" value={details.firstName} icon={<User size={14} />} />
-				<DetailItem label="Last Name" value={details.lastName} icon={<User size={14} />} />
-				<DetailItem label="Origin Phone" value={details.originPhone} icon={<Phone size={14} />} />
-				<DetailItem label="Address" value={details.address} icon={<MapPin size={14} />} />
-				<DetailItem label="City" value={details.city} icon={<MapPin size={14} />} />
-				<DetailItem label="State" value={details.state} icon={<MapPin size={14} />} />
-				<DetailItem label="ZIP" value={details.zip} icon={<MapPin size={14} />} />
-				<DetailItem label="Email" value={details.email} icon={<Mail size={14} />} />
-				<DetailItem label="Home Value" value={details.homeValue} icon={<Home size={14} />} />
-				<DetailItem label="Loan Balance" value={details.mortgageBalance} icon={<BadgeDollarSign size={14} />} />
-				<DetailItem label="Mortgage Rate Type" value={details.mortgageRateType} icon={<Percent size={14} />} />
-				<DetailItem label="Property Type" value={details.propertyType} icon={<Home size={14} />} />
-				<DetailItem label="Multiple Properties" value={details.multipleProperties} icon={<Layers size={14} />} />
-				<DetailItem label="Mortgage Rate" value={details.mortgageRate} icon={<Percent size={14} />} />
-				<DetailItem label="Cash Out Amount" value={details.cashOutAmount} icon={<BadgeDollarSign size={14} />} />
-				<DetailItem label="Call Transfer Loan Type" value={details.loanType} icon={<Wallet size={14} />} />
-				<DetailItem label="Loan Purpose" value={details.loanPurpose} icon={<Wallet size={14} />} />
-				<DetailItem label="Credit" value={details.credit} icon={<BadgeCheck size={14} />} />
+				<DetailItem
+					label="First Name"
+					value={details.firstName}
+					icon={<User size={14} />}
+				/>
+				<DetailItem
+					label="Last Name"
+					value={details.lastName}
+					icon={<User size={14} />}
+				/>
+				<DetailItem
+					label="Origin Phone"
+					value={details.originPhone}
+					icon={<Phone size={14} />}
+				/>
+				<DetailItem
+					label="Address"
+					value={details.address}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="City"
+					value={details.city}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="State"
+					value={details.state}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="ZIP"
+					value={details.zip}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="Email"
+					value={details.email}
+					icon={<Mail size={14} />}
+				/>
+				<DetailItem
+					label="Home Value"
+					value={details.homeValue}
+					icon={<Home size={14} />}
+				/>
+				<DetailItem
+					label="Loan Balance"
+					value={details.mortgageBalance}
+					icon={<BadgeDollarSign size={14} />}
+				/>
+				<DetailItem
+					label="Mortgage Rate Type"
+					value={details.mortgageRateType}
+					icon={<Percent size={14} />}
+				/>
+				<DetailItem
+					label="Property Type"
+					value={details.propertyType}
+					icon={<Home size={14} />}
+				/>
+				<DetailItem
+					label="Multiple Properties"
+					value={details.multipleProperties}
+					icon={<Layers size={14} />}
+				/>
+				<DetailItem
+					label="Mortgage Rate"
+					value={details.mortgageRate}
+					icon={<Percent size={14} />}
+				/>
+				<DetailItem
+					label="Cash Out Amount"
+					value={details.cashOutAmount}
+					icon={<BadgeDollarSign size={14} />}
+				/>
+				<DetailItem
+					label="Call Transfer Loan Type"
+					value={details.loanType}
+					icon={<Wallet size={14} />}
+				/>
+				<DetailItem
+					label="Loan Purpose"
+					value={details.loanPurpose}
+					icon={<Wallet size={14} />}
+				/>
+				<DetailItem
+					label="Credit"
+					value={details.credit}
+					icon={<BadgeCheck size={14} />}
+				/>
 			</div>
 		</div>
 	);
@@ -176,6 +263,8 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 		currentRole === UserRole.QUALITY_ASSURANCE ||
 		currentRole === UserRole.LOAN_OFFICER;
 	const canSoftDelete = currentRole === UserRole.ADMIN && !lead.deletedAt;
+	const canViewPaymentStatus =
+		currentRole === UserRole.ADMIN || currentRole === UserRole.TEAM_LEAD;
 
 	const handleClick = () => {
 		if (canEdit) {
@@ -185,7 +274,9 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 
 	async function handleSoftDelete(event: React.MouseEvent<HTMLButtonElement>) {
 		event.stopPropagation();
-		if (!confirm('Soft delete this lead? Only admins will be able to view it.')) {
+		if (
+			!confirm('Soft delete this lead? Only admins will be able to view it.')
+		) {
 			return;
 		}
 
@@ -232,7 +323,7 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 				</div>
 
 				<div className="flex flex-col items-end gap-2">
-					<LeadBadges lead={lead} />
+					<LeadBadges lead={lead} canViewPaymentStatus={canViewPaymentStatus} />
 					{canSoftDelete ? (
 						<Button
 							type="button"
@@ -249,10 +340,26 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 			</div>
 
 			<div className="grid grid-cols-1 gap-y-4 text-[#313957] sm:grid-cols-2">
-				<DetailItem label="Number" value={lead.customerNumber} icon={<Phone size={14} />} />
-				<DetailItem label="Created By" value={lead.created_by.name} icon={<User size={14} />} />
-				<DetailItem label="Loan Type" value={lead.loanType} icon={<Wallet size={14} />} />
-				<DetailItem label="Campaign" value={lead.campaign} icon={<Megaphone size={14} />} />
+				<DetailItem
+					label="Number"
+					value={lead.customerNumber}
+					icon={<Phone size={14} />}
+				/>
+				<DetailItem
+					label="Created By"
+					value={lead.created_by.name}
+					icon={<User size={14} />}
+				/>
+				<DetailItem
+					label="Loan Type"
+					value={lead.loanType}
+					icon={<Wallet size={14} />}
+				/>
+				<DetailItem
+					label="Campaign"
+					value={lead.campaign}
+					icon={<Megaphone size={14} />}
+				/>
 
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
@@ -269,10 +376,14 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 					</div>
 				</div>
 
-				<DetailItem label="Username" value={lead.username} icon={<User size={14} />} />
+				<DetailItem
+					label="Username"
+					value={lead.username}
+					icon={<User size={14} />}
+				/>
 				<DetailItem
 					label="Updated At"
-					value={new Date(lead.updatedAt).toLocaleDateString('en-GB')}
+					value={formatDate(lead.updatedAt)}
 					icon={<Calendar size={14} />}
 				/>
 			</div>
@@ -280,7 +391,7 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 			{lead.deletedAt ? (
 				<div className="mt-5 rounded-[12px] border border-[#CBD5E1] bg-[#F1F5F9] px-4 py-3 text-[12px] font-medium text-[#475569] lg:text-[14px]">
 					Deleted by {lead.deletedBy?.name || 'Unknown'} on{' '}
-					{new Date(lead.deletedAt).toLocaleDateString('en-GB')}
+					{formatDate(lead.deletedAt)}
 				</div>
 			) : null}
 

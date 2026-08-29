@@ -20,6 +20,7 @@ type TeamMemberDocument = {
 	_id: Types.ObjectId;
 	name: string;
 	email?: string;
+	status?: 'active' | 'inactive' | 'blocked';
 	role: UserRole;
 };
 
@@ -137,6 +138,7 @@ export async function getTeamDashboard(
 
 	const validatedInput = getTeamDashboardInputSchema.parse(input);
 	const teamObjectId = new Types.ObjectId(currentUser.teamId);
+	const teamLeadObjectId = new Types.ObjectId(currentUser.id);
 	const team = await Teams.findById(teamObjectId)
 		.select('_id name')
 		.lean<TeamDocument>();
@@ -144,10 +146,9 @@ export async function getTeamDashboard(
 
 	const teamMembers = await Users.find({
 		role: { $in: MEMBER_ROLES },
-		status: 'active',
 		team_id: teamObjectId,
 	})
-		.select('_id name email role')
+		.select('_id name email role status')
 		.sort({ name: 1 })
 		.lean<TeamMemberDocument[]>();
 
@@ -167,6 +168,23 @@ export async function getTeamDashboard(
 		validatedInput,
 	);
 
+	// Leads the team lead created themselves aren't tied to any member, but
+	// should still count toward team totals/campaigns when viewing the whole
+	// team (not when a single member is selected).
+	const includeOwnLeads = !validatedInput.agentId;
+	const ownLeadStatsRows = includeOwnLeads
+		? await Leads.aggregate<MemberStatsRow>([
+				{
+					$match: createLeadMatch(
+						'created_by',
+						[teamLeadObjectId],
+						validatedInput,
+					),
+				},
+				createStatsGroupStage('created_by'),
+			])
+		: [];
+
 	const statsByMemberId = new Map(
 		statsRows.map((row) => [row._id.toString(), row]),
 	);
@@ -177,6 +195,7 @@ export async function getTeamDashboard(
 			name: member.name,
 			email: member.email,
 			role: member.role,
+			status: member.status,
 			analytics: stats
 				? {
 						total: stats.total,
@@ -189,20 +208,23 @@ export async function getTeamDashboard(
 		};
 	});
 
-	const analytics = members.reduce(
-		(totals, member) => ({
-			total: totals.total + member.analytics.total,
-			pending: totals.pending + member.analytics.pending,
-			billable: totals.billable + member.analytics.billable,
-			nonBillable: totals.nonBillable + member.analytics.nonBillable,
+	const analytics = [...statsRows, ...ownLeadStatsRows].reduce(
+		(totals, row) => ({
+			total: totals.total + row.total,
+			pending: totals.pending + row.pending,
+			billable: totals.billable + row.billable,
+			nonBillable: totals.nonBillable + row.nonBillable,
 		}),
 		getEmptyAnalytics(),
 	);
 
 	const memberObjectIds = teamMembers.map((member) => member._id);
+	const creatorIds = includeOwnLeads
+		? [...memberObjectIds, teamLeadObjectId]
+		: memberObjectIds;
 	const campaigns = await Leads.distinct('campaign', {
 		$or: [
-			{ created_by: { $in: memberObjectIds } },
+			{ created_by: { $in: creatorIds } },
 			{ loan_officer_id: { $in: memberObjectIds } },
 		],
 	});

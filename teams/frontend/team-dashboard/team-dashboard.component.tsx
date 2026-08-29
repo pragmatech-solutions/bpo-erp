@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { LeadCard } from '@/common/components/lead-card';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import type { UserRole } from '@/common/constants/user-roles.enum';
 import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import {
 	useTeamDashboardHook,
@@ -46,6 +47,20 @@ function formatStatus(status: string) {
 		.split(' ')
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 		.join(' ');
+}
+
+function formatAgentFilterLabel(agent: {
+	name: string;
+	role: UserRole;
+	status?: string;
+}) {
+	let label = `${agent.name} — ${getUserRoleLabel(agent.role)}`;
+
+	if (agent.status && agent.status !== 'active') {
+		label += ` (${formatStatus(agent.status)})`;
+	}
+
+	return label;
 }
 
 export function TeamDashboard() {
@@ -150,7 +165,7 @@ export function TeamDashboard() {
 							<SelectItem value="All Agents">All Members</SelectItem>
 							{agents.map((agent) => (
 								<SelectItem key={agent.id} value={agent.id}>
-									{agent.name} — {getUserRoleLabel(agent.role)}
+									{formatAgentFilterLabel(agent)}
 								</SelectItem>
 							))}
 						</SelectContent>

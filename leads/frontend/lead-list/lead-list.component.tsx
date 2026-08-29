@@ -15,6 +15,7 @@ import { Pagination } from '@/common/components/pagination';
 import { PAGE_SIZE_OPTIONS } from '@/common/constants/pagination';
 import { DurationFilter } from './components/duration-filter.component';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import type { UserRole } from '@/common/constants/user-roles.enum';
 import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import {
 	useLeadListHook,
@@ -51,6 +52,25 @@ function formatStatusLabel(status: LeadStatusFilter) {
 		.join(' ');
 }
 
+function formatAgentFilterLabel(
+	agent: {
+		name: string;
+		role: UserRole;
+		status?: string;
+	},
+	isTeamLead: boolean,
+) {
+	let label = isTeamLead
+		? `${agent.name} — ${getUserRoleLabel(agent.role)}`
+		: agent.name;
+
+	if (agent.status && agent.status !== 'active') {
+		label += ` (${agent.status.charAt(0).toUpperCase()}${agent.status.slice(1)})`;
+	}
+
+	return label;
+}
+
 export function LeadList() {
 	const {
 		leads,
@@ -61,7 +81,9 @@ export function LeadList() {
 		isAdmin,
 		isTeamLead,
 		canFilterAgents,
+		canViewPaymentStatus,
 		agents,
+		teams,
 		campaignOptions,
 		pagination,
 		refresh,
@@ -115,7 +137,7 @@ export function LeadList() {
 							</SelectContent>
 						</Select>
 
-						{filters.status === LeadStatus.BILLABLE && (
+						{canViewPaymentStatus && filters.status === LeadStatus.BILLABLE && (
 							<Select
 								value={filters.paymentStatus}
 								onValueChange={(value) =>
@@ -156,6 +178,21 @@ export function LeadList() {
 						</Select>
 
 						{isAdmin && (
+							<Select value={filters.teamId} onValueChange={filters.setTeamId}>
+								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
+									<SelectValue placeholder="All Teams" />
+								</SelectTrigger>
+								<SelectContent className="rounded-[19px] border-none shadow-xl">
+									<SelectItem value="All Teams">All Teams</SelectItem>
+									{teams.map((team) => (
+										<SelectItem key={team.id} value={team.id}>
+											{team.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
+						{isAdmin && (
 							<Select
 								value={filters.deletedFilter}
 								onValueChange={(value) =>
@@ -192,9 +229,7 @@ export function LeadList() {
 									</SelectItem>
 									{agents.map((agent) => (
 										<SelectItem key={agent.id} value={agent.id}>
-											{isTeamLead
-												? `${agent.name} — ${getUserRoleLabel(agent.role)}`
-												: agent.name}
+											{formatAgentFilterLabel(agent, isTeamLead)}
 										</SelectItem>
 									))}
 								</SelectContent>
