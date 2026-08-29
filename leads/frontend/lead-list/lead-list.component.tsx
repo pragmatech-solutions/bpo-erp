@@ -11,15 +11,18 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { LeadCard } from '@/common/components/lead-card';
+import { Pagination } from '@/common/components/pagination';
+import { PAGE_SIZE_OPTIONS } from '@/common/constants/pagination';
 import { DurationFilter } from './components/duration-filter.component';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import type { UserRole } from '@/common/constants/user-roles.enum';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import {
 	useLeadListHook,
 	type DeletedLeadFilter,
 	type LeadStatusFilter,
 	type PaymentStatusFilter,
 } from './lead-list.hook';
-
 
 const STATUSES: LeadStatusFilter[] = [
 	'All Status',
@@ -49,10 +52,23 @@ function formatStatusLabel(status: LeadStatusFilter) {
 		.join(' ');
 }
 
-function formatAgentFilterLabel(agent: { name: string; status?: string }) {
-	if (!agent.status || agent.status === 'active') return agent.name;
+function formatAgentFilterLabel(
+	agent: {
+		name: string;
+		role: UserRole;
+		status?: string;
+	},
+	isTeamLead: boolean,
+) {
+	let label = isTeamLead
+		? `${agent.name} — ${getUserRoleLabel(agent.role)}`
+		: agent.name;
 
-	return agent.name + ' (' + agent.status.charAt(0).toUpperCase() + agent.status.slice(1) + ')';
+	if (agent.status && agent.status !== 'active') {
+		label += ` (${agent.status.charAt(0).toUpperCase()}${agent.status.slice(1)})`;
+	}
+
+	return label;
 }
 
 export function LeadList() {
@@ -63,11 +79,13 @@ export function LeadList() {
 		filters,
 		resetFilters,
 		isAdmin,
+		isTeamLead,
 		canFilterAgents,
 		canViewPaymentStatus,
 		agents,
 		teams,
 		campaignOptions,
+		pagination,
 		refresh,
 	} = useLeadListHook();
 
@@ -200,13 +218,18 @@ export function LeadList() {
 								onValueChange={filters.setAgentId}
 							>
 								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
-									<SelectValue placeholder="All Agents" />
+									<SelectValue
+										placeholder={isTeamLead ? 'All Members' : 'All Agents'}
+									/>
 								</SelectTrigger>
 								<SelectContent className="rounded-[19px] border-none shadow-xl">
-									<SelectItem value="All Agents">All Agents</SelectItem>
+									{/* "All Agents" is the sentinel the leads API expects. */}
+									<SelectItem value="All Agents">
+										{isTeamLead ? 'All Members' : 'All Agents'}
+									</SelectItem>
 									{agents.map((agent) => (
 										<SelectItem key={agent.id} value={agent.id}>
-											{formatAgentFilterLabel(agent)}
+											{formatAgentFilterLabel(agent, isTeamLead)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -224,7 +247,7 @@ export function LeadList() {
 				</Button>
 			</div>
 
-			<div className="flex-1">
+			<div className="flex flex-1 flex-col gap-6 pb-10">
 				{isLoading ? (
 					<div className="flex h-40 items-center justify-center text-[#313957]">
 						Loading leads...
@@ -238,7 +261,7 @@ export function LeadList() {
 						No leads found.
 					</div>
 				) : (
-					<div className="grid grid-cols-1 gap-6 pb-10 lg:grid-cols-2">
+					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 						{leads.map((lead) => (
 							<LeadCard
 								key={lead.id}
@@ -247,6 +270,22 @@ export function LeadList() {
 							/>
 						))}
 					</div>
+				)}
+
+				{/* Kept mounted while refetching so it does not flicker on every
+				    debounced filter change. */}
+				{!errorMessage && pagination.total > 0 && (
+					<Pagination
+						page={pagination.page}
+						totalPages={pagination.totalPages}
+						total={pagination.total}
+						limit={pagination.limit}
+						itemLabel="leads"
+						onPageChange={pagination.setPage}
+						pageSizeOptions={PAGE_SIZE_OPTIONS}
+						onPageSizeChange={pagination.setLimit}
+						className="rounded-[19px] border-t-0"
+					/>
 				)}
 			</div>
 		</div>

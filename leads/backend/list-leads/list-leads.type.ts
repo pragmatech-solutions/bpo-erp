@@ -1,6 +1,7 @@
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 
 export type ListLeadsInput = {
+	page?: number;
 	limit?: number;
 	startDate?: Date;
 	endDate?: Date;
@@ -58,4 +59,11 @@ export type ListedLead = {
 		id: string;
 		name: string;
 	};
+};
+
+export type ListLeadsResult = {
+	leads: ListedLead[];
+	total: number;
+	page: number;
+	limit: number;
 };

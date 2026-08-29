@@ -3,7 +3,6 @@ import { Schema, model, models } from 'mongoose';
 const TeamSchema = new Schema(
 	{
 		name: { type: String, required: true, unique: true },
-		team_lead: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 		status: { type: String, default: 'active' },
 	},
 	{

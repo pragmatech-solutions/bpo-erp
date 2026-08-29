@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { LeadCard } from '@/common/components/lead-card';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
+import type { UserRole } from '@/common/constants/user-roles.enum';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import {
 	useTeamDashboardHook,
 	type TeamLeadPaymentStatusFilter,
@@ -47,10 +49,18 @@ function formatStatus(status: string) {
 		.join(' ');
 }
 
-function formatAgentFilterLabel(agent: { name: string; status?: string }) {
-	if (!agent.status || agent.status === 'active') return agent.name;
+function formatAgentFilterLabel(agent: {
+	name: string;
+	role: UserRole;
+	status?: string;
+}) {
+	let label = `${agent.name} — ${getUserRoleLabel(agent.role)}`;
 
-	return agent.name + ' (' + formatStatus(agent.status) + ')';
+	if (agent.status && agent.status !== 'active') {
+		label += ` (${formatStatus(agent.status)})`;
+	}
+
+	return label;
 }
 
 export function TeamDashboard() {
@@ -148,10 +158,11 @@ export function TeamDashboard() {
 
 					<Select value={filters.agentId} onValueChange={filters.setAgentId}>
 						<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white lg:w-[214px]">
-							<SelectValue placeholder="All Agents" />
+							<SelectValue placeholder="All Members" />
 						</SelectTrigger>
 						<SelectContent className="rounded-[19px] border-none shadow-xl">
-							<SelectItem value="All Agents">All Agents</SelectItem>
+							{/* "All Agents" is the sentinel the leads API expects. */}
+							<SelectItem value="All Agents">All Members</SelectItem>
 							{agents.map((agent) => (
 								<SelectItem key={agent.id} value={agent.id}>
 									{formatAgentFilterLabel(agent)}
@@ -244,6 +255,9 @@ export function TeamDashboard() {
 									</p>
 									<p className="text-[13px] text-[#8897AD]">
 										{member.email || '—'}
+									</p>
+									<p className="text-[12px] text-[#8897AD]">
+										{getUserRoleLabel(member.role)}
 									</p>
 								</div>
 							</div>

@@ -1,7 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import {
+	useState,
+	useEffect,
+	useCallback,
+	useMemo,
+	useSyncExternalStore,
+} from 'react';
 import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
+import { getTotalPages } from '@/common/components/pagination';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants/pagination';
 import { getLeadsApi } from './lead-list.api';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
@@ -45,6 +53,7 @@ function getCurrentRoleSnapshot() {
 function getServerRoleSnapshot() {
 	return null;
 }
+
 export function useLeadListHook() {
 	const [leads, setLeads] = useState<ListedLead[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +74,11 @@ export function useLeadListHook() {
 		start: Date;
 		end?: Date;
 	} | null>(null);
+	const [page, setPage] = useState(1);
+	const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
+	const [total, setTotal] = useState(0);
+
+	const totalPages = useMemo(() => getTotalPages(total, limit), [total, limit]);
 
 	const currentRole = useSyncExternalStore(
 		subscribeToCurrentUser,
@@ -74,13 +88,15 @@ export function useLeadListHook() {
 	const isAdmin = currentRole === UserRole.ADMIN;
 	const canViewPaymentStatus =
 		currentRole === UserRole.ADMIN || currentRole === UserRole.TEAM_LEAD;
+	// Team leads filter across agents and loan officers; everyone else sees
+	// agents only.
+	const isTeamLead = currentRole === UserRole.TEAM_LEAD;
 	const canFilterAgents =
 		currentRole === UserRole.ADMIN ||
 		currentRole === UserRole.TEAM_LEAD ||
 		currentRole === UserRole.QUALITY_ASSURANCE;
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
 	const [teams, setTeams] = useState<TeamOverviewItem[]>([]);
-
 
 	useEffect(() => {
 		async function loadCampaignOptions() {
@@ -157,7 +173,8 @@ export function useLeadListHook() {
 		}
 
 		const response = await getLeadsApi({
-			limit: 50,
+			page,
+			limit,
 			search: search || undefined,
 			status: status === 'All Status' ? undefined : status,
 			paymentStatus:
@@ -175,14 +192,25 @@ export function useLeadListHook() {
 		if (!response.success || !response.data) {
 			setErrorMessage(response.error || 'Failed to fetch leads');
 			setLeads([]);
+			setTotal(0);
 			setIsLoading(false);
 			return;
 		}
 
+		// Deleting the last lead of a page can leave the user stranded past the
+		// end of the list, so fall back to the first page.
+		if (response.data.length === 0 && page > 1) {
+			setPage(1);
+			return;
+		}
+
 		setLeads(response.data);
+		setTotal(response.total ?? response.data.length);
 		setErrorMessage('');
 		setIsLoading(false);
 	}, [
+		page,
+		limit,
 		search,
 		status,
 		paymentStatus,
@@ -203,6 +231,15 @@ export function useLeadListHook() {
 		return () => clearTimeout(timeoutId);
 	}, [fetchLeads]);
 
+	// Every filter change invalidates the current page offset, so each setter is
+	// wrapped to send the user back to the first page.
+	function withPageReset<Value>(setValue: (value: Value) => void) {
+		return (value: Value) => {
+			setValue(value);
+			setPage(1);
+		};
+	}
+
 	const resetFilters = () => {
 		setSearch('');
 		setStatus('All Status');
@@ -213,6 +250,7 @@ export function useLeadListHook() {
 		setTeamId('All Teams');
 		setDeletedFilter('active');
 		setCustomDateRange(null);
+		setPage(1);
 	};
 
 	return {
@@ -220,6 +258,7 @@ export function useLeadListHook() {
 		isLoading,
 		errorMessage,
 		isAdmin,
+		isTeamLead,
 		canFilterAgents,
 		canViewPaymentStatus,
 		agents,
@@ -227,23 +266,31 @@ export function useLeadListHook() {
 		campaignOptions,
 		filters: {
 			search,
-			setSearch,
+			setSearch: withPageReset(setSearch),
 			status,
-			setStatus,
+			setStatus: withPageReset(setStatus),
 			paymentStatus,
-			setPaymentStatus,
+			setPaymentStatus: withPageReset(setPaymentStatus),
 			duration,
-			setDuration,
+			setDuration: withPageReset(setDuration),
 			campaign,
-			setCampaign,
+			setCampaign: withPageReset(setCampaign),
 			agentId,
-			setAgentId,
+			setAgentId: withPageReset(setAgentId),
 			teamId,
-			setTeamId,
+			setTeamId: withPageReset(setTeamId),
 			deletedFilter,
-			setDeletedFilter,
+			setDeletedFilter: withPageReset(setDeletedFilter),
 			customDateRange,
-			setCustomDateRange,
+			setCustomDateRange: withPageReset(setCustomDateRange),
+		},
+		pagination: {
+			page,
+			setPage,
+			limit,
+			setLimit: withPageReset(setLimit),
+			total,
+			totalPages,
 		},
 		resetFilters,
 		refresh: fetchLeads,

@@ -23,6 +23,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Pagination } from '@/common/components/pagination';
+import { PAGE_SIZE_OPTIONS } from '@/common/constants/pagination';
+import { getUserRoleLabel } from '@/common/constants/user-role-label';
 import type {
 	TeamMemberPerformance,
 	TeamOverviewItem,
@@ -55,6 +58,15 @@ function initials(name: string) {
 		.join('')
 		.slice(0, 2)
 		.toUpperCase();
+}
+
+function teamLeadNames(team: TeamOverviewItem) {
+	if (team.teamLeads.length === 0) return 'Unassigned';
+	return team.teamLeads.map((teamLead) => teamLead.name).join(', ');
+}
+
+function memberBreakdown(team: TeamOverviewItem) {
+	return `${team.agentCount} agents · ${team.loanOfficerCount} loan officers`;
 }
 
 function StatCards({
@@ -137,8 +149,6 @@ export function TeamOverview({
 		Record<string, TeamMemberPerformance[]>
 	>({});
 	const [loadingMembersId, setLoadingMembersId] = useState<string | null>(null);
-	const from = teams.total === 0 ? 0 : (teams.page - 1) * teams.limit + 1;
-	const to = Math.min(teams.total, teams.page * teams.limit);
 
 	const toggleExpanded = async (team: TeamOverviewItem) => {
 		if (expandedTeamId === team.id) {
@@ -325,11 +335,29 @@ export function TeamOverview({
 						/>
 					))
 				)}
-				<Pagination teams={teams} from={from} to={to} />
+				<Pagination
+					page={teams.page}
+					totalPages={teams.totalPages}
+					total={teams.total}
+					limit={teams.limit}
+					itemLabel="teams"
+					onPageChange={teams.setPage}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					onPageSizeChange={teams.setLimit}
+				/>
 			</div>
 
 			<div className="lg:hidden">
-				<Pagination teams={teams} from={from} to={to} />
+				<Pagination
+					page={teams.page}
+					totalPages={teams.totalPages}
+					total={teams.total}
+					limit={teams.limit}
+					itemLabel="teams"
+					onPageChange={teams.setPage}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					onPageSizeChange={teams.setLimit}
+				/>
 			</div>
 
 			{canCreateTeams && (
@@ -384,12 +412,20 @@ function DesktopTeamSection({
 					</div>
 				</div>
 				<div className="min-w-0">
-					<div className="truncate text-[13px] font-medium">
-						{team.teamLead?.name || 'Unassigned'}
+					<div
+						className="truncate text-[13px] font-medium"
+						title={teamLeadNames(team)}
+					>
+						{teamLeadNames(team)}
 					</div>
-					<div className="text-[11px] text-black">Team Lead</div>
+					<div className="text-[11px] text-black">
+						{team.teamLeads.length > 1 ? 'Team Leads' : 'Team Lead'}
+					</div>
 				</div>
-				<DesktopSummaryStat value={team.memberCount} label="Members" />
+				<DesktopSummaryStat
+					value={team.memberCount}
+					label={memberBreakdown(team)}
+				/>
 				<DesktopSummaryStat value={team.stats.total} label="Total Leads" />
 				<DesktopSummaryStat
 					value={String(team.stats.pending).padStart(2, '0')}
@@ -441,11 +477,16 @@ function DesktopTeamSection({
 								key={member.id}
 								className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr] border-t border-[#D4D7E3] px-6 py-4 text-[13px] text-black"
 							>
-								<span className="flex items-center gap-2 truncate">
+								<span className="flex min-w-0 items-center gap-2">
 									<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#C5BFF0] text-[10px]">
 										{initials(member.name)}
 									</span>
-									{member.name}
+									<span className="min-w-0">
+										<span className="block truncate">{member.name}</span>
+										<span className="block truncate text-[11px] text-[#8897AD]">
+											{getUserRoleLabel(member.role)}
+										</span>
+									</span>
 								</span>
 								<span>{member.stats.total}</span>
 								<span className="text-[#F59E0B]">
@@ -486,47 +527,6 @@ function DesktopSummaryStat({
 		</div>
 	);
 }
-function Pagination({
-	teams,
-	from,
-	to,
-}: {
-	teams: ReturnType<typeof useTeamOverviewHook>;
-	from: number;
-	to: number;
-}) {
-	return (
-		<div className="flex flex-col gap-3 border-t border-[#D4D7E3] bg-white px-4 py-4 text-[#8897AD] lg:flex-row lg:items-center lg:justify-between lg:px-6">
-			<span>
-				Showing {from} to {to} of {teams.total} teams
-			</span>
-			<div className="flex items-center gap-2">
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() => teams.setPage(Math.max(1, teams.page - 1))}
-					disabled={teams.page === 1}
-				>
-					&lt;
-				</Button>
-				<span className="text-[#26395C]">
-					{teams.page} / {teams.totalPages}
-				</span>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() =>
-						teams.setPage(Math.min(teams.totalPages, teams.page + 1))
-					}
-					disabled={teams.page === teams.totalPages}
-				>
-					&gt;
-				</Button>
-			</div>
-		</div>
-	);
-}
-
 function TeamStat({
 	value,
 	label,
@@ -575,7 +575,8 @@ function TeamMobileCard({
 							{team.name}
 						</h2>
 						<p className="truncate text-[12px] font-medium text-black">
-							Team Lead: {team.teamLead?.name || 'Unassigned'}
+							{team.teamLeads.length > 1 ? 'Team Leads' : 'Team Lead'}:{' '}
+							{teamLeadNames(team)}
 						</p>
 					</div>
 				</div>
@@ -588,7 +589,7 @@ function TeamMobileCard({
 
 			<div className="border-t border-[#D4D7E3] px-3 py-3">
 				<div className="grid grid-cols-6 items-start gap-1">
-					<TeamStat value={team.memberCount} label="Members" />
+					<TeamStat value={team.memberCount} label={memberBreakdown(team)} />
 					<TeamStat value={team.stats.total} label="Total Leads" />
 					<TeamStat
 						value={String(team.stats.pending).padStart(2, '0')}
@@ -634,7 +635,12 @@ function TeamMobileCard({
 									key={member.id}
 									className="grid grid-cols-[1.3fr_1fr_1fr_1fr_1fr_1fr] border-t border-[#D4D7E3] px-2 py-2 text-[9px] text-black"
 								>
-									<span className="truncate">{member.name}</span>
+									<span className="min-w-0">
+										<span className="block truncate">{member.name}</span>
+										<span className="block truncate text-[8px] text-[#8897AD]">
+											{getUserRoleLabel(member.role)}
+										</span>
+									</span>
 									<span>{member.stats.total}</span>
 									<span className="text-[#F59E0B]">
 										{String(member.stats.pending).padStart(2, '0')}

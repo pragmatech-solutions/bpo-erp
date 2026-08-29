@@ -26,11 +26,14 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { cn } from '@/lib/utils';
 import { softDeleteLeadApi } from './soft-delete-lead.api';
-import { formatDateInPacificTime } from '@/common/utils/pacific-time';
 
 interface LeadCardProps {
 	lead: ListedLead;
 	onSoftDeleteSuccess?: () => void;
+}
+
+function formatDate(value: string) {
+	return new Intl.DateTimeFormat('en-GB').format(new Date(value));
 }
 
 type DetailItemProps = {
@@ -153,24 +156,96 @@ function CallTransferDetails({ lead }: { lead: ListedLead }) {
 				<span>Call Transfer Details</span>
 			</div>
 			<div className="grid grid-cols-1 gap-4 text-[#313957] sm:grid-cols-2 xl:grid-cols-3">
-				<DetailItem label="First Name" value={details.firstName} icon={<User size={14} />} />
-				<DetailItem label="Last Name" value={details.lastName} icon={<User size={14} />} />
-				<DetailItem label="Origin Phone" value={details.originPhone} icon={<Phone size={14} />} />
-				<DetailItem label="Address" value={details.address} icon={<MapPin size={14} />} />
-				<DetailItem label="City" value={details.city} icon={<MapPin size={14} />} />
-				<DetailItem label="State" value={details.state} icon={<MapPin size={14} />} />
-				<DetailItem label="ZIP" value={details.zip} icon={<MapPin size={14} />} />
-				<DetailItem label="Email" value={details.email} icon={<Mail size={14} />} />
-				<DetailItem label="Home Value" value={details.homeValue} icon={<Home size={14} />} />
-				<DetailItem label="Loan Balance" value={details.mortgageBalance} icon={<BadgeDollarSign size={14} />} />
-				<DetailItem label="Mortgage Rate Type" value={details.mortgageRateType} icon={<Percent size={14} />} />
-				<DetailItem label="Property Type" value={details.propertyType} icon={<Home size={14} />} />
-				<DetailItem label="Multiple Properties" value={details.multipleProperties} icon={<Layers size={14} />} />
-				<DetailItem label="Mortgage Rate" value={details.mortgageRate} icon={<Percent size={14} />} />
-				<DetailItem label="Cash Out Amount" value={details.cashOutAmount} icon={<BadgeDollarSign size={14} />} />
-				<DetailItem label="Call Transfer Loan Type" value={details.loanType} icon={<Wallet size={14} />} />
-				<DetailItem label="Loan Purpose" value={details.loanPurpose} icon={<Wallet size={14} />} />
-				<DetailItem label="Credit" value={details.credit} icon={<BadgeCheck size={14} />} />
+				<DetailItem
+					label="First Name"
+					value={details.firstName}
+					icon={<User size={14} />}
+				/>
+				<DetailItem
+					label="Last Name"
+					value={details.lastName}
+					icon={<User size={14} />}
+				/>
+				<DetailItem
+					label="Origin Phone"
+					value={details.originPhone}
+					icon={<Phone size={14} />}
+				/>
+				<DetailItem
+					label="Address"
+					value={details.address}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="City"
+					value={details.city}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="State"
+					value={details.state}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="ZIP"
+					value={details.zip}
+					icon={<MapPin size={14} />}
+				/>
+				<DetailItem
+					label="Email"
+					value={details.email}
+					icon={<Mail size={14} />}
+				/>
+				<DetailItem
+					label="Home Value"
+					value={details.homeValue}
+					icon={<Home size={14} />}
+				/>
+				<DetailItem
+					label="Loan Balance"
+					value={details.mortgageBalance}
+					icon={<BadgeDollarSign size={14} />}
+				/>
+				<DetailItem
+					label="Mortgage Rate Type"
+					value={details.mortgageRateType}
+					icon={<Percent size={14} />}
+				/>
+				<DetailItem
+					label="Property Type"
+					value={details.propertyType}
+					icon={<Home size={14} />}
+				/>
+				<DetailItem
+					label="Multiple Properties"
+					value={details.multipleProperties}
+					icon={<Layers size={14} />}
+				/>
+				<DetailItem
+					label="Mortgage Rate"
+					value={details.mortgageRate}
+					icon={<Percent size={14} />}
+				/>
+				<DetailItem
+					label="Cash Out Amount"
+					value={details.cashOutAmount}
+					icon={<BadgeDollarSign size={14} />}
+				/>
+				<DetailItem
+					label="Call Transfer Loan Type"
+					value={details.loanType}
+					icon={<Wallet size={14} />}
+				/>
+				<DetailItem
+					label="Loan Purpose"
+					value={details.loanPurpose}
+					icon={<Wallet size={14} />}
+				/>
+				<DetailItem
+					label="Credit"
+					value={details.credit}
+					icon={<BadgeCheck size={14} />}
+				/>
 			</div>
 		</div>
 	);
@@ -199,7 +274,9 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 
 	async function handleSoftDelete(event: React.MouseEvent<HTMLButtonElement>) {
 		event.stopPropagation();
-		if (!confirm('Soft delete this lead? Only admins will be able to view it.')) {
+		if (
+			!confirm('Soft delete this lead? Only admins will be able to view it.')
+		) {
 			return;
 		}
 
@@ -263,10 +340,26 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 			</div>
 
 			<div className="grid grid-cols-1 gap-y-4 text-[#313957] sm:grid-cols-2">
-				<DetailItem label="Number" value={lead.customerNumber} icon={<Phone size={14} />} />
-				<DetailItem label="Created By" value={lead.created_by.name} icon={<User size={14} />} />
-				<DetailItem label="Loan Type" value={lead.loanType} icon={<Wallet size={14} />} />
-				<DetailItem label="Campaign" value={lead.campaign} icon={<Megaphone size={14} />} />
+				<DetailItem
+					label="Number"
+					value={lead.customerNumber}
+					icon={<Phone size={14} />}
+				/>
+				<DetailItem
+					label="Created By"
+					value={lead.created_by.name}
+					icon={<User size={14} />}
+				/>
+				<DetailItem
+					label="Loan Type"
+					value={lead.loanType}
+					icon={<Wallet size={14} />}
+				/>
+				<DetailItem
+					label="Campaign"
+					value={lead.campaign}
+					icon={<Megaphone size={14} />}
+				/>
 
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2 text-[12px] text-black lg:text-[14px]">
@@ -283,10 +376,14 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 					</div>
 				</div>
 
-				<DetailItem label="Username" value={lead.username} icon={<User size={14} />} />
+				<DetailItem
+					label="Username"
+					value={lead.username}
+					icon={<User size={14} />}
+				/>
 				<DetailItem
 					label="Updated At"
-					value={formatDateInPacificTime(lead.updatedAt)}
+					value={formatDate(lead.updatedAt)}
 					icon={<Calendar size={14} />}
 				/>
 			</div>
@@ -294,7 +391,7 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 			{lead.deletedAt ? (
 				<div className="mt-5 rounded-[12px] border border-[#CBD5E1] bg-[#F1F5F9] px-4 py-3 text-[12px] font-medium text-[#475569] lg:text-[14px]">
 					Deleted by {lead.deletedBy?.name || 'Unknown'} on{' '}
-					{formatDateInPacificTime(lead.deletedAt)}
+					{formatDate(lead.deletedAt)}
 				</div>
 			) : null}
 

@@ -10,6 +10,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Pagination } from '@/common/components/pagination';
+import { PAGE_SIZE_OPTIONS } from '@/common/constants/pagination';
 import type { CampaignListItem } from '@/campaigns/backend/campaigns/campaigns.type';
 import { useCampaignManagementHook } from './campaign-management.hook';
 
@@ -87,8 +89,6 @@ function CampaignActions({
 export function CampaignManagement() {
 	const campaign = useCampaignManagementHook();
 	const campaigns = campaign.campaigns ?? [];
-	const from = campaign.total === 0 ? 0 : (campaign.page - 1) * campaign.limit + 1;
-	const to = Math.min(campaign.total, campaign.page * campaign.limit);
 
 	return (
 		<div className="flex flex-col gap-4 lg:gap-6">
@@ -125,7 +125,9 @@ export function CampaignManagement() {
 						</label>
 						<Select
 							value={campaign.isActive ? 'active' : 'disabled'}
-							onValueChange={(value) => campaign.setIsActive(value === 'active')}
+							onValueChange={(value) =>
+								campaign.setIsActive(value === 'active')
+							}
 						>
 							<SelectTrigger className="h-[48px] rounded-[12px] border-[#D4D7E3]">
 								<SelectValue />
@@ -245,13 +247,19 @@ export function CampaignManagement() {
 						<tbody>
 							{campaign.isLoading ? (
 								<tr>
-									<td className="px-6 py-10 text-center text-[#313957]" colSpan={5}>
+									<td
+										className="px-6 py-10 text-center text-[#313957]"
+										colSpan={5}
+									>
 										Loading campaigns...
 									</td>
 								</tr>
 							) : campaigns.length === 0 ? (
 								<tr>
-									<td className="px-6 py-10 text-center text-[#313957]" colSpan={5}>
+									<td
+										className="px-6 py-10 text-center text-[#313957]"
+										colSpan={5}
+									>
 										No campaigns found.
 									</td>
 								</tr>
@@ -282,34 +290,17 @@ export function CampaignManagement() {
 						</tbody>
 					</table>
 				</div>
-				<div className="flex flex-col gap-3 border-t border-[#D4D7E3] px-6 py-4 text-[#8897AD] lg:flex-row lg:items-center lg:justify-between">
-					<span>
-						Showing {from} to {to} of {campaign.total} campaigns
-					</span>
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => campaign.setPage(Math.max(1, campaign.page - 1))}
-							disabled={campaign.page === 1}
-						>
-							&lt;
-						</Button>
-						<span className="text-[#26395C]">
-							{campaign.page} / {campaign.totalPages}
-						</span>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() =>
-								campaign.setPage(Math.min(campaign.totalPages, campaign.page + 1))
-							}
-							disabled={campaign.page === campaign.totalPages}
-						>
-							&gt;
-						</Button>
-					</div>
-				</div>
+				<Pagination
+					page={campaign.page}
+					totalPages={campaign.totalPages}
+					total={campaign.total}
+					limit={campaign.limit}
+					itemLabel="campaigns"
+					onPageChange={campaign.setPage}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					onPageSizeChange={campaign.setLimit}
+					className="bg-transparent px-6 lg:px-6"
+				/>
 			</div>
 		</div>
 	);

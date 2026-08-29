@@ -1,16 +1,25 @@
-import { Types } from 'mongoose';
+import { Types, type PipelineStage } from 'mongoose';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
-import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
+import {
+	buildTeamLeadLeadMatch,
+	createTeamMemberLeadMatch,
+	getTeamMemberIds,
+	type TeamMemberIds,
+} from '@/common/backend/get-team-member-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { listLeadsInputSchema } from './list-leads.input-schema';
-import type { ListedLead, ListLeadsInput } from './list-leads.type';
+import type {
+	ListedLead,
+	ListLeadsInput,
+	ListLeadsResult,
+} from './list-leads.type';
 
 export async function listLeads(
 	input: ListLeadsInput = {},
-): Promise<ListedLead[]> {
+): Promise<ListLeadsResult> {
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 
@@ -41,19 +50,14 @@ export async function listLeads(
 	if (isAdmin) {
 		const requestedAgentId = validatedInput.agentId;
 		const requestedTeamId = validatedInput.teamId;
-		let teamCreatorIds: Types.ObjectId[] | undefined;
+		let teamMemberIds: TeamMemberIds | undefined;
 
 		if (
 			requestedTeamId &&
 			requestedTeamId !== 'All Teams' &&
 			Types.ObjectId.isValid(requestedTeamId)
 		) {
-			const teamUsers = await Users.find({
-				team_id: new Types.ObjectId(requestedTeamId),
-			})
-				.select('_id')
-				.lean<{ _id: Types.ObjectId }[]>();
-			teamCreatorIds = teamUsers.map((user) => user._id);
+			teamMemberIds = await getTeamMemberIds(requestedTeamId);
 		}
 
 		if (
@@ -62,15 +66,29 @@ export async function listLeads(
 			Types.ObjectId.isValid(requestedAgentId)
 		) {
 			const agentObjectId = new Types.ObjectId(requestedAgentId);
-			const agentMatchesTeam = teamCreatorIds
-				? teamCreatorIds.some(
-						(creatorId) => creatorId.toString() === agentObjectId.toString(),
+			const agentMatchesTeam = teamMemberIds
+				? [...teamMemberIds.agentIds, ...teamMemberIds.loanOfficerIds].some(
+						(memberId) => memberId.toString() === agentObjectId.toString(),
 					)
 				: true;
 
-			matchStage.created_by = agentMatchesTeam ? agentObjectId : { $in: [] };
-		} else if (teamCreatorIds) {
-			matchStage.created_by = { $in: teamCreatorIds };
+			if (!agentMatchesTeam) {
+				matchStage.created_by = { $in: [] };
+			} else {
+				// A loan officer's leads are assigned via loan_officer_id, not
+				// created_by, so the match field depends on the target's role.
+				const targetUser = await Users.findById(agentObjectId)
+					.select('role')
+					.lean<{ role: UserRole }>();
+
+				matchStage.$and = [
+					targetUser?.role === UserRole.LOAN_OFFICER
+						? { loan_officer_id: agentObjectId }
+						: { created_by: agentObjectId },
+				];
+			}
+		} else if (teamMemberIds) {
+			matchStage.$and = [createTeamMemberLeadMatch(teamMemberIds)];
 		}
 	} else if (currentUser.role === UserRole.QUALITY_ASSURANCE) {
 		if (
@@ -85,20 +103,28 @@ export async function listLeads(
 			throw new Error('Forbidden: Team lead is not assigned to a team');
 		}
 
-		const teamAgentIds = await getTeamAgentObjectIds(currentUser.teamId);
-		const teamLeadId = new Types.ObjectId(currentUser.id);
-		const teamCreatorIds = [...teamAgentIds, teamLeadId];
-		const requestedAgentId = validatedInput.agentId;
+		const requestedMemberId =
+			validatedInput.agentId && validatedInput.agentId !== 'All Agents'
+				? validatedInput.agentId
+				: undefined;
 
-		if (requestedAgentId && requestedAgentId !== 'All Agents') {
-			const selectedCreatorId = teamCreatorIds.find(
-				(creatorId) => creatorId.toString() === requestedAgentId,
-			);
+		// Team scope can itself be an $or (agent-created OR loan-officer-assigned
+		// leads), so it goes under $and to avoid clobbering the search $or below.
+		const teamMatch = await buildTeamLeadLeadMatch(
+			currentUser.teamId,
+			requestedMemberId,
+		);
 
-			matchStage.created_by = selectedCreatorId ? selectedCreatorId : { $in: [] };
-		} else {
-			matchStage.created_by = { $in: teamCreatorIds };
+		if (!requestedMemberId) {
+			// No specific member selected: also surface leads the team lead
+			// personally created, which buildTeamLeadLeadMatch doesn't cover.
+			const teamLeadId = new Types.ObjectId(currentUser.id);
+			(teamMatch.$or as Record<string, unknown>[]).push({
+				created_by: teamLeadId,
+			});
 		}
+
+		matchStage.$and = [teamMatch];
 	} else if (currentUser.role === UserRole.AGENT) {
 		matchStage.created_by = new Types.ObjectId(currentUser.id);
 	} else if (currentUser.role === UserRole.LOAN_OFFICER) {
@@ -132,9 +158,14 @@ export async function listLeads(
 		matchStage.updated_at = dateFilter;
 	}
 
-	const leads = await Leads.aggregate([
+	const skip = (validatedInput.page - 1) * validatedInput.limit;
+
+	// $skip/$limit run before the lookups so joins only happen for the current
+	// page of leads.
+	const leadsPipeline: PipelineStage[] = [
 		{ $match: matchStage },
 		{ $sort: { updated_at: -1 } },
+		{ $skip: skip },
 		{ $limit: validatedInput.limit },
 		{
 			$lookup: {
@@ -236,16 +267,23 @@ export async function listLeads(
 				_id: 0,
 			},
 		},
+	];
+
+	// The count reuses the exact same match stage, so the total always reflects
+	// the caller's role scope and filters rather than the whole collection.
+	const [leads, total] = await Promise.all([
+		Leads.aggregate(leadsPipeline),
+		Leads.countDocuments(matchStage),
 	]);
 
 	const listedLeads = leads as ListedLead[];
 
-	if (!canViewPaymentStatus) {
-		return listedLeads.map((lead) => ({
-			...lead,
-			paymentStatus: undefined,
-		}));
-	}
-
-	return listedLeads;
+	return {
+		leads: canViewPaymentStatus
+			? listedLeads
+			: listedLeads.map((lead) => ({ ...lead, paymentStatus: undefined })),
+		total,
+		page: validatedInput.page,
+		limit: validatedInput.limit,
+	};
 }

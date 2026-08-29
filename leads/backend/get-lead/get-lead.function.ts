@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
-import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
+import { getTeamMemberIds } from '@/common/backend/get-team-member-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
@@ -85,11 +85,17 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 			throw new Error('Forbidden: Team lead is not assigned to a team');
 		}
 
-		const teamAgentIds = await getTeamAgentObjectIds(currentUser.teamId);
+		const { agentIds, loanOfficerIds } = await getTeamMemberIds(
+			currentUser.teamId,
+		);
+		const loanOfficerId = lead.loan_officer_id?._id.toString();
 		const canReadLead =
 			lead.created_by._id.toString() === currentUser.id ||
-			teamAgentIds.some(
+			agentIds.some(
 				(agentId) => agentId.toString() === lead.created_by._id.toString(),
+			) ||
+			loanOfficerIds.some(
+				(officerId) => officerId.toString() === loanOfficerId,
 			);
 
 		if (!canReadLead) {

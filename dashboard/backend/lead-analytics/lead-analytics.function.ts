@@ -1,6 +1,9 @@
 import { Types } from 'mongoose';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
-import { getTeamAgentObjectIds } from '@/common/backend/get-team-agent-ids.function';
+import {
+	createTeamMemberLeadMatch,
+	getTeamMemberIds,
+} from '@/common/backend/get-team-member-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
@@ -24,9 +27,9 @@ export async function getLeadAnalytics(): Promise<DashboardData> {
 			throw new Error('Forbidden: Team lead is not assigned to a team');
 		}
 
-		matchStage.created_by = {
-			$in: await getTeamAgentObjectIds(currentUser.teamId),
-		};
+		matchStage.$and = [
+			createTeamMemberLeadMatch(await getTeamMemberIds(currentUser.teamId)),
+		];
 	} else if (currentUser.role === UserRole.AGENT) {
 		matchStage.created_by = new Types.ObjectId(currentUser.id);
 	} else if (currentUser.role !== UserRole.ADMIN) {
@@ -61,7 +64,7 @@ export async function getLeadAnalytics(): Promise<DashboardData> {
 		nonBillable: 0,
 	};
 
-	const recentLeads = await listLeads({ limit: 5, startDate });
+	const { leads: recentLeads } = await listLeads({ limit: 5, startDate });
 
 	return {
 		analytics: {

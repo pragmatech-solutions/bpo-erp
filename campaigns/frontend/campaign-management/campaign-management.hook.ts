@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants/pagination';
 import type { CampaignListItem } from '@/campaigns/backend/campaigns/campaigns.type';
 import {
 	createCampaignApi,
@@ -20,10 +21,9 @@ export function useCampaignManagementHook() {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [name, setName] = useState('');
 	const [isActive, setIsActive] = useState(true);
-	const [editingCampaign, setEditingCampaign] = useState<CampaignListItem | null>(
-		null,
-	);
-	const limit = 6;
+	const [editingCampaign, setEditingCampaign] =
+		useState<CampaignListItem | null>(null);
+	const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 
 	const totalPages = useMemo(
 		() => Math.max(1, Math.ceil(total / limit)),
@@ -85,7 +85,10 @@ export function useCampaignManagementHook() {
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
-	const updateCampaignStatus = async (campaign: CampaignListItem, next: boolean) => {
+	const updateCampaignStatus = async (
+		campaign: CampaignListItem,
+		next: boolean,
+	) => {
 		if (isSaving) return;
 
 		if (!next) {
@@ -129,6 +132,10 @@ export function useCampaignManagementHook() {
 		setPage,
 		total,
 		limit,
+		setLimit: (value: number) => {
+			setLimit(value);
+			setPage(1);
+		},
 		totalPages,
 		isLoading,
 		isSaving,

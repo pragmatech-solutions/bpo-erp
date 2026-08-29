@@ -28,7 +28,6 @@ import type {
 type TeamDocument = {
 	_id: Types.ObjectId;
 	name: string;
-	team_lead?: Types.ObjectId | null;
 	status?: string;
 	created_at: Date;
 };
@@ -37,7 +36,10 @@ type UserDocument = {
 	_id: Types.ObjectId;
 	name: string;
 	email?: string;
+	role: UserRole;
 };
+
+const MEMBER_ROLES = [UserRole.AGENT, UserRole.LOAN_OFFICER];
 
 type LeadStatusAggregate = {
 	_id: LeadStatus;
@@ -51,13 +53,33 @@ const emptyStats = (): LeadStats => ({
 	nonBillable: 0,
 });
 
-async function getLeadStatsForUsers(
-	userIds: Types.ObjectId[],
+/**
+ * Agents own the leads they create; loan officers own the leads assigned to
+ * them. A team's leads are the union of both, which $or de-duplicates when the
+ * same lead was created by one member and assigned to another.
+ */
+function createMemberLeadMatch(
+	agentIds: Types.ObjectId[],
+	loanOfficerIds: Types.ObjectId[],
+) {
+	return {
+		$or: [
+			{ created_by: { $in: agentIds } },
+			{ loan_officer_id: { $in: loanOfficerIds } },
+		],
+	};
+}
+
+async function getLeadStatsForMembers(
+	agentIds: Types.ObjectId[],
+	loanOfficerIds: Types.ObjectId[],
 ): Promise<LeadStats> {
-	if (userIds.length === 0) return emptyStats();
+	if (agentIds.length === 0 && loanOfficerIds.length === 0) {
+		return emptyStats();
+	}
 
 	const rows = await Leads.aggregate<LeadStatusAggregate>([
-		{ $match: { created_by: { $in: userIds } } },
+		{ $match: createMemberLeadMatch(agentIds, loanOfficerIds) },
 		{ $group: { _id: '$status', count: { $sum: 1 } } },
 	]);
 
@@ -70,42 +92,57 @@ async function getLeadStatsForUsers(
 	}, emptyStats());
 }
 
-async function getTeamLead(teamLeadId?: Types.ObjectId | null) {
-	if (!teamLeadId) return null;
-
-	const teamLead = await Users.findById(teamLeadId)
-		.select('_id name')
-		.lean<Pick<UserDocument, '_id' | 'name'>>();
-
-	if (!teamLead) return null;
-
+function splitMemberIdsByRole(
+	members: Array<Pick<UserDocument, '_id' | 'role'>>,
+) {
 	return {
+		agentIds: members
+			.filter((member) => member.role === UserRole.AGENT)
+			.map((member) => member._id),
+		loanOfficerIds: members
+			.filter((member) => member.role === UserRole.LOAN_OFFICER)
+			.map((member) => member._id),
+	};
+}
+
+async function getTeamLeads(teamId: Types.ObjectId) {
+	const teamLeads = await Users.find({
+		team_id: teamId,
+		role: UserRole.TEAM_LEAD,
+	})
+		.select('_id name')
+		.sort({ name: 1 })
+		.lean<Array<Pick<UserDocument, '_id' | 'name'>>>();
+
+	return teamLeads.map((teamLead) => ({
 		id: teamLead._id.toString(),
 		name: teamLead.name,
-	};
+	}));
 }
 
 async function buildTeamOverview(
 	team: TeamDocument,
 ): Promise<TeamOverviewItem> {
-	const [teamLead, members] = await Promise.all([
-		getTeamLead(team.team_lead),
+	const [teamLeads, members] = await Promise.all([
+		getTeamLeads(team._id),
 		Users.find({
 			team_id: team._id,
-			role: UserRole.AGENT,
+			role: { $in: MEMBER_ROLES },
 		})
-			.select('_id')
-			.lean<Array<Pick<UserDocument, '_id'>>>(),
+			.select('_id role')
+			.lean<Array<Pick<UserDocument, '_id' | 'role'>>>(),
 	]);
 
-	const memberIds = members.map((member) => member._id);
-	const stats = await getLeadStatsForUsers(memberIds);
+	const { agentIds, loanOfficerIds } = splitMemberIdsByRole(members);
+	const stats = await getLeadStatsForMembers(agentIds, loanOfficerIds);
 
 	return {
 		id: team._id.toString(),
 		name: team.name,
-		teamLead,
+		teamLeads,
 		memberCount: members.length,
+		agentCount: agentIds.length,
+		loanOfficerCount: loanOfficerIds.length,
 		stats,
 		status: team.status || 'active',
 		createdAt: team.created_at.toISOString(),
@@ -139,13 +176,22 @@ export async function listTeams(
 		filter.status = validatedInput.status;
 	}
 
+	// Leadership now lives only on the user, so filtering by team lead means
+	// resolving that lead's own team.
 	if (
 		currentUser.role === UserRole.ADMIN &&
 		validatedInput.teamLeadId &&
 		validatedInput.teamLeadId !== 'all' &&
 		Types.ObjectId.isValid(validatedInput.teamLeadId)
 	) {
-		filter.team_lead = new Types.ObjectId(validatedInput.teamLeadId);
+		const selectedTeamLead = await Users.findOne({
+			_id: new Types.ObjectId(validatedInput.teamLeadId),
+			role: UserRole.TEAM_LEAD,
+		})
+			.select('team_id')
+			.lean<{ team_id?: Types.ObjectId | null }>();
+
+		filter._id = selectedTeamLead?.team_id ?? { $in: [] };
 	}
 
 	if (currentUser.role === UserRole.TEAM_LEAD) {
@@ -159,14 +205,14 @@ export async function listTeams(
 	}
 
 	const skip = (validatedInput.page - 1) * validatedInput.limit;
-	const agentFilter =
+	const memberFilter =
 		currentUser.role === UserRole.TEAM_LEAD
 			? {
-					role: UserRole.AGENT,
+					role: { $in: MEMBER_ROLES },
 					team_id: new Types.ObjectId(currentUser.teamId),
 				}
 			: {
-					role: UserRole.AGENT,
+					role: { $in: MEMBER_ROLES },
 					team_id: { $exists: true, $ne: null },
 				};
 	const teamLeadFilter =
@@ -174,7 +220,7 @@ export async function listTeams(
 			? { _id: new Types.ObjectId(currentUser.id) }
 			: { role: UserRole.TEAM_LEAD };
 
-	const [teams, total, allAgents, teamLeadUsers] = await Promise.all([
+	const [teams, total, allMembers, teamLeadUsers] = await Promise.all([
 		Teams.find(filter)
 			.select('_id name team_lead status created_at')
 			.sort({ created_at: -1 })
@@ -182,18 +228,19 @@ export async function listTeams(
 			.limit(validatedInput.limit)
 			.lean<TeamDocument[]>(),
 		Teams.countDocuments(filter),
-		Users.find(agentFilter)
-			.select('_id')
-			.lean<Array<Pick<UserDocument, '_id'>>>(),
+		Users.find(memberFilter)
+			.select('_id role')
+			.lean<Array<Pick<UserDocument, '_id' | 'role'>>>(),
 		Users.find(teamLeadFilter)
 			.select('_id name')
 			.sort({ name: 1 })
 			.lean<Array<Pick<UserDocument, '_id' | 'name'>>>(),
 	]);
 
+	const allMemberIds = splitMemberIdsByRole(allMembers);
 	const [teamRows, stats] = await Promise.all([
 		Promise.all(teams.map(buildTeamOverview)),
-		getLeadStatsForUsers(allAgents.map((agent) => agent._id)),
+		getLeadStatsForMembers(allMemberIds.agentIds, allMemberIds.loanOfficerIds),
 	]);
 
 	return {
@@ -214,31 +261,46 @@ export async function createTeam(input: CreateTeamInput) {
 	await requireAdmin();
 	const validatedInput = createTeamInputSchema.parse(input);
 
-	if (!Types.ObjectId.isValid(validatedInput.teamLeadId)) {
-		throw new Error('Team lead not found');
-	}
+	const teamLeadObjectIds = validatedInput.teamLeadIds.map((teamLeadId) => {
+		if (!Types.ObjectId.isValid(teamLeadId)) {
+			throw new Error('Team lead not found');
+		}
+		return new Types.ObjectId(teamLeadId);
+	});
 
 	const memberObjectIds = validatedInput.memberIds.map((memberId) => {
 		if (!Types.ObjectId.isValid(memberId)) throw new Error('User not found');
 		return new Types.ObjectId(memberId);
 	});
 
+	const teamLeadIdSet = new Set(
+		teamLeadObjectIds.map((teamLeadId) => teamLeadId.toString()),
+	);
+	if (
+		memberObjectIds.some((memberId) => teamLeadIdSet.has(memberId.toString()))
+	) {
+		throw new Error('A team lead cannot also be added as a team member');
+	}
+
 	const existingTeam = await Teams.findOne({
 		name: validatedInput.name,
 	}).lean();
 	if (existingTeam) throw new Error('Team already exists');
 
-	const teamLead = await Users.findById(validatedInput.teamLeadId).lean<{
-		_id: Types.ObjectId;
-		role: UserRole;
-	}>();
-	if (!teamLead || teamLead.role === UserRole.ADMIN) {
+	// A team may have several leads; each must be free of an existing team.
+	const teamLeadCount = await Users.countDocuments({
+		_id: { $in: teamLeadObjectIds },
+		role: { $ne: UserRole.ADMIN },
+		team_id: null,
+	});
+	if (teamLeadCount !== teamLeadObjectIds.length) {
 		throw new Error('Team lead not found');
 	}
 
 	const memberCount = await Users.countDocuments({
 		_id: { $in: memberObjectIds },
-		role: { $ne: UserRole.ADMIN },
+		role: { $in: MEMBER_ROLES },
+		team_id: null,
 	});
 	if (memberCount !== memberObjectIds.length) {
 		throw new Error('User not found');
@@ -246,19 +308,19 @@ export async function createTeam(input: CreateTeamInput) {
 
 	const team = await Teams.create({
 		name: validatedInput.name,
-		team_lead: teamLead._id,
 		status: 'active',
 	});
 
-	await Users.findByIdAndUpdate(teamLead._id, {
-		role: UserRole.TEAM_LEAD,
-		team_id: team._id,
-	});
+	await Users.updateMany(
+		{ _id: { $in: teamLeadObjectIds } },
+		{ role: UserRole.TEAM_LEAD, team_id: team._id },
+	);
 
+	// Members keep their own role — a loan officer stays a loan officer.
 	if (memberObjectIds.length > 0) {
 		await Users.updateMany(
 			{ _id: { $in: memberObjectIds } },
-			{ role: UserRole.AGENT, team_id: team._id },
+			{ team_id: team._id },
 		);
 	}
 
@@ -268,11 +330,17 @@ export async function createTeam(input: CreateTeamInput) {
 async function buildMemberPerformance(
 	member: UserDocument,
 ): Promise<TeamMemberPerformance> {
+	const isLoanOfficer = member.role === UserRole.LOAN_OFFICER;
+
 	return {
 		id: member._id.toString(),
 		name: member.name,
 		email: member.email,
-		stats: await getLeadStatsForUsers([member._id]),
+		role: member.role,
+		stats: await getLeadStatsForMembers(
+			isLoanOfficer ? [] : [member._id],
+			isLoanOfficer ? [member._id] : [],
+		),
 	};
 }
 
@@ -295,7 +363,7 @@ export async function getTeamPerformance(
 	}
 
 	const team = await Teams.findById(validatedInput.id)
-		.select('_id name team_lead')
+		.select('_id name')
 		.lean<TeamDocument>();
 	if (!team) throw new Error('Team not found');
 	if (
@@ -305,27 +373,30 @@ export async function getTeamPerformance(
 		throw new Error('Team not found');
 	}
 
-	const [teamLead, members] = await Promise.all([
-		getTeamLead(team.team_lead),
+	const [teamLeads, members] = await Promise.all([
+		getTeamLeads(team._id),
 		Users.find({
 			team_id: team._id,
-			role: UserRole.AGENT,
+			role: { $in: MEMBER_ROLES },
 		})
-			.select('_id name email')
+			.select('_id name email role')
 			.sort({ name: 1 })
 			.lean<UserDocument[]>(),
 	]);
 
+	const { agentIds, loanOfficerIds } = splitMemberIdsByRole(members);
 	const [memberRows, stats] = await Promise.all([
 		Promise.all(members.map(buildMemberPerformance)),
-		getLeadStatsForUsers(members.map((member) => member._id)),
+		getLeadStatsForMembers(agentIds, loanOfficerIds),
 	]);
 
 	return {
 		id: team._id.toString(),
 		name: team.name,
-		teamLead,
+		teamLeads,
 		memberCount: members.length,
+		agentCount: agentIds.length,
+		loanOfficerCount: loanOfficerIds.length,
 		stats,
 		members: memberRows,
 	};
