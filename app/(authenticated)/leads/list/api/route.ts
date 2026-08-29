@@ -24,6 +24,7 @@ export async function GET(req: Request) {
 		const search = searchParams.get('search') || undefined;
 		const campaign = searchParams.get('campaign') || undefined;
 		const agentId = searchParams.get('agentId') || undefined;
+		const teamId = searchParams.get('teamId') || undefined;
 		const deletedFilter = searchParams.get('deletedFilter') || undefined;
 
 		const validatedInput = listLeadsInputSchema.parse({
@@ -36,6 +37,7 @@ export async function GET(req: Request) {
 			search,
 			campaign,
 			agentId,
+			teamId,
 			deletedFilter,
 		});
 

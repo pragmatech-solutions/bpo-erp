@@ -19,7 +19,6 @@ export async function getTeamMemberIds(teamId: string): Promise<TeamMemberIds> {
 
 	const members = await Users.find({
 		role: { $in: [UserRole.AGENT, UserRole.LOAN_OFFICER] },
-		status: 'active',
 		team_id: new Types.ObjectId(teamId),
 	})
 		.select('_id role')

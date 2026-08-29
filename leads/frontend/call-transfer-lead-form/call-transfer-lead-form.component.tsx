@@ -124,20 +124,55 @@ function SelectField({
 function ScriptPanel({ loanOfficerPhone }: { loanOfficerPhone?: string }) {
 	return (
 		<div className="flex flex-col gap-5 rounded-[18px] bg-[#FFF6CC] p-5 text-[14px] leading-6 text-[#0C1421] shadow-sm lg:sticky lg:top-6">
-			<div className="rounded-[12px] bg-white/70 p-4 text-center">
-				<h2 className="text-[24px] font-bold tracking-wide">QUALIFIERS</h2>
-				<ul className="mt-4 space-y-2 text-left font-semibold">
-					<li>$200,000+ Loan Amount</li>
-					<li>75% LTV Max</li>
-					<li>Cash Out Only</li>
-					<li>No Bankruptcy, last two years</li>
-					<li>No Mortgage lates, last 12 months</li>
-					<li>Has Household Income</li>
-					<li>MUST WANT TO SPEAK TO A LOAN OFFICER TO GET APPROVED</li>
-				</ul>
-				<p className="mt-4 font-semibold">
-					Transfer Schedule 11am - 8pm Eastern Standard Time
-				</p>
+			<div className="rounded-[12px] bg-white/70 p-4">
+				<h2 className="text-[22px] font-bold leading-tight tracking-wide">
+					Mortgage Prequalification Guidelines
+				</h2>
+
+				<div className="mt-5 space-y-5">
+					<section>
+						<h3 className="font-semibold">Eligible States</h3>
+						<ul className="mt-2 list-disc space-y-1 pl-5">
+							<li>
+								Available nationwide except: Delaware (DE), Hawaii (HI),
+								Indiana (IN), Massachusetts (MA), Missouri (MO), Nevada
+								(NV), and Utah (UT).
+							</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 className="font-semibold">Loan & Cash-Out Minimums</h3>
+						<ul className="mt-2 list-disc space-y-1 pl-5">
+							<li>Minimum Cash-Out Amount: $20,000</li>
+							<li>Minimum Loan Amount (VA): $150,000</li>
+							<li>Minimum Loan Amount (FHA & Conventional): $200,000</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 className="font-semibold">Credit & Income Requirements</h3>
+						<ul className="mt-2 list-disc space-y-1 pl-5">
+							<li>Minimum Credit Score (VA / FHA): 600</li>
+							<li>Minimum Credit Score (Conventional): 640</li>
+							<li>Income: Must have a verifiable source of income.</li>
+						</ul>
+					</section>
+
+					<section>
+						<h3 className="font-semibold">Payment & Credit History</h3>
+						<ul className="mt-2 list-disc space-y-1 pl-5">
+							<li>
+								Mortgage Late Payments: Zero late payments in the last
+								12 months.
+							</li>
+							<li>
+								Bankruptcy & Foreclosure: No bankruptcy or foreclosure
+								within the last 2 years.
+							</li>
+						</ul>
+					</section>
+				</div>
 			</div>
 
 			<div className="rounded-[12px] bg-white/70 p-4">
@@ -147,41 +182,10 @@ function ScriptPanel({ loanOfficerPhone }: { loanOfficerPhone?: string }) {
 						{loanOfficerPhone || 'Select a loan officer'}
 					</span>
 				</p>
-				<p className="mt-4">
-					Hello. This is XXXXXXX calling on behalf of American Financial
-					Network, how are you today?
-				</p>
-				<p className="mt-4">
-					We are calling homeowners in your area to see if we can help them
-					save money monthly or meet any other financial goals you may have.
-				</p>
-				<p className="mt-4">
-					Do you have a need for money using the equity in your home, it can
-					be used for anything such as Cash Out, Debt Consolidation or Home
-					Improvement? (Must answer yes)
-				</p>
-				<ul className="mt-4 list-disc space-y-2 pl-6">
-					<li>Cash Out - Cash for anything you need</li>
-					<li>Debt Consolidation - Payoff credit cards, loans, or bills</li>
-					<li>Home Improvement - Roof, windows, extension, or repairs</li>
-				</ul>
-				<p className="mt-4">
-					If YES: Ok, that is GREAT. I would like to ask you just a few
-					questions to see if I can prequalify you to speak with a Loan
-					Advisor.
-				</p>
-				<ul className="mt-4 list-disc space-y-2 pl-6">
-					<li>Would you be using the money for Extra Cash?</li>
-					<li>Is your home value about XXXXXXX?</li>
-					<li>Is your mortgage balance about XXXXXXX?</li>
-					<li>Do you have household income that would help qualify you?</li>
-					<li>Have you had bankruptcy in the last 2 years?</li>
-				</ul>
 			</div>
 		</div>
 	);
 }
-
 function LtvPanel({
 	homeValue,
 	loanBalance,
@@ -506,7 +510,3 @@ export function CallTransferLeadForm() {
 		</div>
 	);
 }
-
-
-
-

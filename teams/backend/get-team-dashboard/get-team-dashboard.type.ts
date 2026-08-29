@@ -7,6 +7,7 @@ export type TeamMemberDashboardItem = {
 	name: string;
 	email?: string;
 	role: UserRole;
+	status?: 'active' | 'inactive' | 'blocked';
 	analytics: LeadAnalytics;
 	campaigns: string[];
 };

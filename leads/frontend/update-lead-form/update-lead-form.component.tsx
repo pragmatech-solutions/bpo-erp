@@ -383,16 +383,6 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 						</div>
 					)}
 
-					{form.status === LeadStatus.BILLABLE && form.isQualityAssurance && (
-						<div className="flex flex-col gap-4">
-							<label className="text-[16px] font-medium text-[#313957]">
-								Payment Status
-							</label>
-							<div className="flex h-[58px] items-center justify-center rounded-[12px] border border-[#F43F5E] bg-[#FFE4E6] text-[16px] lg:w-[966px]">
-								Unpaid
-							</div>
-						</div>
-					)}
 
 					{errorMessage && (
 						<div className="flex items-center gap-2 text-red-500">

@@ -9,6 +9,7 @@ export type ListLeadsInput = {
 	search?: string;
 	campaign?: string;
 	agentId?: string;
+	teamId?: string;
 	paymentStatus?: 'paid' | 'unpaid';
 	deletedFilter?: 'active' | 'deleted' | 'all';
 };

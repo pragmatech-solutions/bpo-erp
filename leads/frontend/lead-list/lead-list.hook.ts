@@ -11,14 +11,19 @@ import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 import { getTotalPages } from '@/common/components/pagination';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants/pagination';
 import { getLeadsApi } from './lead-list.api';
-import { resolveDurationRange } from './lead-list.function';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { getAgentsApi } from '@/agents/frontend/list-agents';
 import type { AgentListItem } from '@/agents/backend/list-agents/list-agents.type';
 import { getCampaignOptionsApi } from '@/campaigns/frontend/campaign-options';
+import { getTeamsApi } from '@/teams/frontend/team-overview';
+import type { TeamOverviewItem } from '@/teams/backend/manage-teams/manage-teams.type';
 import { CAMPAIGNS } from '@/common/constants/campaigns';
+import {
+	getPacificDateRangeForPreset,
+	getPacificDateRangeFromCalendarDates,
+} from '@/common/utils/pacific-time';
 
 export type DurationPreset =
 	| 'Today'
@@ -61,6 +66,7 @@ export function useLeadListHook() {
 	const [duration, setDuration] = useState<DurationPreset>('All');
 	const [campaign, setCampaign] = useState<string>('All Campaigns');
 	const [agentId, setAgentId] = useState<string>('All Agents');
+	const [teamId, setTeamId] = useState<string>('All Teams');
 	const [deletedFilter, setDeletedFilter] =
 		useState<DeletedLeadFilter>('active');
 	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
@@ -80,6 +86,8 @@ export function useLeadListHook() {
 		getServerRoleSnapshot,
 	);
 	const isAdmin = currentRole === UserRole.ADMIN;
+	const canViewPaymentStatus =
+		currentRole === UserRole.ADMIN || currentRole === UserRole.TEAM_LEAD;
 	// Team leads filter across agents and loan officers; everyone else sees
 	// agents only.
 	const isTeamLead = currentRole === UserRole.TEAM_LEAD;
@@ -88,6 +96,7 @@ export function useLeadListHook() {
 		currentRole === UserRole.TEAM_LEAD ||
 		currentRole === UserRole.QUALITY_ASSURANCE;
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
+	const [teams, setTeams] = useState<TeamOverviewItem[]>([]);
 
 	useEffect(() => {
 		async function loadCampaignOptions() {
@@ -115,13 +124,53 @@ export function useLeadListHook() {
 			fetchAgents();
 		}
 	}, [canFilterAgents]);
+	useEffect(() => {
+		if (!isAdmin) return;
+
+		async function loadTeams() {
+			try {
+				const data = await getTeamsApi({ page: 1, limit: 50 });
+				setTeams(data.teams);
+			} catch {
+				setTeams([]);
+			}
+		}
+
+		loadTeams();
+	}, [isAdmin]);
 
 	const fetchLeads = useCallback(async () => {
 		setIsLoading(true);
-		const { startDate, endDate } = resolveDurationRange(
-			duration,
-			customDateRange,
-		);
+		let startDate: Date | undefined;
+		let endDate: Date | undefined;
+
+		switch (duration) {
+			case 'Today':
+			case 'Yesterday':
+			case 'Last 7 Days':
+			case 'Week to Date':
+			case 'Last 30 Days':
+			case 'This Month':
+			case 'Last Month': {
+				const pacificRange = getPacificDateRangeForPreset(duration);
+				startDate = pacificRange.startDate;
+				endDate = pacificRange.endDate;
+				break;
+			}
+			case 'Custom Range':
+				if (customDateRange) {
+					const pacificRange = getPacificDateRangeFromCalendarDates(
+						customDateRange.start,
+						customDateRange.end,
+					);
+					startDate = pacificRange.startDate;
+					endDate = pacificRange.endDate;
+				}
+				break;
+			default:
+				startDate = undefined;
+				endDate = undefined;
+		}
 
 		const response = await getLeadsApi({
 			page,
@@ -129,11 +178,14 @@ export function useLeadListHook() {
 			search: search || undefined,
 			status: status === 'All Status' ? undefined : status,
 			paymentStatus:
-				paymentStatus === 'All Payment Status' ? undefined : paymentStatus,
+				canViewPaymentStatus && paymentStatus !== 'All Payment Status'
+					? paymentStatus
+					: undefined,
 			startDate,
 			endDate,
 			campaign: campaign === 'All Campaigns' ? undefined : campaign,
 			agentId: agentId === 'All Agents' ? undefined : agentId,
+			teamId: isAdmin && teamId !== 'All Teams' ? teamId : undefined,
 			deletedFilter: isAdmin ? deletedFilter : undefined,
 		});
 
@@ -162,10 +214,12 @@ export function useLeadListHook() {
 		search,
 		status,
 		paymentStatus,
+		canViewPaymentStatus,
 		duration,
 		customDateRange,
 		campaign,
 		agentId,
+		teamId,
 		deletedFilter,
 		isAdmin,
 	]);
@@ -193,6 +247,7 @@ export function useLeadListHook() {
 		setDuration('All');
 		setCampaign('All Campaigns');
 		setAgentId('All Agents');
+		setTeamId('All Teams');
 		setDeletedFilter('active');
 		setCustomDateRange(null);
 		setPage(1);
@@ -205,7 +260,9 @@ export function useLeadListHook() {
 		isAdmin,
 		isTeamLead,
 		canFilterAgents,
+		canViewPaymentStatus,
 		agents,
+		teams,
 		campaignOptions,
 		filters: {
 			search,
@@ -220,6 +277,8 @@ export function useLeadListHook() {
 			setCampaign: withPageReset(setCampaign),
 			agentId,
 			setAgentId: withPageReset(setAgentId),
+			teamId,
+			setTeamId: withPageReset(setTeamId),
 			deletedFilter,
 			setDeletedFilter: withPageReset(setDeletedFilter),
 			customDateRange,
