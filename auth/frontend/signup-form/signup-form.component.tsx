@@ -7,14 +7,6 @@ import { useSignupFormHook } from './signup-form.hook';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import { UserRole } from '@/common/constants/user-roles.enum';
 
 export function SignupForm() {
 	const {
@@ -26,8 +18,6 @@ export function SignupForm() {
 		setEmail,
 		phoneNumber,
 		setPhoneNumber,
-		role,
-		setRole,
 		password,
 		setPassword,
 		agreed,
@@ -127,31 +117,6 @@ export function SignupForm() {
 										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] pl-[58px] text-[14px] placeholder:text-[#8897AD] md:text-[16px]"
 									/>
 								</div>
-							</div>
-
-							<div className="flex flex-col gap-2 md:mb-[25px]">
-								<Label
-									htmlFor="role"
-									className="text-[14px] text-[#0C1421] md:text-[16px]"
-								>
-									Role
-								</Label>
-								<Select
-									value={role}
-									onValueChange={(value) =>
-										setRole(value as UserRole.AGENT)
-									}
-								>
-									<SelectTrigger
-										id="role"
-										className="h-[55px] rounded-[12px] border-[#D4D7E3] bg-[#F7FBFF] px-5 text-[14px] md:text-[16px]"
-									>
-										<SelectValue placeholder="Select role" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value={UserRole.AGENT}>Agent</SelectItem>
-									</SelectContent>
-								</Select>
 							</div>
 
 							<div className="flex flex-col gap-2 md:mb-[25px]">
@@ -259,5 +224,3 @@ export function SignupForm() {
 		</div>
 	);
 }
-
-

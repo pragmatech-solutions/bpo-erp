@@ -4,7 +4,6 @@ import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signupApi } from './signup.api';
 import { signupInputSchema } from '@/auth/backend/signup/signup.input-schema';
-import { UserRole } from '@/common/constants/user-roles.enum';
 
 type SignupError = string | Record<string, string[]>;
 
@@ -14,7 +13,6 @@ export function useSignupFormHook() {
 	const [username, setUsername] = useState('');
 	const [email, setEmail] = useState('');
 	const [phoneNumber, setPhoneNumber] = useState('');
-	const [role, setRole] = useState<UserRole.AGENT>(UserRole.AGENT);
 	const [password, setPassword] = useState('');
 	const [agreed, setAgreed] = useState(false);
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -50,7 +48,6 @@ export function useSignupFormHook() {
 				username,
 				email,
 				password,
-				role,
 				phone_number: phoneNumber,
 			};
 			const validated = signupInputSchema.safeParse(payload);
@@ -85,8 +82,6 @@ export function useSignupFormHook() {
 		setEmail,
 		phoneNumber,
 		setPhoneNumber,
-		role,
-		setRole,
 		password,
 		setPassword,
 		agreed,
