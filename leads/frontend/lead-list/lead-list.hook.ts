@@ -11,6 +11,10 @@ import type { ListedLead } from '@/leads/backend/list-leads/list-leads.type';
 import { getTotalPages } from '@/common/components/pagination';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants/pagination';
 import { getLeadsApi } from './lead-list.api';
+import {
+	bulkUpdateLeadsApi,
+	type BulkLeadAction,
+} from './bulk-lead-action.api';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import { UserRole } from '@/common/constants/user-roles.enum';
@@ -80,8 +84,27 @@ export function useLeadListHook() {
 	const [page, setPage] = useState(1);
 	const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 	const [total, setTotal] = useState(0);
+	const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+	const [bulkActionError, setBulkActionError] = useState('');
+	const [bulkActionMessage, setBulkActionMessage] = useState('');
+	const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
 	const totalPages = useMemo(() => getTotalPages(total, limit), [total, limit]);
+	const selectableLeads = useMemo(
+		() => leads.filter((lead) => !lead.deletedAt),
+		[leads],
+	);
+	const visibleBillableLeads = useMemo(
+		() => selectableLeads.filter((lead) => lead.status === LeadStatus.BILLABLE),
+		[selectableLeads],
+	);
+	const selectedLeadIdSet = useMemo(
+		() => new Set(selectedLeadIds),
+		[selectedLeadIds],
+	);
+	const allVisibleLeadsSelected =
+		visibleBillableLeads.length > 0 &&
+		visibleBillableLeads.every((lead) => selectedLeadIdSet.has(lead.id));
 
 	const currentRole = useSyncExternalStore(
 		subscribeToCurrentUser,
@@ -201,15 +224,22 @@ export function useLeadListHook() {
 			return;
 		}
 
+		const fetchedLeads = response.data;
+
 		// Deleting the last lead of a page can leave the user stranded past the
 		// end of the list, so fall back to the first page.
-		if (response.data.length === 0 && page > 1) {
+		if (fetchedLeads.length === 0 && page > 1) {
 			setPage(1);
 			return;
 		}
 
-		setLeads(response.data);
-		setTotal(response.total ?? response.data.length);
+		setSelectedLeadIds((current) =>
+			current.filter((leadId) =>
+				fetchedLeads.some((lead) => lead.id === leadId && !lead.deletedAt),
+			),
+		);
+		setLeads(fetchedLeads);
+		setTotal(response.total ?? fetchedLeads.length);
 		setErrorMessage('');
 		setIsLoading(false);
 	}, [
@@ -236,6 +266,7 @@ export function useLeadListHook() {
 		return () => clearTimeout(timeoutId);
 	}, [fetchLeads]);
 
+
 	// Every filter change invalidates the current page offset, so each setter is
 	// wrapped to send the user back to the first page.
 	function withPageReset<Value>(setValue: (value: Value) => void) {
@@ -258,6 +289,89 @@ export function useLeadListHook() {
 		setCustomDateRange(null);
 		setPage(1);
 	};
+
+	function clearBulkSelection() {
+		setSelectedLeadIds([]);
+		setBulkActionError('');
+		setBulkActionMessage('');
+	}
+
+	function toggleLeadSelection(leadId: string, isSelected: boolean) {
+		setBulkActionError('');
+		setBulkActionMessage('');
+		setSelectedLeadIds((current) => {
+			if (isSelected) return Array.from(new Set([...current, leadId]));
+			return current.filter((id) => id !== leadId);
+		});
+	}
+
+	function toggleAllVisibleLeads() {
+		setBulkActionError('');
+		setBulkActionMessage('');
+		const visibleLeadIds = visibleBillableLeads.map((lead) => lead.id);
+
+		setSelectedLeadIds((current) => {
+			if (allVisibleLeadsSelected) {
+				return current.filter((id) => !visibleLeadIds.includes(id));
+			}
+
+			return Array.from(new Set([...current, ...visibleLeadIds]));
+		});
+	}
+
+	async function handleBulkAction(action: BulkLeadAction) {
+		setBulkActionError('');
+		setBulkActionMessage('');
+
+		if (!isAdmin) {
+			setBulkActionError('Only admins can update leads in bulk');
+			return;
+		}
+
+		if (selectedLeadIds.length === 0) {
+			setBulkActionError('Select at least one lead');
+			return;
+		}
+
+		const selectedLeads = leads.filter((lead) => selectedLeadIdSet.has(lead.id));
+		const isPaymentAction = action === 'mark_paid' || action === 'mark_unpaid';
+
+		if (
+			isPaymentAction &&
+			selectedLeads.some((lead) => lead.status !== LeadStatus.BILLABLE)
+		) {
+			setBulkActionError('Only billable leads can be marked paid or unpaid');
+			return;
+		}
+
+		const actionLabel =
+			action === 'mark_paid'
+				? 'paid'
+				: action === 'mark_unpaid'
+					? 'unpaid'
+					: 'deleted';
+
+		if (
+			!confirm(
+				`Mark ${selectedLeadIds.length} selected lead(s) as ${actionLabel}?`,
+			)
+		) {
+			return;
+		}
+
+		setIsBulkUpdating(true);
+		const response = await bulkUpdateLeadsApi({ leadIds: selectedLeadIds, action });
+
+		if (response.success) {
+			setSelectedLeadIds([]);
+			setBulkActionMessage(response.message);
+			await fetchLeads();
+		} else {
+			setBulkActionError(response.error || 'Failed to update selected leads');
+		}
+
+		setIsBulkUpdating(false);
+	}
 
 	return {
 		leads,
@@ -302,5 +416,19 @@ export function useLeadListHook() {
 		},
 		resetFilters,
 		refresh: fetchLeads,
+		bulkActions: {
+			selectedLeadIds,
+			selectedLeadIdSet,
+			selectedCount: selectedLeadIds.length,
+			selectableCount: visibleBillableLeads.length,
+			allVisibleLeadsSelected,
+			isBulkUpdating,
+			errorMessage: bulkActionError,
+			successMessage: bulkActionMessage,
+			toggleLeadSelection,
+			toggleAllVisibleLeads,
+			clearBulkSelection,
+			handleBulkAction,
+		},
 	};
 }

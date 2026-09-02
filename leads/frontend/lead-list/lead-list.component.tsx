@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import {
 	type LeadTypeFilter,
 	type PaymentStatusFilter,
 } from './lead-list.hook';
+import type { BulkLeadAction } from './bulk-lead-action.api';
 
 const STATUSES: LeadStatusFilter[] = [
 	'All Status',
@@ -47,6 +49,12 @@ const DELETED_FILTERS: Array<{ label: string; value: DeletedLeadFilter }> = [
 	{ label: 'Active Leads', value: 'active' },
 	{ label: 'Deleted Leads', value: 'deleted' },
 	{ label: 'All Leads', value: 'all' },
+];
+
+const BULK_ACTIONS: Array<{ label: string; value: BulkLeadAction }> = [
+	{ label: 'Mark as Paid', value: 'mark_paid' },
+	{ label: 'Mark as Unpaid', value: 'mark_unpaid' },
+	{ label: 'Mark as Deleted', value: 'mark_deleted' },
 ];
 
 function formatStatusLabel(status: LeadStatusFilter) {
@@ -93,7 +101,14 @@ export function LeadList() {
 		campaignOptions,
 		pagination,
 		refresh,
+		bulkActions,
 	} = useLeadListHook();
+	const [bulkActionSelectKey, setBulkActionSelectKey] = useState(0);
+
+	async function handleBulkActionSelect(value: string) {
+		await bulkActions.handleBulkAction(value as BulkLeadAction);
+		setBulkActionSelectKey((current) => current + 1);
+	}
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -270,6 +285,74 @@ export function LeadList() {
 				</Button>
 			</div>
 
+			{isAdmin ? (
+				<div className="flex flex-col gap-3">
+					<div className="flex flex-col gap-3 rounded-[19px] bg-white p-3 lg:min-h-[58px] lg:flex-row lg:items-center lg:justify-between lg:px-6">
+						<div className="flex items-center justify-between gap-3 lg:min-w-[260px]">
+							<label className="flex min-w-0 items-center gap-3 text-[14px] font-medium text-[#2563EB]">
+								<input
+									type="checkbox"
+									checked={bulkActions.allVisibleLeadsSelected}
+									disabled={bulkActions.selectableCount === 0}
+									onChange={bulkActions.toggleAllVisibleLeads}
+									className="size-4 shrink-0 rounded border-[#D4D7E3] accent-[#2563EB]"
+								/>
+								<span className="truncate">Select All Billable Lead</span>
+							</label>
+							<span className="shrink-0 text-right text-[14px] font-medium text-[#2563EB] lg:hidden">
+								{bulkActions.selectedCount} Lead Selected
+							</span>
+						</div>
+
+						<div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-end lg:flex-1">
+							<span className="hidden text-[14px] font-medium text-[#2563EB] lg:inline">
+								{bulkActions.selectedCount} Lead Selected
+							</span>
+							<Select
+								key={bulkActionSelectKey}
+								disabled={
+									bulkActions.selectedCount === 0 || bulkActions.isBulkUpdating
+								}
+								onValueChange={handleBulkActionSelect}
+							>
+								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 text-[15px] font-medium text-[#313957] data-[placeholder]:text-[#8897AD] sm:w-[170px] lg:border-none lg:bg-[#2563EB] lg:text-white lg:data-[placeholder]:text-white lg:[&_svg]:text-white">
+									<SelectValue
+										placeholder={
+											bulkActions.isBulkUpdating ? 'Updating...' : 'Action'
+										}
+									/>
+								</SelectTrigger>
+								<SelectContent className="rounded-[12px] border-none shadow-xl">
+									{BULK_ACTIONS.map((action) => (
+										<SelectItem key={action.value} value={action.value}>
+											{action.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Button
+								variant="ghost"
+								className="h-[48px] rounded-[12px] bg-[#2563EB] px-4 text-[14px] font-medium text-white hover:bg-blue-700 hover:text-white disabled:bg-[#93A8EA] sm:h-auto sm:bg-transparent sm:p-0 sm:text-[#6B7A99] sm:hover:bg-transparent sm:hover:text-[#313957] sm:disabled:bg-transparent"
+								disabled={bulkActions.selectedCount === 0}
+								onClick={bulkActions.clearBulkSelection}
+							>
+								Cancel Selection
+							</Button>
+						</div>
+					</div>
+					{bulkActions.errorMessage ? (
+						<p className="text-sm font-medium text-red-500">
+							{bulkActions.errorMessage}
+						</p>
+					) : null}
+					{bulkActions.successMessage ? (
+						<p className="text-sm font-medium text-green-600">
+							{bulkActions.successMessage}
+						</p>
+					) : null}
+				</div>
+			) : null}
+
 			<div className="flex flex-1 flex-col gap-6 pb-10">
 				{isLoading ? (
 					<div className="flex h-40 items-center justify-center text-[#313957]">
@@ -290,6 +373,9 @@ export function LeadList() {
 								key={lead.id}
 								lead={lead}
 								onSoftDeleteSuccess={refresh}
+								isSelectable={isAdmin && !lead.deletedAt}
+								isSelected={bulkActions.selectedLeadIdSet.has(lead.id)}
+								onSelectionChange={bulkActions.toggleLeadSelection}
 							/>
 						))}
 					</div>

@@ -30,6 +30,9 @@ import { softDeleteLeadApi } from './soft-delete-lead.api';
 interface LeadCardProps {
 	lead: ListedLead;
 	onSoftDeleteSuccess?: () => void;
+	isSelectable?: boolean;
+	isSelected?: boolean;
+	onSelectionChange?: (leadId: string, isSelected: boolean) => void;
 }
 
 function formatDate(value: string) {
@@ -251,7 +254,13 @@ function CallTransferDetails({ lead }: { lead: ListedLead }) {
 	);
 }
 
-export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
+export function LeadCard({
+	lead,
+	onSoftDeleteSuccess,
+	isSelectable = false,
+	isSelected = false,
+	onSelectionChange,
+}: LeadCardProps) {
 	const router = useRouter();
 	const userInfo = getCurrentLoggedInUserInformation();
 	const currentRole = userInfo?.currentUser.role;
@@ -308,7 +317,19 @@ export function LeadCard({ lead, onSoftDeleteSuccess }: LeadCardProps) {
 			)}
 		>
 			<div className="mb-4 flex items-start justify-between gap-4">
-				<div className="flex items-center gap-3">
+				<div className="flex min-w-0 items-center gap-3">
+					{isSelectable ? (
+						<input
+							type="checkbox"
+							checked={isSelected}
+							onChange={(event) =>
+								onSelectionChange?.(lead.id, event.target.checked)
+							}
+							onClick={(event) => event.stopPropagation()}
+							className="size-4 shrink-0 rounded border-[#D4D7E3] accent-[#2563EB]"
+							aria-label={`Select ${lead.customerName}`}
+						/>
+					) : null}
 					<div className="flex size-[39px] items-center justify-center rounded-full bg-[#ADADD7] text-[18px] font-bold tracking-wider text-[#424290]">
 						{getInitials(lead.customerName)}
 					</div>

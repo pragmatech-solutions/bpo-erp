@@ -46,9 +46,11 @@ function ReadOnlyField({ label, value, icon }: ReadOnlyFieldProps) {
 	return (
 		<div className="flex flex-col gap-2">
 			<label className="text-[16px] font-medium text-[#313957]">{label}</label>
-			<div className="relative flex h-[58px] items-center rounded-[12px] border border-[#D4D7E3] bg-gray-50 pl-11 text-[16px] text-[#313957]">
+			<div className="relative flex h-[58px] min-w-0 items-center overflow-hidden rounded-[12px] border border-[#D4D7E3] bg-gray-50 pl-11 pr-4 text-[16px] text-[#313957]">
 				<span className="absolute left-4 text-[#26395C]">{icon}</span>
-				{value || 'N/A'}
+				<span className="block min-w-0 truncate" title={value || 'N/A'}>
+					{value || 'N/A'}
+				</span>
 			</div>
 		</div>
 	);

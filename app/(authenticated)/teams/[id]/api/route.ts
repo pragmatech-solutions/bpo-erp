@@ -3,6 +3,8 @@ import { ZodError } from 'zod';
 import { getTeamPerformance } from '@/teams/backend/manage-teams';
 import { getErrorStatus } from '@/common/backend/authorization.function';
 
+export const dynamic = 'force-dynamic';
+
 type RouteContext = {
 	params: Promise<{
 		id: string;
@@ -13,7 +15,9 @@ export async function GET(_request: Request, context: RouteContext) {
 	try {
 		const { id } = await context.params;
 		const data = await getTeamPerformance({ id });
-		return NextResponse.json(data);
+		return NextResponse.json(data, {
+			headers: { 'Cache-Control': 'no-store' },
+		});
 	} catch (error) {
 		if (error instanceof ZodError) {
 			return NextResponse.json({ error: error.message }, { status: 400 });

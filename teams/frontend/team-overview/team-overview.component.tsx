@@ -167,7 +167,6 @@ export function TeamOverview({
 		}
 
 		setExpandedTeamId(team.id);
-		if (memberCache[team.id]) return;
 
 		try {
 			setLoadingMembersId(team.id);
