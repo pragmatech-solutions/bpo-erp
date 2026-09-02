@@ -1,10 +1,15 @@
 const PACIFIC_TIME_ZONE = 'America/Los_Angeles';
+const MAVRIX_SHIFT_START_HOUR = 19;
 
 type PacificDateParts = {
 	year: number;
 	month: number;
 	day: number;
 	weekday: string;
+};
+
+type PacificDateTimeParts = PacificDateParts & {
+	hour: number;
 };
 
 const pacificDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -41,6 +46,18 @@ function getPacificDateParts(date: Date): PacificDateParts {
 		month: Number(getFormatterPart(parts, 'month')),
 		day: Number(getFormatterPart(parts, 'day')),
 		weekday: getFormatterPart(parts, 'weekday'),
+	};
+}
+
+function getPacificDateTimeParts(date: Date): PacificDateTimeParts {
+	const parts = pacificDateTimeFormatter.formatToParts(date);
+
+	return {
+		year: Number(getFormatterPart(parts, 'year')),
+		month: Number(getFormatterPart(parts, 'month')),
+		day: Number(getFormatterPart(parts, 'day')),
+		weekday: getPacificDateParts(date).weekday,
+		hour: Number(getFormatterPart(parts, 'hour')),
 	};
 }
 
@@ -95,6 +112,39 @@ function getEndOfPacificDay(parts: Pick<PacificDateParts, 'year' | 'month' | 'da
 	return getUtcDateForPacificTime(parts.year, parts.month, parts.day, 23, 59, 59, 999);
 }
 
+function getMavrixShiftDateParts(now: Date) {
+	const currentPacificTime = getPacificDateTimeParts(now);
+	const currentPacificDate = {
+		year: currentPacificTime.year,
+		month: currentPacificTime.month,
+		day: currentPacificTime.day,
+		weekday: currentPacificTime.weekday,
+	};
+
+	if (currentPacificTime.hour < MAVRIX_SHIFT_START_HOUR) {
+		return addCalendarDays(currentPacificDate, -1);
+	}
+
+	return currentPacificDate;
+}
+
+function getStartOfMavrixShiftDay(parts: PacificDateParts) {
+	return getUtcDateForPacificTime(
+		parts.year,
+		parts.month,
+		parts.day,
+		MAVRIX_SHIFT_START_HOUR,
+		0,
+		0,
+		0,
+	);
+}
+
+function getEndOfMavrixShiftDay(parts: PacificDateParts) {
+	const nextShiftDate = addCalendarDays(parts, 1);
+	return new Date(getStartOfMavrixShiftDay(nextShiftDate).getTime() - 1);
+}
+
 function getDaysSinceMonday(weekday: string) {
 	const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 	const index = weekdays.indexOf(weekday);
@@ -118,10 +168,23 @@ export function getPacificDateRangeForPreset(
 	let endParts = today;
 
 	switch (preset) {
-		case 'Yesterday':
-			startParts = addCalendarDays(today, -1);
-			endParts = startParts;
-			break;
+		case 'Today': {
+			const shiftDate = getMavrixShiftDateParts(now);
+
+			return {
+				startDate: getStartOfMavrixShiftDay(shiftDate),
+				endDate: now,
+			};
+		}
+		case 'Yesterday': {
+			const shiftDate = getMavrixShiftDateParts(now);
+			const previousShiftDate = addCalendarDays(shiftDate, -1);
+
+			return {
+				startDate: getStartOfMavrixShiftDay(previousShiftDate),
+				endDate: getEndOfMavrixShiftDay(previousShiftDate),
+			};
+		}
 		case 'Week to Date':
 			startParts = addCalendarDays(today, -getDaysSinceMonday(today.weekday));
 			break;
@@ -157,7 +220,6 @@ export function getPacificDateRangeForPreset(
 			};
 			break;
 		}
-		case 'Today':
 		default:
 			break;
 	}

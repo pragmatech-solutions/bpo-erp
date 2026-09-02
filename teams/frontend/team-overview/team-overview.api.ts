@@ -43,5 +43,7 @@ export async function createTeamApi(input: {
 }
 
 export async function getTeamPerformanceApi(id: string) {
-	return apiClient<TeamPerformanceData>(`/teams/${id}/api`);
+	return apiClient<TeamPerformanceData>(`/teams/${id}/api`, {
+		cache: 'no-store',
+	});
 }
