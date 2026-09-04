@@ -15,7 +15,12 @@ export const NAVIGATION_LINKS = [
 		label: 'Dashboard',
 		href: '/dashboard',
 		icon: LayoutDashboard,
-		roles: [UserRole.ADMIN, UserRole.TEAM_LEAD, UserRole.AGENT],
+		roles: [
+			UserRole.ADMIN,
+			UserRole.MANAGER,
+			UserRole.TEAM_LEAD,
+			UserRole.AGENT,
+		],
 	},
 	{
 		label: 'Lead List',
@@ -23,6 +28,7 @@ export const NAVIGATION_LINKS = [
 		icon: Users,
 		roles: [
 			UserRole.ADMIN,
+			UserRole.MANAGER,
 			UserRole.TEAM_LEAD,
 			UserRole.AGENT,
 			UserRole.QUALITY_ASSURANCE,
@@ -33,19 +39,24 @@ export const NAVIGATION_LINKS = [
 		label: 'Create Lead',
 		href: '/leads/create',
 		icon: UserPlus,
-		roles: [UserRole.ADMIN, UserRole.TEAM_LEAD, UserRole.AGENT],
+		roles: [
+			UserRole.ADMIN,
+			UserRole.MANAGER,
+			UserRole.TEAM_LEAD,
+			UserRole.AGENT,
+		],
 	},
 	{
 		label: 'Teams',
 		href: '/teams',
 		icon: UsersRound,
-		roles: [UserRole.ADMIN, UserRole.TEAM_LEAD],
+		roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.TEAM_LEAD],
 	},
 	{
 		label: 'User',
 		href: '/users',
 		icon: UserCog,
-		roles: [UserRole.ADMIN],
+		roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.TEAM_LEAD],
 	},
 	{
 		label: 'Campaign',

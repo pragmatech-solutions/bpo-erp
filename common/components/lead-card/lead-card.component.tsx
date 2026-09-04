@@ -136,14 +136,26 @@ function LeadBadges({
 					</span>
 				)
 			) : (
-				<span
-					className={cn(
-						'rounded-full px-3 py-1 text-[10px] lg:text-[12px]',
-						getStatusPill(lead.status),
-					)}
-				>
-					{getTitleCase(lead.status)}
-				</span>
+				<>
+					<span
+						className={cn(
+							'rounded-full px-3 py-1 text-[10px] lg:text-[12px]',
+							getStatusPill(lead.status),
+						)}
+					>
+						{getTitleCase(lead.status)}
+					</span>
+					{canViewPaymentStatus && lead.paymentStatus ? (
+						<span
+							className={cn(
+								'rounded-full px-3 py-1 text-[10px] text-white lg:text-[12px]',
+								lead.paymentStatus === 'paid' ? 'bg-[#10B981]' : 'bg-[#F43F5E]',
+							)}
+						>
+							{lead.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
+						</span>
+					) : null}
+				</>
 			)}
 		</div>
 	);
@@ -269,11 +281,14 @@ export function LeadCard({
 	const isCallTransfer = lead.leadType === 'call_transfer';
 	const canEdit =
 		currentRole === UserRole.ADMIN ||
+		currentRole === UserRole.MANAGER ||
 		currentRole === UserRole.QUALITY_ASSURANCE ||
 		currentRole === UserRole.LOAN_OFFICER;
 	const canSoftDelete = currentRole === UserRole.ADMIN && !lead.deletedAt;
 	const canViewPaymentStatus =
-		currentRole === UserRole.ADMIN || currentRole === UserRole.TEAM_LEAD;
+		currentRole === UserRole.ADMIN ||
+		currentRole === UserRole.MANAGER ||
+		currentRole === UserRole.TEAM_LEAD;
 
 	const handleClick = () => {
 		if (canEdit) {

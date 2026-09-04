@@ -12,7 +12,12 @@ import {
 import type { CreateLeadInput } from './create-lead.type';
 import { createLeadInputSchema } from './create-lead.input-schema';
 
-const leadCreatorRoles = [UserRole.ADMIN, UserRole.TEAM_LEAD, UserRole.AGENT];
+const leadCreatorRoles = [
+	UserRole.ADMIN,
+	UserRole.MANAGER,
+	UserRole.TEAM_LEAD,
+	UserRole.AGENT,
+];
 
 export async function createLead(input: CreateLeadInput) {
 	await connectToDatabase();

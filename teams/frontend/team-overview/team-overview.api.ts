@@ -34,6 +34,7 @@ export async function getTeamsApi(input: {
 export async function createTeamApi(input: {
 	name: string;
 	teamLeadIds: string[];
+	managerIds?: string[];
 	memberIds: string[];
 }) {
 	return apiClient<{ id: string }>('/teams/api', {

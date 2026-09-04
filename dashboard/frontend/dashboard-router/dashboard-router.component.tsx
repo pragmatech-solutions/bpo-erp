@@ -39,7 +39,7 @@ export function DashboardRouter() {
 		return null;
 	}
 
-	if (currentRole === UserRole.TEAM_LEAD) {
+	if (currentRole === UserRole.TEAM_LEAD || currentRole === UserRole.MANAGER) {
 		return <TeamDashboard />;
 	}
 

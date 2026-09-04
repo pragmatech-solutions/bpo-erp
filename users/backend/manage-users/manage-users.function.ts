@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { requireAuthenticatedUser } from '@/common/backend/authorization.function';
 import { connectToDatabase } from '@/common/database';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { Teams } from '@/common/models/teams.schema';
 import { Users } from '@/common/models/users.schema';
@@ -19,6 +20,7 @@ type UserDocument = {
 	email?: string;
 	role: UserRole;
 	status: 'active' | 'inactive' | 'blocked';
+	availability_status?: UserAvailabilityStatus;
 	team_id?: { _id: Types.ObjectId; name: string } | null;
 	created_by?: { name?: string } | null;
 	created_at: Date;
@@ -32,6 +34,8 @@ function mapUser(user: UserDocument): ManagedUser {
 		email: user.email,
 		role: user.role,
 		status: user.status,
+		availabilityStatus:
+			user.availability_status || UserAvailabilityStatus.INACTIVE,
 		team: user.team_id
 			? { id: user.team_id._id.toString(), name: user.team_id.name }
 			: null,
@@ -41,14 +45,18 @@ function mapUser(user: UserDocument): ManagedUser {
 }
 
 const MEMBER_ROLES = [UserRole.AGENT, UserRole.LOAN_OFFICER];
-const TEAM_ASSIGNABLE_ROLES = [...MEMBER_ROLES, UserRole.TEAM_LEAD];
+const TEAM_ASSIGNABLE_ROLES = [
+	...MEMBER_ROLES,
+	UserRole.TEAM_LEAD,
+	UserRole.MANAGER,
+];
 
 function getScopedUserFilter(
 	role: UserRole,
 	teamId?: string,
 ): Record<string, unknown> {
 	if (role === UserRole.ADMIN) return {};
-	if (role === UserRole.TEAM_LEAD && teamId) {
+	if ((role === UserRole.TEAM_LEAD || role === UserRole.MANAGER) && teamId) {
 		return {
 			role: { $in: MEMBER_ROLES },
 			team_id: new Types.ObjectId(teamId),
@@ -91,7 +99,7 @@ export async function listManagedUsers(
 	const [users, total] = await Promise.all([
 		Users.find(filter)
 			.select(
-				'_id name username email role status team_id created_by created_at',
+				'_id name username email role status availability_status team_id created_by created_at',
 			)
 			.populate('team_id', 'name')
 			.populate('created_by', 'name')
@@ -118,6 +126,9 @@ async function getAdminUpdatePayload(
 
 	if (input.role !== undefined) updatePayload.role = input.role;
 	if (input.status !== undefined) updatePayload.status = input.status;
+	if (input.availabilityStatus !== undefined) {
+		updatePayload.availability_status = input.availabilityStatus;
+	}
 
 	if (input.teamId !== undefined) {
 		if (input.teamId === null || input.teamId === '') {
@@ -128,12 +139,12 @@ async function getAdminUpdatePayload(
 			const teamExists = await Teams.exists({ _id: input.teamId });
 			if (!teamExists) throw new Error('Team not found');
 
-			// Only leads and members belong to a team; anyone else holding a
-			// team_id would be invisible in every team view.
+			// Only team-scoped roles should hold a team_id; otherwise they become
+			// invisible in every team view.
 			const effectiveRole = input.role ?? targetRole;
 			if (!TEAM_ASSIGNABLE_ROLES.includes(effectiveRole)) {
 				throw new Error(
-					'Forbidden: Only team leads, agents and loan officers can belong to a team',
+					'Forbidden: Only managers, team leads, agents and loan officers can belong to a team',
 				);
 			}
 
@@ -143,6 +154,20 @@ async function getAdminUpdatePayload(
 
 	return updatePayload;
 }
+
+function assertCanManageTeamMember(
+	currentUser: { teamId?: string },
+	targetUser: { role: UserRole; team_id?: Types.ObjectId | null },
+) {
+	if (
+		!MEMBER_ROLES.includes(targetUser.role) ||
+		!currentUser.teamId ||
+		targetUser.team_id?.toString() !== currentUser.teamId
+	) {
+		throw new Error('User not found');
+	}
+}
+
 export async function updateManagedUser(input: UpdateUserInput) {
 	await connectToDatabase();
 	const currentUser = await requireAuthenticatedUser();
@@ -166,24 +191,45 @@ export async function updateManagedUser(input: UpdateUserInput) {
 			validatedInput,
 			targetUser.role,
 		);
-	} else if (currentUser.role === UserRole.TEAM_LEAD) {
+	} else if (
+		currentUser.role === UserRole.TEAM_LEAD ||
+		currentUser.role === UserRole.MANAGER
+	) {
 		if (
 			validatedInput.role !== undefined ||
 			validatedInput.teamId !== undefined
 		) {
-			throw new Error('Forbidden: Team leads can only update account status');
+			throw new Error(
+				'Forbidden: Team-scoped users can only update member status',
+			);
 		}
-		if (!validatedInput.status) {
-			throw new Error('Forbidden: Team leads can only update account status');
-		}
+
 		if (
-			!MEMBER_ROLES.includes(targetUser.role) ||
-			!currentUser.teamId ||
-			targetUser.team_id?.toString() !== currentUser.teamId
+			currentUser.role !== UserRole.MANAGER &&
+			validatedInput.availabilityStatus !== undefined
 		) {
-			throw new Error('User not found');
+			throw new Error(
+				'Forbidden: Only managers can update availability status',
+			);
 		}
-		updatePayload = { status: validatedInput.status };
+
+		if (
+			validatedInput.status === undefined &&
+			validatedInput.availabilityStatus === undefined
+		) {
+			throw new Error(
+				'Forbidden: Team-scoped users can only update member status',
+			);
+		}
+
+		assertCanManageTeamMember(currentUser, targetUser);
+		updatePayload = {};
+		if (validatedInput.status !== undefined) {
+			updatePayload.status = validatedInput.status;
+		}
+		if (validatedInput.availabilityStatus !== undefined) {
+			updatePayload.availability_status = validatedInput.availabilityStatus;
+		}
 	} else {
 		throw new Error('Forbidden: User management access denied');
 	}
@@ -195,7 +241,9 @@ export async function updateManagedUser(input: UpdateUserInput) {
 	const user = await Users.findByIdAndUpdate(validatedInput.id, updatePayload, {
 		new: true,
 	})
-		.select('_id name username email role status team_id created_by created_at')
+		.select(
+			'_id name username email role status availability_status team_id created_by created_at',
+		)
 		.populate('team_id', 'name')
 		.populate('created_by', 'name')
 		.lean<UserDocument>();

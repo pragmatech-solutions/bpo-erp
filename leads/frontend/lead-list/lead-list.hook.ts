@@ -74,8 +74,7 @@ export function useLeadListHook() {
 	const [teamId, setTeamId] = useState<string>('All Teams');
 	const [deletedFilter, setDeletedFilter] =
 		useState<DeletedLeadFilter>('active');
-	const [leadType, setLeadType] =
-		useState<LeadTypeFilter>('All Lead Types');
+	const [leadType, setLeadType] = useState<LeadTypeFilter>('All Lead Types');
 	const [campaignOptions, setCampaignOptions] = useState<string[]>(CAMPAIGNS);
 	const [customDateRange, setCustomDateRange] = useState<{
 		start: Date;
@@ -113,12 +112,16 @@ export function useLeadListHook() {
 	);
 	const isAdmin = currentRole === UserRole.ADMIN;
 	const canViewPaymentStatus =
-		currentRole === UserRole.ADMIN || currentRole === UserRole.TEAM_LEAD;
+		currentRole === UserRole.ADMIN ||
+		currentRole === UserRole.MANAGER ||
+		currentRole === UserRole.TEAM_LEAD;
 	// Team leads filter across agents and loan officers; everyone else sees
 	// agents only.
-	const isTeamLead = currentRole === UserRole.TEAM_LEAD;
+	const isTeamLead =
+		currentRole === UserRole.TEAM_LEAD || currentRole === UserRole.MANAGER;
 	const canFilterAgents =
 		currentRole === UserRole.ADMIN ||
+		currentRole === UserRole.MANAGER ||
 		currentRole === UserRole.TEAM_LEAD ||
 		currentRole === UserRole.QUALITY_ASSURANCE;
 	const [agents, setAgents] = useState<AgentListItem[]>([]);
@@ -266,7 +269,6 @@ export function useLeadListHook() {
 		return () => clearTimeout(timeoutId);
 	}, [fetchLeads]);
 
-
 	// Every filter change invalidates the current page offset, so each setter is
 	// wrapped to send the user back to the first page.
 	function withPageReset<Value>(setValue: (value: Value) => void) {
@@ -333,7 +335,9 @@ export function useLeadListHook() {
 			return;
 		}
 
-		const selectedLeads = leads.filter((lead) => selectedLeadIdSet.has(lead.id));
+		const selectedLeads = leads.filter((lead) =>
+			selectedLeadIdSet.has(lead.id),
+		);
 		const isPaymentAction = action === 'mark_paid' || action === 'mark_unpaid';
 
 		if (
@@ -360,7 +364,10 @@ export function useLeadListHook() {
 		}
 
 		setIsBulkUpdating(true);
-		const response = await bulkUpdateLeadsApi({ leadIds: selectedLeadIds, action });
+		const response = await bulkUpdateLeadsApi({
+			leadIds: selectedLeadIds,
+			action,
+		});
 
 		if (response.success) {
 			setSelectedLeadIds([]);

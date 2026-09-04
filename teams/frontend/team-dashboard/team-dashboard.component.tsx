@@ -54,7 +54,7 @@ function formatAgentFilterLabel(agent: {
 	role: UserRole;
 	status?: string;
 }) {
-	let label = `${agent.name} — ${getUserRoleLabel(agent.role)}`;
+	let label = `${agent.name} - ${getUserRoleLabel(agent.role)}`;
 
 	if (agent.status && agent.status !== 'active') {
 		label += ` (${formatStatus(agent.status)})`;
@@ -254,7 +254,7 @@ export function TeamDashboard() {
 										{member.name}
 									</p>
 									<p className="text-[13px] text-[#8897AD]">
-										{member.email || '—'}
+										{member.email || '-'}
 									</p>
 									<p className="text-[12px] text-[#8897AD]">
 										{getUserRoleLabel(member.role)}

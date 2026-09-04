@@ -31,20 +31,28 @@ export function useUserManagementHook() {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [resetPasswordResult, setResetPasswordResult] =
 		useState<ResetUserPasswordResponse | null>(null);
-	const [currentRole] = useState(() => {
-		const info = getCurrentLoggedInUserInformation();
-		return info?.currentUser.role;
-	});
+	const [currentRole, setCurrentRole] = useState<UserRole | undefined>();
+	const [hasLoadedCurrentRole, setHasLoadedCurrentRole] = useState(false);
 	const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 	const isAdmin = currentRole === UserRole.ADMIN;
 	const isTeamLead = currentRole === UserRole.TEAM_LEAD;
+	const isManager = currentRole === UserRole.MANAGER;
+	const canManageAvailability = isAdmin || isManager;
 
 	const totalPages = useMemo(
 		() => Math.max(1, Math.ceil(total / limit)),
 		[total, limit],
 	);
 
+	useEffect(() => {
+		const info = getCurrentLoggedInUserInformation();
+		setCurrentRole(info?.currentUser.role as UserRole | undefined);
+		setHasLoadedCurrentRole(true);
+	}, []);
+
 	const loadUsers = useCallback(async () => {
+		if (!hasLoadedCurrentRole) return;
+
 		try {
 			setIsLoading(true);
 			setErrorMessage('');
@@ -65,7 +73,16 @@ export function useUserManagementHook() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [isAdmin, limit, page, role, search, status, teamId]);
+	}, [
+		hasLoadedCurrentRole,
+		isAdmin,
+		limit,
+		page,
+		role,
+		search,
+		status,
+		teamId,
+	]);
 
 	useEffect(() => {
 		loadUsers();
@@ -106,6 +123,9 @@ export function useUserManagementHook() {
 					...currentUser,
 					...(input.role ? { role: input.role } : {}),
 					...(input.status ? { status: input.status } : {}),
+					...(input.availabilityStatus
+						? { availabilityStatus: input.availabilityStatus }
+						: {}),
 					...(input.teamId !== undefined
 						? {
 								team:
@@ -202,5 +222,7 @@ export function useUserManagementHook() {
 		resetUserPassword,
 		isAdmin,
 		isTeamLead,
+		isManager,
+		canManageAvailability,
 	};
 }
