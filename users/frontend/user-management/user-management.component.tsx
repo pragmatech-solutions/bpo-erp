@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { ChevronDown, Copy, Filter, KeyRound, Search, X } from 'lucide-react';
@@ -39,10 +39,6 @@ const editableRoles: UserRole[] = [
 	UserRole.AGENT,
 	UserRole.QUALITY_ASSURANCE,
 	UserRole.LOAN_OFFICER,
-];
-const availabilityStatuses = [
-	UserAvailabilityStatus.ACTIVE,
-	UserAvailabilityStatus.INACTIVE,
 ];
 
 function initials(name: string) {
@@ -89,35 +85,39 @@ function StatusSelect({
 	management: ManagementHook;
 	className?: string;
 }) {
+	const statuses = management.isAdmin
+		? adminAccountStatuses
+		: teamLeadAccountStatuses;
+
 	return (
-		<Select
-			value={user.status}
-			onValueChange={(value) =>
-				management.updateUser(user, {
-					status: value as UserAccountStatus,
-				})
-			}
+		<div
+			className={`relative flex h-[40px] items-center justify-between rounded-[8px] border border-[#D4D7E3] bg-white px-3 text-[13px] font-medium text-[#0C1421] ${className}`}
 		>
-			<SelectTrigger
-				className={`h-[40px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px] ${className}`}
+			<span className="pointer-events-none flex min-w-0 items-center gap-2 truncate">
+				<StatusDot status={user.status} />
+				<span className="truncate">{statusLabel(user.status)}</span>
+			</span>
+			<ChevronDown className="pointer-events-none size-4 shrink-0 text-[#26395C] opacity-70" />
+			<select
+				value={user.status}
+				onChange={(event) =>
+					management.updateUser(user, {
+						status: event.target.value as UserAccountStatus,
+					})
+				}
 				disabled={management.isSaving}
+				aria-label={`Update ${user.name} account status`}
+				className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
 			>
-				<span className="flex items-center gap-2 truncate">
-					<StatusDot status={user.status} />
-					{statusLabel(user.status)}
-				</span>
-			</SelectTrigger>
-			<SelectContent>
-				{teamLeadAccountStatuses.map((status) => (
-					<SelectItem key={status} value={status}>
+				{statuses.map((status) => (
+					<option key={status} value={status}>
 						{statusLabel(status)}
-					</SelectItem>
+					</option>
 				))}
-			</SelectContent>
-		</Select>
+			</select>
+		</div>
 	);
 }
-
 function StatusDot({ status }: { status: UserAccountStatus }) {
 	const color =
 		status === 'active'
@@ -128,47 +128,37 @@ function StatusDot({ status }: { status: UserAccountStatus }) {
 
 	return <span className={`size-2.5 rounded-full ${color}`} />;
 }
-function AvailabilitySelect({
+function AvailabilityToggle({
 	user,
 	management,
-	className = '',
 }: {
 	user: ManagedUser;
 	management: ManagementHook;
-	className?: string;
 }) {
+	const isActive = user.availabilityStatus === UserAvailabilityStatus.ACTIVE;
+	const nextStatus = isActive
+		? UserAvailabilityStatus.INACTIVE
+		: UserAvailabilityStatus.ACTIVE;
+
 	return (
-		<Select
-			value={user.availabilityStatus}
-			onValueChange={(value) =>
-				management.updateUser(user, {
-					availabilityStatus: value as UserAvailabilityStatus,
-				})
+		<button
+			type="button"
+			onClick={() =>
+				management.updateUser(user, { availabilityStatus: nextStatus })
 			}
+			disabled={management.isSaving || !management.canManageAvailability}
+			aria-label={`Mark ${user.name} availability as ${availabilityLabel(nextStatus)}`}
+			aria-pressed={isActive}
+			className={`relative inline-flex h-[28px] w-[52px] shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+				isActive ? 'bg-[#10B981]' : 'bg-[#E9EDF5]'
+			}`}
 		>
-			<SelectTrigger
-				className={`h-[40px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px] ${className}`}
-				disabled={management.isSaving}
-			>
-				<span className="flex items-center gap-2 truncate">
-					<span
-						className={`size-2.5 rounded-full ${
-							user.availabilityStatus === UserAvailabilityStatus.ACTIVE
-								? 'bg-[#10B981]'
-								: 'bg-[#94A3B8]'
-						}`}
-					/>
-					{availabilityLabel(user.availabilityStatus)}
-				</span>
-			</SelectTrigger>
-			<SelectContent>
-				{availabilityStatuses.map((status) => (
-					<SelectItem key={status} value={status}>
-						{availabilityLabel(status)}
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
+			<span
+				className={`absolute left-[3px] size-[22px] rounded-full bg-white shadow-sm transition-transform ${
+					isActive ? 'translate-x-[24px]' : 'translate-x-0'
+				}`}
+			/>
+		</button>
 	);
 }
 export function UserManagement() {
@@ -443,36 +433,6 @@ function AdminTeamSelect({
 	);
 }
 
-function AdminStatusSelect({
-	user,
-	management,
-	className,
-}: {
-	user: ManagedUser;
-	management: ManagementHook;
-	className: string;
-}) {
-	return (
-		<Select
-			value={user.status}
-			onValueChange={(value) =>
-				management.updateUser(user, { status: value as UserAccountStatus })
-			}
-		>
-			<SelectTrigger className={className} disabled={management.isSaving}>
-				<SelectValue />
-			</SelectTrigger>
-			<SelectContent>
-				{adminAccountStatuses.map((status) => (
-					<SelectItem key={status} value={status}>
-						{statusLabel(status)}
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
-	);
-}
-
 function AdminEditableFields({
 	user,
 	management,
@@ -503,7 +463,7 @@ function AdminEditableFields({
 			</div>
 			<div className="flex flex-col gap-2">
 				<span className="text-[12px] font-semibold text-black">Status</span>
-				<AdminStatusSelect
+				<StatusSelect
 					user={user}
 					management={management}
 					className={className}
@@ -513,11 +473,7 @@ function AdminEditableFields({
 				<span className="text-[12px] font-semibold text-black">
 					Availability
 				</span>
-				<AvailabilitySelect
-					user={user}
-					management={management}
-					className={className}
-				/>
+				<AvailabilityToggle user={user} management={management} />
 			</div>
 		</>
 	);
@@ -567,11 +523,7 @@ function UserMobileCard({
 							<span className="text-[12px] font-semibold text-black">
 								Availability
 							</span>
-							<AvailabilitySelect
-								user={user}
-								management={management}
-								className="w-full"
-							/>
+							<AvailabilityToggle user={user} management={management} />
 						</div>
 					) : (
 						<ReadOnlyField
@@ -693,18 +645,14 @@ function UserRow({
 					/>
 				</td>
 				<td className="px-6 py-4">
-					<AdminStatusSelect
+					<StatusSelect
 						user={user}
 						management={management}
 						className="h-[40px] w-[135px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px]"
 					/>
 				</td>
 				<td className="px-6 py-4">
-					<AvailabilitySelect
-						user={user}
-						management={management}
-						className="w-[135px]"
-					/>
+					<AvailabilityToggle user={user} management={management} />
 				</td>
 				<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
 				<td className="px-6 py-4">
@@ -736,11 +684,7 @@ function UserRow({
 			</td>
 			<td className="px-6 py-4">
 				{management.canManageAvailability ? (
-					<AvailabilitySelect
-						user={user}
-						management={management}
-						className="w-[135px]"
-					/>
+					<AvailabilityToggle user={user} management={management} />
 				) : (
 					availabilityLabel(user.availabilityStatus)
 				)}
