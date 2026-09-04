@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { getCurrentAuthenticatedUser } from '@/common/backend/get-current-authenticated-user.function';
+import { getTeamMemberIds } from '@/common/backend/get-team-member-ids.function';
 import { connectToDatabase } from '@/common/database';
 import { Leads } from '@/common/models/leads.schema';
 import { Users } from '@/common/models/users.schema';
@@ -65,14 +66,14 @@ type LoanOfficerDocument = {
 function hasAdminOnlyEditFields(input: UpdateLeadInput) {
 	return Boolean(
 		input.customerName !== undefined ||
-			input.username !== undefined ||
-			input.customerNumber !== undefined ||
-			input.campaign !== undefined ||
-			input.loanType !== undefined ||
-			input.loanBalance !== undefined ||
-			input.homeValue !== undefined ||
-			input.loanOfficerId !== undefined ||
-			input.callTransfer !== undefined,
+		input.username !== undefined ||
+		input.customerNumber !== undefined ||
+		input.campaign !== undefined ||
+		input.loanType !== undefined ||
+		input.loanBalance !== undefined ||
+		input.homeValue !== undefined ||
+		input.loanOfficerId !== undefined ||
+		input.callTransfer !== undefined,
 	);
 }
 
@@ -87,11 +88,12 @@ export async function updateLead(input: UpdateLeadInput) {
 
 	if (
 		currentUser.role !== UserRole.ADMIN &&
+		currentUser.role !== UserRole.MANAGER &&
 		currentUser.role !== UserRole.QUALITY_ASSURANCE &&
 		currentUser.role !== UserRole.LOAN_OFFICER
 	) {
 		throw new Error(
-			'Forbidden: Only admins, QA, or loan officers can update leads',
+			'Forbidden: Only admins, managers, QA, or loan officers can update leads',
 		);
 	}
 
@@ -103,6 +105,43 @@ export async function updateLead(input: UpdateLeadInput) {
 
 	if (editableLead.deleted_at && currentUser.role !== UserRole.ADMIN) {
 		throw new Error('Lead not found');
+	}
+
+	if (currentUser.role === UserRole.MANAGER) {
+		if (!currentUser.teamId) {
+			throw new Error('Forbidden: Manager is not assigned to a team');
+		}
+
+		const { leadCreatorIds, loanOfficerIds } = await getTeamMemberIds(
+			currentUser.teamId,
+		);
+		const leadCreatorId = editableLead.created_by?.toString();
+		const loanOfficerId = editableLead.loan_officer_id?.toString();
+		const canUpdateTeamLead =
+			leadCreatorIds.some(
+				(creatorId) => creatorId.toString() === leadCreatorId,
+			) ||
+			loanOfficerIds.some(
+				(officerId) => officerId.toString() === loanOfficerId,
+			);
+
+		if (!canUpdateTeamLead) {
+			throw new Error('Lead not found');
+		}
+
+		if (validatedInput.status !== editableLead.status) {
+			throw new Error('Forbidden: Managers can only update payment status');
+		}
+
+		if (validatedInput.paymentStatus === undefined) {
+			throw new Error('Payment status is required');
+		}
+
+		if (editableLead.status === LeadStatus.BILLABLE) {
+			throw new Error(
+				'Forbidden: Managers cannot update payment status for billable leads',
+			);
+		}
 	}
 
 	if (
@@ -277,6 +316,10 @@ export async function updateLead(input: UpdateLeadInput) {
 			: undefined;
 
 	if (currentUser.role === UserRole.ADMIN) {
+		if (validatedInput.paymentStatus !== undefined) {
+			editableLead.payment_status = validatedInput.paymentStatus;
+		}
+	} else if (currentUser.role === UserRole.MANAGER) {
 		if (validatedInput.paymentStatus !== undefined) {
 			editableLead.payment_status = validatedInput.paymentStatus;
 		}

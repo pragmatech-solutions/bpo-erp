@@ -92,8 +92,11 @@ export function CreateTeamForm() {
 	const [name, setName] = useState('');
 	const [selectedTeamLeadId, setSelectedTeamLeadId] = useState('');
 	const [teamLeadIds, setTeamLeadIds] = useState<string[]>([]);
+	const [selectedManagerId, setSelectedManagerId] = useState('');
+	const [managerIds, setManagerIds] = useState<string[]>([]);
 	const [selectedMemberId, setSelectedMemberId] = useState('');
 	const [teamLeadOptions, setTeamLeadOptions] = useState<ManagedUser[]>([]);
+	const [managerOptions, setManagerOptions] = useState<ManagedUser[]>([]);
 	const [memberOptions, setMemberOptions] = useState<ManagedUser[]>([]);
 	const [memberIds, setMemberIds] = useState<string[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -105,12 +108,14 @@ export function CreateTeamForm() {
 			try {
 				setIsLoading(true);
 				setErrorMessage('');
-				const [teamLeads, agents, loanOfficers] = await Promise.all([
+				const [teamLeads, managers, agents, loanOfficers] = await Promise.all([
 					getUnassignedUsers(UserRole.TEAM_LEAD),
+					getUnassignedUsers(UserRole.MANAGER),
 					getUnassignedUsers(UserRole.AGENT),
 					getUnassignedUsers(UserRole.LOAN_OFFICER),
 				]);
 				setTeamLeadOptions(teamLeads.users);
+				setManagerOptions(managers.users);
 				// A team holds both agents and loan officers; each keeps its own role.
 				setMemberOptions(
 					[...agents.users, ...loanOfficers.users].sort((first, second) =>
@@ -134,9 +139,19 @@ export function CreateTeamForm() {
 		[memberIds, memberOptions],
 	);
 
+	const selectedManagers = useMemo(
+		() => managerOptions.filter((manager) => managerIds.includes(manager.id)),
+		[managerIds, managerOptions],
+	);
+
 	const availableMembers = useMemo(
 		() => memberOptions.filter((member) => !memberIds.includes(member.id)),
 		[memberIds, memberOptions],
+	);
+
+	const availableManagers = useMemo(
+		() => managerOptions.filter((manager) => !managerIds.includes(manager.id)),
+		[managerIds, managerOptions],
 	);
 
 	const selectedTeamLeads = useMemo(
@@ -183,11 +198,31 @@ export function CreateTeamForm() {
 		);
 	};
 
+	const addManager = (id: string) => {
+		setManagerIds((current) =>
+			current.includes(id) ? current : [...current, id],
+		);
+		setSelectedManagerId('');
+	};
+
+	const removeManager = (id: string) => {
+		const confirmed = window.confirm(
+			'Remove this user from the selected managers?',
+		);
+		if (!confirmed) return;
+		setManagerIds((current) => current.filter((managerId) => managerId !== id));
+	};
+
 	const submit = async () => {
 		try {
 			setIsSaving(true);
 			setErrorMessage('');
-			const team = await createTeamApi({ name, teamLeadIds, memberIds });
+			const team = await createTeamApi({
+				name,
+				teamLeadIds,
+				managerIds,
+				memberIds,
+			});
 			router.push(`/teams/${team.id}`);
 		} catch (error) {
 			setErrorMessage(
@@ -280,6 +315,37 @@ export function CreateTeamForm() {
 
 							<div>
 								<label className="mb-2 block text-[15px] font-medium text-[#26395C]">
+									Managers
+								</label>
+								<Select
+									value={selectedManagerId}
+									onValueChange={(value) => addManager(value)}
+								>
+									<SelectTrigger className="h-[56px] rounded-[12px] border-[#D4D7E3]">
+										<SelectValue placeholder="Select Managers" />
+									</SelectTrigger>
+									<SelectContent>
+										{availableManagers.length === 0 ? (
+											<SelectItem value="none" disabled>
+												No unassigned managers available
+											</SelectItem>
+										) : (
+											availableManagers.map((userOption) => (
+												<SelectItem key={userOption.id} value={userOption.id}>
+													{userOption.name}
+												</SelectItem>
+											))
+										)}
+									</SelectContent>
+								</Select>
+								<SelectedUserChips
+									users={selectedManagers}
+									onRemove={removeManager}
+								/>
+							</div>
+
+							<div>
+								<label className="mb-2 block text-[15px] font-medium text-[#26395C]">
 									Team Members
 								</label>
 								<Select
@@ -297,7 +363,7 @@ export function CreateTeamForm() {
 										) : (
 											availableMembers.map((userOption) => (
 												<SelectItem key={userOption.id} value={userOption.id}>
-													{userOption.name} —{' '}
+													{userOption.name} -{' '}
 													{getUserRoleLabel(userOption.role)}
 												</SelectItem>
 											))

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { UserRole } from '@/common/constants/user-roles.enum';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import {
 	DEFAULT_PAGE,
 	DEFAULT_PAGE_SIZE,
@@ -44,6 +45,7 @@ export const updateUserInputSchema = z.object({
 	id: z.string().min(1),
 	role: z.nativeEnum(UserRole).optional(),
 	status: userStatusSchema.optional(),
+	availabilityStatus: z.nativeEnum(UserAvailabilityStatus).optional(),
 	teamId: z.string().nullable().optional(),
 });
 

@@ -42,6 +42,13 @@ type UserDocument = {
 };
 
 const MEMBER_ROLES = [UserRole.AGENT, UserRole.LOAN_OFFICER];
+const TEAM_LEADERSHIP_ROLES = [UserRole.TEAM_LEAD, UserRole.MANAGER];
+const TEAM_LEAD_CREATOR_ROLES = [
+	UserRole.AGENT,
+	UserRole.TEAM_LEAD,
+	UserRole.MANAGER,
+];
+const TEAM_SCOPED_ROLES = [...TEAM_LEAD_CREATOR_ROLES, UserRole.LOAN_OFFICER];
 
 type LeadStatusAggregate = {
 	_id: LeadStatus;
@@ -56,32 +63,31 @@ const emptyStats = (): LeadStats => ({
 });
 
 /**
- * Agents own the leads they create; loan officers own the leads assigned to
- * them. A team's leads are the union of both, which $or de-duplicates when the
- * same lead was created by one member and assigned to another.
+ * Team leads, managers, and agents own the leads they create. Loan officers own
+ * the leads assigned to them. A team's leads are the union of both sides.
  */
 function createMemberLeadMatch(
-	agentIds: Types.ObjectId[],
+	leadCreatorIds: Types.ObjectId[],
 	loanOfficerIds: Types.ObjectId[],
 ) {
 	return {
 		$or: [
-			{ created_by: { $in: agentIds } },
+			{ created_by: { $in: leadCreatorIds } },
 			{ loan_officer_id: { $in: loanOfficerIds } },
 		],
 	};
 }
 
 async function getLeadStatsForMembers(
-	agentIds: Types.ObjectId[],
+	leadCreatorIds: Types.ObjectId[],
 	loanOfficerIds: Types.ObjectId[],
 ): Promise<LeadStats> {
-	if (agentIds.length === 0 && loanOfficerIds.length === 0) {
+	if (leadCreatorIds.length === 0 && loanOfficerIds.length === 0) {
 		return emptyStats();
 	}
 
 	const rows = await Leads.aggregate<LeadStatusAggregate>([
-		{ $match: createMemberLeadMatch(agentIds, loanOfficerIds) },
+		{ $match: createMemberLeadMatch(leadCreatorIds, loanOfficerIds) },
 		{ $group: { _id: '$status', count: { $sum: 1 } } },
 	]);
 
@@ -98,6 +104,9 @@ function splitMemberIdsByRole(
 	members: Array<Pick<UserDocument, '_id' | 'role'>>,
 ) {
 	return {
+		leadCreatorIds: members
+			.filter((member) => TEAM_LEAD_CREATOR_ROLES.includes(member.role))
+			.map((member) => member._id),
 		agentIds: members
 			.filter((member) => member.role === UserRole.AGENT)
 			.map((member) => member._id),
@@ -122,26 +131,47 @@ async function getTeamLeads(teamId: Types.ObjectId) {
 	}));
 }
 
+async function getManagers(teamId: Types.ObjectId) {
+	const managers = await Users.find({
+		team_id: teamId,
+		role: UserRole.MANAGER,
+	})
+		.select('_id name')
+		.sort({ name: 1 })
+		.lean<Array<Pick<UserDocument, '_id' | 'name'>>>();
+
+	return managers.map((manager) => ({
+		id: manager._id.toString(),
+		name: manager.name,
+	}));
+}
+
 async function buildTeamOverview(
 	team: TeamDocument,
 ): Promise<TeamOverviewItem> {
-	const [teamLeads, members] = await Promise.all([
+	const [teamLeads, managers, teamUsers] = await Promise.all([
 		getTeamLeads(team._id),
+		getManagers(team._id),
 		Users.find({
 			team_id: team._id,
-			role: { $in: MEMBER_ROLES },
+			role: { $in: TEAM_SCOPED_ROLES },
 		})
 			.select('_id role')
 			.lean<Array<Pick<UserDocument, '_id' | 'role'>>>(),
 	]);
 
-	const { agentIds, loanOfficerIds } = splitMemberIdsByRole(members);
-	const stats = await getLeadStatsForMembers(agentIds, loanOfficerIds);
+	const members = teamUsers.filter((member) =>
+		MEMBER_ROLES.includes(member.role),
+	);
+	const { leadCreatorIds, agentIds, loanOfficerIds } =
+		splitMemberIdsByRole(teamUsers);
+	const stats = await getLeadStatsForMembers(leadCreatorIds, loanOfficerIds);
 
 	return {
 		id: team._id.toString(),
 		name: team.name,
 		teamLeads,
+		managers,
 		memberCount: members.length,
 		agentCount: agentIds.length,
 		loanOfficerCount: loanOfficerIds.length,
@@ -158,11 +188,12 @@ export async function listTeams(
 	const currentUser = await requireAuthenticatedUser();
 	if (
 		currentUser.role !== UserRole.ADMIN &&
+		currentUser.role !== UserRole.MANAGER &&
 		currentUser.role !== UserRole.TEAM_LEAD
 	) {
 		throw new Error('Forbidden: Team management access denied');
 	}
-	if (currentUser.role === UserRole.TEAM_LEAD && !currentUser.teamId) {
+	if (TEAM_LEADERSHIP_ROLES.includes(currentUser.role) && !currentUser.teamId) {
 		throw new Error('Team not found');
 	}
 
@@ -178,8 +209,6 @@ export async function listTeams(
 		filter.status = validatedInput.status;
 	}
 
-	// Leadership now lives only on the user, so filtering by team lead means
-	// resolving that lead's own team.
 	if (
 		currentUser.role === UserRole.ADMIN &&
 		validatedInput.teamLeadId &&
@@ -196,7 +225,7 @@ export async function listTeams(
 		filter._id = selectedTeamLead?.team_id ?? { $in: [] };
 	}
 
-	if (currentUser.role === UserRole.TEAM_LEAD) {
+	if (TEAM_LEADERSHIP_ROLES.includes(currentUser.role)) {
 		filter._id = new Types.ObjectId(currentUser.teamId);
 	}
 
@@ -207,42 +236,63 @@ export async function listTeams(
 	}
 
 	const skip = (validatedInput.page - 1) * validatedInput.limit;
-	const memberFilter =
-		currentUser.role === UserRole.TEAM_LEAD
-			? {
-					role: { $in: MEMBER_ROLES },
-					team_id: new Types.ObjectId(currentUser.teamId),
-				}
-			: {
-					role: { $in: MEMBER_ROLES },
-					team_id: { $exists: true, $ne: null },
-				};
+	const teamUserFilter = TEAM_LEADERSHIP_ROLES.includes(currentUser.role)
+		? {
+				role: { $in: TEAM_SCOPED_ROLES },
+				team_id: new Types.ObjectId(currentUser.teamId),
+			}
+		: {
+				role: { $in: TEAM_SCOPED_ROLES },
+				team_id: { $exists: true, $ne: null },
+			};
 	const teamLeadFilter =
 		currentUser.role === UserRole.TEAM_LEAD
 			? { _id: new Types.ObjectId(currentUser.id) }
-			: { role: UserRole.TEAM_LEAD };
+			: TEAM_LEADERSHIP_ROLES.includes(currentUser.role)
+				? {
+						role: UserRole.TEAM_LEAD,
+						team_id: new Types.ObjectId(currentUser.teamId),
+					}
+				: { role: UserRole.TEAM_LEAD };
+	const managerFilter =
+		currentUser.role === UserRole.MANAGER
+			? { _id: new Types.ObjectId(currentUser.id) }
+			: TEAM_LEADERSHIP_ROLES.includes(currentUser.role)
+				? {
+						role: UserRole.MANAGER,
+						team_id: new Types.ObjectId(currentUser.teamId),
+					}
+				: { role: UserRole.MANAGER };
 
-	const [teams, total, allMembers, teamLeadUsers] = await Promise.all([
-		Teams.find(filter)
-			.select('_id name team_lead status created_at')
-			.sort({ created_at: -1 })
-			.skip(skip)
-			.limit(validatedInput.limit)
-			.lean<TeamDocument[]>(),
-		Teams.countDocuments(filter),
-		Users.find(memberFilter)
-			.select('_id role')
-			.lean<Array<Pick<UserDocument, '_id' | 'role'>>>(),
-		Users.find(teamLeadFilter)
-			.select('_id name')
-			.sort({ name: 1 })
-			.lean<Array<Pick<UserDocument, '_id' | 'name'>>>(),
-	]);
+	const [teams, total, allTeamUsers, teamLeadUsers, managerUsers] =
+		await Promise.all([
+			Teams.find(filter)
+				.select('_id name team_lead status created_at')
+				.sort({ created_at: -1 })
+				.skip(skip)
+				.limit(validatedInput.limit)
+				.lean<TeamDocument[]>(),
+			Teams.countDocuments(filter),
+			Users.find(teamUserFilter)
+				.select('_id role')
+				.lean<Array<Pick<UserDocument, '_id' | 'role'>>>(),
+			Users.find(teamLeadFilter)
+				.select('_id name')
+				.sort({ name: 1 })
+				.lean<Array<Pick<UserDocument, '_id' | 'name'>>>(),
+			Users.find(managerFilter)
+				.select('_id name')
+				.sort({ name: 1 })
+				.lean<Array<Pick<UserDocument, '_id' | 'name'>>>(),
+		]);
 
-	const allMemberIds = splitMemberIdsByRole(allMembers);
+	const allMemberIds = splitMemberIdsByRole(allTeamUsers);
 	const [teamRows, stats] = await Promise.all([
 		Promise.all(teams.map(buildTeamOverview)),
-		getLeadStatsForMembers(allMemberIds.agentIds, allMemberIds.loanOfficerIds),
+		getLeadStatsForMembers(
+			allMemberIds.leadCreatorIds,
+			allMemberIds.loanOfficerIds,
+		),
 	]);
 
 	return {
@@ -251,6 +301,10 @@ export async function listTeams(
 		teamLeads: teamLeadUsers.map((teamLead) => ({
 			id: teamLead._id.toString(),
 			name: teamLead.name,
+		})),
+		managers: managerUsers.map((manager) => ({
+			id: manager._id.toString(),
+			name: manager.name,
 		})),
 		total,
 		page: validatedInput.page,
@@ -270,18 +324,27 @@ export async function createTeam(input: CreateTeamInput) {
 		return new Types.ObjectId(teamLeadId);
 	});
 
+	const managerObjectIds = validatedInput.managerIds.map((managerId) => {
+		if (!Types.ObjectId.isValid(managerId)) {
+			throw new Error('Manager not found');
+		}
+		return new Types.ObjectId(managerId);
+	});
+
 	const memberObjectIds = validatedInput.memberIds.map((memberId) => {
 		if (!Types.ObjectId.isValid(memberId)) throw new Error('User not found');
 		return new Types.ObjectId(memberId);
 	});
 
-	const teamLeadIdSet = new Set(
-		teamLeadObjectIds.map((teamLeadId) => teamLeadId.toString()),
+	const leadershipIdSet = new Set(
+		[...teamLeadObjectIds, ...managerObjectIds].map((leaderId) =>
+			leaderId.toString(),
+		),
 	);
 	if (
-		memberObjectIds.some((memberId) => teamLeadIdSet.has(memberId.toString()))
+		memberObjectIds.some((memberId) => leadershipIdSet.has(memberId.toString()))
 	) {
-		throw new Error('A team lead cannot also be added as a team member');
+		throw new Error('A team leader cannot also be added as a team member');
 	}
 
 	const existingTeam = await Teams.findOne({
@@ -289,14 +352,22 @@ export async function createTeam(input: CreateTeamInput) {
 	}).lean();
 	if (existingTeam) throw new Error('Team already exists');
 
-	// A team may have several leads; each must be free of an existing team.
 	const teamLeadCount = await Users.countDocuments({
 		_id: { $in: teamLeadObjectIds },
-		role: { $ne: UserRole.ADMIN },
+		role: UserRole.TEAM_LEAD,
 		team_id: null,
 	});
 	if (teamLeadCount !== teamLeadObjectIds.length) {
 		throw new Error('Team lead not found');
+	}
+
+	const managerCount = await Users.countDocuments({
+		_id: { $in: managerObjectIds },
+		role: UserRole.MANAGER,
+		team_id: null,
+	});
+	if (managerCount !== managerObjectIds.length) {
+		throw new Error('Manager not found');
 	}
 
 	const memberCount = await Users.countDocuments({
@@ -318,7 +389,13 @@ export async function createTeam(input: CreateTeamInput) {
 		{ role: UserRole.TEAM_LEAD, team_id: team._id },
 	);
 
-	// Members keep their own role — a loan officer stays a loan officer.
+	if (managerObjectIds.length > 0) {
+		await Users.updateMany(
+			{ _id: { $in: managerObjectIds } },
+			{ role: UserRole.MANAGER, team_id: team._id },
+		);
+	}
+
 	if (memberObjectIds.length > 0) {
 		await Users.updateMany(
 			{ _id: { $in: memberObjectIds } },
@@ -354,6 +431,7 @@ export async function getTeamPerformance(
 	const currentUser = await requireAuthenticatedUser();
 	if (
 		currentUser.role !== UserRole.ADMIN &&
+		currentUser.role !== UserRole.MANAGER &&
 		currentUser.role !== UserRole.TEAM_LEAD
 	) {
 		throw new Error('Forbidden: Team management access denied');
@@ -370,14 +448,15 @@ export async function getTeamPerformance(
 		.lean<TeamDocument>();
 	if (!team) throw new Error('Team not found');
 	if (
-		currentUser.role === UserRole.TEAM_LEAD &&
+		TEAM_LEADERSHIP_ROLES.includes(currentUser.role) &&
 		(!currentUser.teamId || team._id.toString() !== currentUser.teamId)
 	) {
 		throw new Error('Team not found');
 	}
 
-	const [teamLeads, members] = await Promise.all([
+	const [teamLeads, managers, members, teamUsers] = await Promise.all([
 		getTeamLeads(team._id),
+		getManagers(team._id),
 		Users.find({
 			team_id: team._id,
 			role: { $in: MEMBER_ROLES },
@@ -385,18 +464,26 @@ export async function getTeamPerformance(
 			.select('_id name email role status')
 			.sort({ name: 1 })
 			.lean<UserDocument[]>(),
+		Users.find({
+			team_id: team._id,
+			role: { $in: TEAM_SCOPED_ROLES },
+		})
+			.select('_id role')
+			.lean<Array<Pick<UserDocument, '_id' | 'role'>>>(),
 	]);
 
-	const { agentIds, loanOfficerIds } = splitMemberIdsByRole(members);
+	const { leadCreatorIds, agentIds, loanOfficerIds } =
+		splitMemberIdsByRole(teamUsers);
 	const [memberRows, stats] = await Promise.all([
 		Promise.all(members.map(buildMemberPerformance)),
-		getLeadStatsForMembers(agentIds, loanOfficerIds),
+		getLeadStatsForMembers(leadCreatorIds, loanOfficerIds),
 	]);
 
 	return {
 		id: team._id.toString(),
 		name: team.name,
 		teamLeads,
+		managers,
 		memberCount: members.length,
 		agentCount: agentIds.length,
 		loanOfficerCount: loanOfficerIds.length,

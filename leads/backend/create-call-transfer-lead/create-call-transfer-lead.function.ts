@@ -15,14 +15,19 @@ import {
 	type CreateCallTransferLeadInput,
 } from './create-call-transfer-lead.input-schema';
 
-const callTransferCreatorRoles = [UserRole.TEAM_LEAD, UserRole.AGENT];
+const callTransferCreatorRoles = [
+	UserRole.MANAGER,
+	UserRole.TEAM_LEAD,
+	UserRole.AGENT,
+];
 
-const loanTypeMap: Record<CreateCallTransferLeadInput['loan_type'], LoanType> = {
-	Conventional: LoanType.CONVENTIONAL,
-	Veteran: LoanType.VA,
-	FHA: LoanType.FHA,
-	Streamline: LoanType.VA_ELIGIBLE,
-};
+const loanTypeMap: Record<CreateCallTransferLeadInput['loan_type'], LoanType> =
+	{
+		Conventional: LoanType.CONVENTIONAL,
+		Veteran: LoanType.VA,
+		FHA: LoanType.FHA,
+		Streamline: LoanType.VA_ELIGIBLE,
+	};
 
 type LoanOfficerDocument = {
 	_id: Types.ObjectId;
@@ -40,7 +45,9 @@ function buildUsername(input: CreateCallTransferLeadInput) {
 	return input.origin_phone.replace(/\s+/g, '');
 }
 
-export async function createCallTransferLead(input: CreateCallTransferLeadInput) {
+export async function createCallTransferLead(
+	input: CreateCallTransferLeadInput,
+) {
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 

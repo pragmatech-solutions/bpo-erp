@@ -17,6 +17,7 @@ export default async function TeamPerformancePage({
 	if (
 		!currentUser ||
 		(currentUser.role !== UserRole.ADMIN &&
+			currentUser.role !== UserRole.MANAGER &&
 			currentUser.role !== UserRole.TEAM_LEAD)
 	) {
 		notFound();

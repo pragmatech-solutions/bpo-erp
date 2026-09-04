@@ -1,5 +1,6 @@
 'use client';
 
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { apiClient } from '@/lib/api-client';
 import type {
@@ -13,6 +14,7 @@ export type UserStatusFilter = UserAccountStatus | 'all';
 export type UpdateManagedUserInput = {
 	role?: UserRole;
 	status?: UserAccountStatus;
+	availabilityStatus?: UserAvailabilityStatus;
 	teamId?: string | null;
 };
 

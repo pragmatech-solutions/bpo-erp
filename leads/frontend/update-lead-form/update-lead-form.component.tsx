@@ -103,6 +103,12 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 		handleCancel,
 	} = useUpdateLeadFormHook(id);
 
+	const canUpdateLeadStatus = !form.isManager;
+	const canUpdatePaymentStatus = form.isAdmin
+		? form.status === LeadStatus.BILLABLE
+		: form.isManager && form.status !== LeadStatus.BILLABLE;
+	const formattedCurrentStatus =
+		form.status.charAt(0).toUpperCase() + form.status.slice(1);
 	const statusOptions =
 		form.isQualityAssurance || form.isLoanOfficer
 			? [LeadStatus.BILLABLE, LeadStatus.NON_BILLABLE]
@@ -120,12 +126,22 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 		<div className="flex flex-col gap-6 py-6 lg:py-10">
 			<div className="flex flex-col gap-1">
 				<h1 className="font-[var(--font-poppins)] text-[24px] font-semibold text-[#313957] lg:text-[32px] lg:text-[#0C1421]">
-					{form.isAdmin ? 'Edit Lead' : 'Update Lead Status'}
+					{form.isAdmin
+						? 'Edit Lead'
+						: form.isManager
+							? 'Update Lead Payment'
+							: 'Update Lead Status'}
 				</h1>
 				{form.isAdmin ? (
 					<p className="text-[14px] font-medium text-[#313957]">
 						Admin can correct lead information and reassign active loan
 						officers.
+					</p>
+				) : null}
+				{form.isManager ? (
+					<p className="text-[14px] font-medium text-[#313957]">
+						Managers can update payment status for pending and non-billable team
+						leads.
 					</p>
 				) : null}
 			</div>
@@ -167,7 +183,10 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 									<Label className="text-[16px] font-medium text-[#313957]">
 										Campaign
 									</Label>
-									<Select value={form.campaign} onValueChange={form.setCampaign}>
+									<Select
+										value={form.campaign}
+										onValueChange={form.setCampaign}
+									>
 										<SelectTrigger className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white text-[16px] text-[#313957]">
 											<SelectValue placeholder="Select Campaign" />
 										</SelectTrigger>
@@ -187,7 +206,9 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 									</Label>
 									<Select
 										value={form.loanType}
-										onValueChange={(value) => form.setLoanType(value as LoanType)}
+										onValueChange={(value) =>
+											form.setLoanType(value as LoanType)
+										}
 									>
 										<SelectTrigger className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white text-[16px] text-[#313957]">
 											<SelectValue placeholder="Select Loan Type" />
@@ -229,7 +250,8 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 										</SelectContent>
 									</Select>
 									<p className="text-[12px] text-[#6B7A99]">
-										Phone: {form.loanOfficerPhoneNumber || 'Select a loan officer'}
+										Phone:{' '}
+										{form.loanOfficerPhoneNumber || 'Select a loan officer'}
 									</p>
 								</div>
 
@@ -259,49 +281,221 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 										Call Transfer Details
 									</h2>
 									<div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-										<TextField id="firstName" label="First Name" value={form.callTransfer.firstName} onChange={(value) => form.updateCallTransferField('firstName', value)} required />
-										<TextField id="lastName" label="Last Name" value={form.callTransfer.lastName} onChange={(value) => form.updateCallTransferField('lastName', value)} required />
-										<TextField id="originPhone" label="Origin Phone" value={form.callTransfer.originPhone} onChange={(value) => form.updateCallTransferField('originPhone', value)} required />
-										<TextField id="email" label="Email" value={form.callTransfer.email} onChange={(value) => form.updateCallTransferField('email', value)} />
-										<TextField id="address" label="Address" value={form.callTransfer.address} onChange={(value) => form.updateCallTransferField('address', value)} required />
-										<TextField id="city" label="City" value={form.callTransfer.city} onChange={(value) => form.updateCallTransferField('city', value)} required />
-										<TextField id="state" label="State" value={form.callTransfer.state} onChange={(value) => form.updateCallTransferField('state', value)} required />
-										<TextField id="zip" label="ZIP" value={form.callTransfer.zip} onChange={(value) => form.updateCallTransferField('zip', value)} required />
-										<TextField id="callTransferHomeValue" label="Call Transfer Home Value" type="number" value={form.callTransfer.homeValue} onChange={(value) => form.updateCallTransferField('homeValue', value)} required />
-										<TextField id="mortgageBalance" label="Mortgage Balance" type="number" value={form.callTransfer.mortgageBalance} onChange={(value) => form.updateCallTransferField('mortgageBalance', value)} required />
-										<TextField id="mortgageRateType" label="Mortgage Rate Type" value={form.callTransfer.mortgageRateType} onChange={(value) => form.updateCallTransferField('mortgageRateType', value)} />
-										<TextField id="propertyType" label="Property Type" value={form.callTransfer.propertyType} onChange={(value) => form.updateCallTransferField('propertyType', value)} />
-										<TextField id="mortgageRate" label="Mortgage Rate" type="number" value={form.callTransfer.mortgageRate} onChange={(value) => form.updateCallTransferField('mortgageRate', value)} />
-										<TextField id="cashOutAmount" label="Cash Out Amount" type="number" value={form.callTransfer.cashOutAmount} onChange={(value) => form.updateCallTransferField('cashOutAmount', value)} />
+										<TextField
+											id="firstName"
+											label="First Name"
+											value={form.callTransfer.firstName}
+											onChange={(value) =>
+												form.updateCallTransferField('firstName', value)
+											}
+											required
+										/>
+										<TextField
+											id="lastName"
+											label="Last Name"
+											value={form.callTransfer.lastName}
+											onChange={(value) =>
+												form.updateCallTransferField('lastName', value)
+											}
+											required
+										/>
+										<TextField
+											id="originPhone"
+											label="Origin Phone"
+											value={form.callTransfer.originPhone}
+											onChange={(value) =>
+												form.updateCallTransferField('originPhone', value)
+											}
+											required
+										/>
+										<TextField
+											id="email"
+											label="Email"
+											value={form.callTransfer.email}
+											onChange={(value) =>
+												form.updateCallTransferField('email', value)
+											}
+										/>
+										<TextField
+											id="address"
+											label="Address"
+											value={form.callTransfer.address}
+											onChange={(value) =>
+												form.updateCallTransferField('address', value)
+											}
+											required
+										/>
+										<TextField
+											id="city"
+											label="City"
+											value={form.callTransfer.city}
+											onChange={(value) =>
+												form.updateCallTransferField('city', value)
+											}
+											required
+										/>
+										<TextField
+											id="state"
+											label="State"
+											value={form.callTransfer.state}
+											onChange={(value) =>
+												form.updateCallTransferField('state', value)
+											}
+											required
+										/>
+										<TextField
+											id="zip"
+											label="ZIP"
+											value={form.callTransfer.zip}
+											onChange={(value) =>
+												form.updateCallTransferField('zip', value)
+											}
+											required
+										/>
+										<TextField
+											id="callTransferHomeValue"
+											label="Call Transfer Home Value"
+											type="number"
+											value={form.callTransfer.homeValue}
+											onChange={(value) =>
+												form.updateCallTransferField('homeValue', value)
+											}
+											required
+										/>
+										<TextField
+											id="mortgageBalance"
+											label="Mortgage Balance"
+											type="number"
+											value={form.callTransfer.mortgageBalance}
+											onChange={(value) =>
+												form.updateCallTransferField('mortgageBalance', value)
+											}
+											required
+										/>
+										<TextField
+											id="mortgageRateType"
+											label="Mortgage Rate Type"
+											value={form.callTransfer.mortgageRateType}
+											onChange={(value) =>
+												form.updateCallTransferField('mortgageRateType', value)
+											}
+										/>
+										<TextField
+											id="propertyType"
+											label="Property Type"
+											value={form.callTransfer.propertyType}
+											onChange={(value) =>
+												form.updateCallTransferField('propertyType', value)
+											}
+										/>
+										<TextField
+											id="mortgageRate"
+											label="Mortgage Rate"
+											type="number"
+											value={form.callTransfer.mortgageRate}
+											onChange={(value) =>
+												form.updateCallTransferField('mortgageRate', value)
+											}
+										/>
+										<TextField
+											id="cashOutAmount"
+											label="Cash Out Amount"
+											type="number"
+											value={form.callTransfer.cashOutAmount}
+											onChange={(value) =>
+												form.updateCallTransferField('cashOutAmount', value)
+											}
+										/>
 									</div>
 
 									<div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
 										<div className="flex flex-col gap-2">
 											<Label>Multiple Properties</Label>
-											<Select value={form.callTransfer.multipleProperties} onValueChange={(value) => form.updateCallTransferField('multipleProperties', value as 'Yes' | 'No')}>
-												<SelectTrigger className="h-[58px] rounded-[12px]"><SelectValue /></SelectTrigger>
-												<SelectContent><SelectItem value="No">No</SelectItem><SelectItem value="Yes">Yes</SelectItem></SelectContent>
+											<Select
+												value={form.callTransfer.multipleProperties}
+												onValueChange={(value) =>
+													form.updateCallTransferField(
+														'multipleProperties',
+														value as 'Yes' | 'No',
+													)
+												}
+											>
+												<SelectTrigger className="h-[58px] rounded-[12px]">
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="No">No</SelectItem>
+													<SelectItem value="Yes">Yes</SelectItem>
+												</SelectContent>
 											</Select>
 										</div>
 										<div className="flex flex-col gap-2">
 											<Label>Call Transfer Loan Type</Label>
-											<Select value={form.callTransfer.loanType} onValueChange={(value) => form.updateCallTransferField('loanType', value as (typeof CALL_TRANSFER_LOAN_TYPES)[number])}>
-												<SelectTrigger className="h-[58px] rounded-[12px]"><SelectValue /></SelectTrigger>
-												<SelectContent>{CALL_TRANSFER_LOAN_TYPES.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent>
+											<Select
+												value={form.callTransfer.loanType}
+												onValueChange={(value) =>
+													form.updateCallTransferField(
+														'loanType',
+														value as (typeof CALL_TRANSFER_LOAN_TYPES)[number],
+													)
+												}
+											>
+												<SelectTrigger className="h-[58px] rounded-[12px]">
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{CALL_TRANSFER_LOAN_TYPES.map((type) => (
+														<SelectItem key={type} value={type}>
+															{type}
+														</SelectItem>
+													))}
+												</SelectContent>
 											</Select>
 										</div>
 										<div className="flex flex-col gap-2">
 											<Label>Loan Purpose</Label>
-											<Select value={form.callTransfer.loanPurpose} onValueChange={(value) => form.updateCallTransferField('loanPurpose', value as (typeof CALL_TRANSFER_LOAN_PURPOSES)[number])}>
-												<SelectTrigger className="h-[58px] rounded-[12px]"><SelectValue /></SelectTrigger>
-												<SelectContent>{CALL_TRANSFER_LOAN_PURPOSES.map((purpose) => <SelectItem key={purpose} value={purpose}>{purpose}</SelectItem>)}</SelectContent>
+											<Select
+												value={form.callTransfer.loanPurpose}
+												onValueChange={(value) =>
+													form.updateCallTransferField(
+														'loanPurpose',
+														value as (typeof CALL_TRANSFER_LOAN_PURPOSES)[number],
+													)
+												}
+											>
+												<SelectTrigger className="h-[58px] rounded-[12px]">
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{CALL_TRANSFER_LOAN_PURPOSES.map((purpose) => (
+														<SelectItem key={purpose} value={purpose}>
+															{purpose}
+														</SelectItem>
+													))}
+												</SelectContent>
 											</Select>
 										</div>
 										<div className="flex flex-col gap-2">
 											<Label>Credit</Label>
-											<Select value={form.callTransfer.credit} onValueChange={(value) => form.updateCallTransferField('credit', value as (typeof CALL_TRANSFER_CREDIT_RATINGS)[number])}>
-												<SelectTrigger className="h-[58px] rounded-[12px]"><SelectValue /></SelectTrigger>
-												<SelectContent>{CALL_TRANSFER_CREDIT_RATINGS.map((credit) => <SelectItem key={credit} value={credit}>{credit}</SelectItem>)}</SelectContent>
+											<Select
+												value={form.callTransfer.credit}
+												onValueChange={(value) =>
+													form.updateCallTransferField(
+														'credit',
+														value as (typeof CALL_TRANSFER_CREDIT_RATINGS)[number],
+													)
+												}
+											>
+												<SelectTrigger className="h-[58px] rounded-[12px]">
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{CALL_TRANSFER_CREDIT_RATINGS.map((credit) => (
+														<SelectItem key={credit} value={credit}>
+															{credit}
+														</SelectItem>
+													))}
+												</SelectContent>
 											</Select>
 										</div>
 									</div>
@@ -311,40 +505,72 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 					) : (
 						<>
 							<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10">
-								<ReadOnlyField label="Customer Name" value={form.customerName} icon={<User size={16} />} />
-								<ReadOnlyField label="Number" value={form.customerNumber} icon={<Phone size={16} />} />
+								<ReadOnlyField
+									label="Customer Name"
+									value={form.customerName}
+									icon={<User size={16} />}
+								/>
+								<ReadOnlyField
+									label="Number"
+									value={form.customerNumber}
+									icon={<Phone size={16} />}
+								/>
 							</div>
-							<ReadOnlyField label="Username" value={form.username} icon={<User size={16} />} />
-							<ReadOnlyField label="Loan Type" value={form.loanType} icon={<Wallet size={16} />} />
+							<ReadOnlyField
+								label="Username"
+								value={form.username}
+								icon={<User size={16} />}
+							/>
+							<ReadOnlyField
+								label="Loan Type"
+								value={form.loanType}
+								icon={<Wallet size={16} />}
+							/>
+							{form.isManager ? (
+								<ReadOnlyField
+									label="Current Status"
+									value={formattedCurrentStatus}
+									icon={<Check size={16} />}
+								/>
+							) : null}
+							{form.isManager && form.status === LeadStatus.NON_BILLABLE ? (
+								<ReadOnlyField
+									label="Status Reason"
+									value={form.statusReason}
+									icon={<X size={16} />}
+								/>
+							) : null}
 						</>
 					)}
 
-					<div className="flex flex-col gap-4">
-						<label className="text-[16px] font-medium text-[#313957]">
-							New Status
-						</label>
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-[966px]">
-							{statusOptions.map((status) => (
-								<button
-									key={status}
-									type="button"
-									onClick={() => form.setStatus(status)}
-									className={cn(
-										'flex h-[58px] items-center justify-center rounded-[12px] border border-[#D4D7E3] text-[16px] transition-all',
-										form.status === status
-											? status === LeadStatus.NON_BILLABLE
-												? 'border-[#D4D7E3] bg-[#FFE4E6]'
-												: 'border-[#2563EB] bg-[#E5F0FF]'
-											: 'bg-white',
-									)}
-								>
-									{status.charAt(0).toUpperCase() + status.slice(1)}
-								</button>
-							))}
+					{canUpdateLeadStatus ? (
+						<div className="flex flex-col gap-4">
+							<label className="text-[16px] font-medium text-[#313957]">
+								New Status
+							</label>
+							<div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-[966px]">
+								{statusOptions.map((status) => (
+									<button
+										key={status}
+										type="button"
+										onClick={() => form.setStatus(status)}
+										className={cn(
+											'flex h-[58px] items-center justify-center rounded-[12px] border border-[#D4D7E3] text-[16px] transition-all',
+											form.status === status
+												? status === LeadStatus.NON_BILLABLE
+													? 'border-[#D4D7E3] bg-[#FFE4E6]'
+													: 'border-[#2563EB] bg-[#E5F0FF]'
+												: 'bg-white',
+										)}
+									>
+										{status.charAt(0).toUpperCase() + status.slice(1)}
+									</button>
+								))}
+							</div>
 						</div>
-					</div>
+					) : null}
 
-					{form.status === LeadStatus.NON_BILLABLE && (
+					{canUpdateLeadStatus && form.status === LeadStatus.NON_BILLABLE && (
 						<div className="flex flex-col gap-2">
 							<label className="text-[16px] font-medium text-[#313957]">
 								Status Reason
@@ -358,7 +584,7 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 						</div>
 					)}
 
-					{form.status === LeadStatus.BILLABLE && form.isAdmin && (
+					{canUpdatePaymentStatus && (
 						<div className="flex flex-col gap-4">
 							<label className="text-[16px] font-medium text-[#313957]">
 								Payment Status
@@ -384,7 +610,6 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 							</div>
 						</div>
 					)}
-
 
 					{errorMessage && (
 						<div className="flex items-center gap-2 text-red-500">

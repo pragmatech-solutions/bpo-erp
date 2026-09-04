@@ -13,6 +13,7 @@ type LoanOfficerDocument = {
 
 const allowedLeadCreatorRoles = [
 	UserRole.ADMIN,
+	UserRole.MANAGER,
 	UserRole.TEAM_LEAD,
 	UserRole.AGENT,
 ];

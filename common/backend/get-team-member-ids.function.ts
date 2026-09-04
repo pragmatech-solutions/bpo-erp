@@ -3,6 +3,7 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 import { Users } from '@/common/models/users.schema';
 
 export type TeamMemberIds = {
+	leadCreatorIds: Types.ObjectId[];
 	agentIds: Types.ObjectId[];
 	loanOfficerIds: Types.ObjectId[];
 };
@@ -12,19 +13,30 @@ type TeamMemberDocument = {
 	role: UserRole;
 };
 
+const TEAM_LEAD_CREATOR_ROLES = [
+	UserRole.AGENT,
+	UserRole.TEAM_LEAD,
+	UserRole.MANAGER,
+];
+
+const TEAM_SCOPED_ROLES = [...TEAM_LEAD_CREATOR_ROLES, UserRole.LOAN_OFFICER];
+
 export async function getTeamMemberIds(teamId: string): Promise<TeamMemberIds> {
 	if (!Types.ObjectId.isValid(teamId)) {
-		return { agentIds: [], loanOfficerIds: [] };
+		return { leadCreatorIds: [], agentIds: [], loanOfficerIds: [] };
 	}
 
 	const members = await Users.find({
-		role: { $in: [UserRole.AGENT, UserRole.LOAN_OFFICER] },
+		role: { $in: TEAM_SCOPED_ROLES },
 		team_id: new Types.ObjectId(teamId),
 	})
 		.select('_id role')
 		.lean<TeamMemberDocument[]>();
 
 	return {
+		leadCreatorIds: members
+			.filter((member) => TEAM_LEAD_CREATOR_ROLES.includes(member.role))
+			.map((member) => member._id),
 		agentIds: members
 			.filter((member) => member.role === UserRole.AGENT)
 			.map((member) => member._id),
@@ -35,12 +47,12 @@ export async function getTeamMemberIds(teamId: string): Promise<TeamMemberIds> {
 }
 
 export function createTeamMemberLeadMatch({
-	agentIds,
+	leadCreatorIds,
 	loanOfficerIds,
 }: TeamMemberIds): Record<string, unknown> {
 	return {
 		$or: [
-			{ created_by: { $in: agentIds } },
+			{ created_by: { $in: leadCreatorIds } },
 			{ loan_officer_id: { $in: loanOfficerIds } },
 		],
 	};
@@ -56,10 +68,10 @@ export async function buildTeamLeadLeadMatch(
 		return createTeamMemberLeadMatch(memberIds);
 	}
 
-	const selectedAgentId = memberIds.agentIds.find(
-		(agentId) => agentId.toString() === requestedMemberId,
+	const selectedLeadCreatorId = memberIds.leadCreatorIds.find(
+		(creatorId) => creatorId.toString() === requestedMemberId,
 	);
-	if (selectedAgentId) return { created_by: selectedAgentId };
+	if (selectedLeadCreatorId) return { created_by: selectedLeadCreatorId };
 
 	const selectedLoanOfficerId = memberIds.loanOfficerIds.find(
 		(loanOfficerId) => loanOfficerId.toString() === requestedMemberId,

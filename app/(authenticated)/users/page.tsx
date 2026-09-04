@@ -13,6 +13,7 @@ export default async function UsersPage() {
 	if (
 		!currentUser ||
 		(currentUser.role !== UserRole.ADMIN &&
+			currentUser.role !== UserRole.MANAGER &&
 			currentUser.role !== UserRole.TEAM_LEAD)
 	) {
 		notFound();
@@ -20,4 +21,3 @@ export default async function UsersPage() {
 
 	return <UserManagement />;
 }
-

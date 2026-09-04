@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { ChevronDown, Copy, Filter, KeyRound, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import {
 	Select,
 	SelectContent,
@@ -33,10 +34,15 @@ const adminAccountStatuses: UserAccountStatus[] = [
 ];
 const editableRoles: UserRole[] = [
 	UserRole.ADMIN,
+	UserRole.MANAGER,
 	UserRole.TEAM_LEAD,
 	UserRole.AGENT,
 	UserRole.QUALITY_ASSURANCE,
 	UserRole.LOAN_OFFICER,
+];
+const availabilityStatuses = [
+	UserAvailabilityStatus.ACTIVE,
+	UserAvailabilityStatus.INACTIVE,
 ];
 
 function initials(name: string) {
@@ -53,6 +59,10 @@ function formatDate(value: string) {
 }
 
 function statusLabel(status: UserAccountStatus) {
+	return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function availabilityLabel(status: UserAvailabilityStatus) {
 	return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
@@ -118,7 +128,49 @@ function StatusDot({ status }: { status: UserAccountStatus }) {
 
 	return <span className={`size-2.5 rounded-full ${color}`} />;
 }
-
+function AvailabilitySelect({
+	user,
+	management,
+	className = '',
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+	className?: string;
+}) {
+	return (
+		<Select
+			value={user.availabilityStatus}
+			onValueChange={(value) =>
+				management.updateUser(user, {
+					availabilityStatus: value as UserAvailabilityStatus,
+				})
+			}
+		>
+			<SelectTrigger
+				className={`h-[40px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px] ${className}`}
+				disabled={management.isSaving}
+			>
+				<span className="flex items-center gap-2 truncate">
+					<span
+						className={`size-2.5 rounded-full ${
+							user.availabilityStatus === UserAvailabilityStatus.ACTIVE
+								? 'bg-[#10B981]'
+								: 'bg-[#94A3B8]'
+						}`}
+					/>
+					{availabilityLabel(user.availabilityStatus)}
+				</span>
+			</SelectTrigger>
+			<SelectContent>
+				{availabilityStatuses.map((status) => (
+					<SelectItem key={status} value={status}>
+						{availabilityLabel(status)}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
 export function UserManagement() {
 	const management = useUserManagementHook();
 	const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -258,7 +310,7 @@ export function UserManagement() {
 
 			<div className="hidden overflow-hidden rounded-[20px] bg-white shadow-sm lg:block">
 				<div className="overflow-x-auto">
-					<table className="w-full min-w-[1050px] text-left">
+					<table className="w-full min-w-[1180px] text-left">
 						<thead className="bg-[#F1F5FB]">
 							<tr>
 								<th className="px-6 py-5 font-semibold">User</th>
@@ -266,6 +318,7 @@ export function UserManagement() {
 								<th className="px-6 py-5 font-semibold">Role</th>
 								<th className="px-6 py-5 font-semibold">Team</th>
 								<th className="px-6 py-5 font-semibold">Status</th>
+								<th className="px-6 py-5 font-semibold">Availability</th>
 								<th className="px-6 py-5 font-semibold">Created On</th>
 								{management.isAdmin && (
 									<th className="px-6 py-5 font-semibold">Action</th>
@@ -277,7 +330,7 @@ export function UserManagement() {
 								<tr>
 									<td
 										className="px-6 py-10 text-center text-[#313957]"
-										colSpan={management.isAdmin ? 7 : 6}
+										colSpan={management.isAdmin ? 8 : 7}
 									>
 										Loading users...
 									</td>
@@ -286,7 +339,7 @@ export function UserManagement() {
 								<tr>
 									<td
 										className="px-6 py-10 text-center text-[#313957]"
-										colSpan={management.isAdmin ? 7 : 6}
+										colSpan={management.isAdmin ? 8 : 7}
 									>
 										No users found.
 									</td>
@@ -456,6 +509,16 @@ function AdminEditableFields({
 					className={className}
 				/>
 			</div>
+			<div className="flex flex-col gap-2">
+				<span className="text-[12px] font-semibold text-black">
+					Availability
+				</span>
+				<AvailabilitySelect
+					user={user}
+					management={management}
+					className={className}
+				/>
+			</div>
 		</>
 	);
 }
@@ -478,17 +541,17 @@ function UserMobileCard({
 						{user.name}
 					</h2>
 					<p className="truncate text-[12px] font-medium text-black">
-						{user.email || '—'}
+						{user.email || 'N/A'}
 					</p>
 				</div>
 			</div>
 
 			{management.isAdmin ? (
-				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
+				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
 					<AdminEditableFields user={user} management={management} />
 				</div>
 			) : (
-				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
+				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
 					<ReadOnlyField label="Role" value={roleLabel(user.role)} />
 					<ReadOnlyField label="Team" value={user.team?.name || 'No Team'} />
 					<div className="flex flex-col gap-2">
@@ -499,6 +562,23 @@ function UserMobileCard({
 							className="w-full"
 						/>
 					</div>
+					{management.canManageAvailability ? (
+						<div className="flex flex-col gap-2">
+							<span className="text-[12px] font-semibold text-black">
+								Availability
+							</span>
+							<AvailabilitySelect
+								user={user}
+								management={management}
+								className="w-full"
+							/>
+						</div>
+					) : (
+						<ReadOnlyField
+							label="Availability"
+							value={availabilityLabel(user.availabilityStatus)}
+						/>
+					)}
 				</div>
 			)}
 
@@ -597,7 +677,7 @@ function UserRow({
 						<span className="font-medium">{user.name}</span>
 					</div>
 				</td>
-				<td className="px-6 py-4">{user.email || '—'}</td>
+				<td className="px-6 py-4">{user.email || 'N/A'}</td>
 				<td className="px-6 py-4">
 					<AdminRoleSelect
 						user={user}
@@ -619,6 +699,13 @@ function UserRow({
 						className="h-[40px] w-[135px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px]"
 					/>
 				</td>
+				<td className="px-6 py-4">
+					<AvailabilitySelect
+						user={user}
+						management={management}
+						className="w-[135px]"
+					/>
+				</td>
 				<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
 				<td className="px-6 py-4">
 					<AdminPasswordResetAction user={user} management={management} />
@@ -637,7 +724,7 @@ function UserRow({
 					<span className="font-medium">{user.name}</span>
 				</div>
 			</td>
-			<td className="px-6 py-4">{user.email}</td>
+			<td className="px-6 py-4">{user.email || 'N/A'}</td>
 			<td className="px-6 py-4">{roleLabel(user.role)}</td>
 			<td className="px-6 py-4">{user.team?.name || 'No Team'}</td>
 			<td className="px-6 py-4">
@@ -646,6 +733,17 @@ function UserRow({
 					management={management}
 					className="w-[135px]"
 				/>
+			</td>
+			<td className="px-6 py-4">
+				{management.canManageAvailability ? (
+					<AvailabilitySelect
+						user={user}
+						management={management}
+						className="w-[135px]"
+					/>
+				) : (
+					availabilityLabel(user.availabilityStatus)
+				)}
 			</td>
 			<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
 		</tr>

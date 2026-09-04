@@ -38,6 +38,8 @@ export function useUserManagementHook() {
 	const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 	const isAdmin = currentRole === UserRole.ADMIN;
 	const isTeamLead = currentRole === UserRole.TEAM_LEAD;
+	const isManager = currentRole === UserRole.MANAGER;
+	const canManageAvailability = isAdmin || isManager;
 
 	const totalPages = useMemo(
 		() => Math.max(1, Math.ceil(total / limit)),
@@ -106,6 +108,9 @@ export function useUserManagementHook() {
 					...currentUser,
 					...(input.role ? { role: input.role } : {}),
 					...(input.status ? { status: input.status } : {}),
+					...(input.availabilityStatus
+						? { availabilityStatus: input.availabilityStatus }
+						: {}),
 					...(input.teamId !== undefined
 						? {
 								team:
@@ -202,5 +207,7 @@ export function useUserManagementHook() {
 		resetUserPassword,
 		isAdmin,
 		isTeamLead,
+		isManager,
+		canManageAvailability,
 	};
 }
