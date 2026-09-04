@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, Copy, Filter, KeyRound, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
 import {
 	Select,
 	SelectContent,
@@ -33,6 +34,7 @@ const adminAccountStatuses: UserAccountStatus[] = [
 ];
 const editableRoles: UserRole[] = [
 	UserRole.ADMIN,
+	UserRole.MANAGER,
 	UserRole.TEAM_LEAD,
 	UserRole.AGENT,
 	UserRole.QUALITY_ASSURANCE,
@@ -53,6 +55,10 @@ function formatDate(value: string) {
 }
 
 function statusLabel(status: UserAccountStatus) {
+	return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function availabilityLabel(status: UserAvailabilityStatus) {
 	return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
@@ -79,35 +85,39 @@ function StatusSelect({
 	management: ManagementHook;
 	className?: string;
 }) {
+	const statuses = management.isAdmin
+		? adminAccountStatuses
+		: teamLeadAccountStatuses;
+
 	return (
-		<Select
-			value={user.status}
-			onValueChange={(value) =>
-				management.updateUser(user, {
-					status: value as UserAccountStatus,
-				})
-			}
+		<div
+			className={`relative flex h-[40px] items-center justify-between rounded-[8px] border border-[#D4D7E3] bg-white px-3 text-[13px] font-medium text-[#0C1421] ${className}`}
 		>
-			<SelectTrigger
-				className={`h-[40px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px] ${className}`}
+			<span className="pointer-events-none flex min-w-0 items-center gap-2 truncate">
+				<StatusDot status={user.status} />
+				<span className="truncate">{statusLabel(user.status)}</span>
+			</span>
+			<ChevronDown className="pointer-events-none size-4 shrink-0 text-[#26395C] opacity-70" />
+			<select
+				value={user.status}
+				onChange={(event) =>
+					management.updateUser(user, {
+						status: event.target.value as UserAccountStatus,
+					})
+				}
 				disabled={management.isSaving}
+				aria-label={`Update ${user.name} account status`}
+				className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
 			>
-				<span className="flex items-center gap-2 truncate">
-					<StatusDot status={user.status} />
-					{statusLabel(user.status)}
-				</span>
-			</SelectTrigger>
-			<SelectContent>
-				{teamLeadAccountStatuses.map((status) => (
-					<SelectItem key={status} value={status}>
+				{statuses.map((status) => (
+					<option key={status} value={status}>
 						{statusLabel(status)}
-					</SelectItem>
+					</option>
 				))}
-			</SelectContent>
-		</Select>
+			</select>
+		</div>
 	);
 }
-
 function StatusDot({ status }: { status: UserAccountStatus }) {
 	const color =
 		status === 'active'
@@ -118,7 +128,39 @@ function StatusDot({ status }: { status: UserAccountStatus }) {
 
 	return <span className={`size-2.5 rounded-full ${color}`} />;
 }
+function AvailabilityToggle({
+	user,
+	management,
+}: {
+	user: ManagedUser;
+	management: ManagementHook;
+}) {
+	const isActive = user.availabilityStatus === UserAvailabilityStatus.ACTIVE;
+	const nextStatus = isActive
+		? UserAvailabilityStatus.INACTIVE
+		: UserAvailabilityStatus.ACTIVE;
 
+	return (
+		<button
+			type="button"
+			onClick={() =>
+				management.updateUser(user, { availabilityStatus: nextStatus })
+			}
+			disabled={management.isSaving || !management.canManageAvailability}
+			aria-label={`Mark ${user.name} availability as ${availabilityLabel(nextStatus)}`}
+			aria-pressed={isActive}
+			className={`relative inline-flex h-[28px] w-[52px] shrink-0 items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+				isActive ? 'bg-[#10B981]' : 'bg-[#E9EDF5]'
+			}`}
+		>
+			<span
+				className={`absolute left-[3px] size-[22px] rounded-full bg-white shadow-sm transition-transform ${
+					isActive ? 'translate-x-[24px]' : 'translate-x-0'
+				}`}
+			/>
+		</button>
+	);
+}
 export function UserManagement() {
 	const management = useUserManagementHook();
 	const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -258,7 +300,7 @@ export function UserManagement() {
 
 			<div className="hidden overflow-hidden rounded-[20px] bg-white shadow-sm lg:block">
 				<div className="overflow-x-auto">
-					<table className="w-full min-w-[1050px] text-left">
+					<table className="w-full min-w-[1180px] text-left">
 						<thead className="bg-[#F1F5FB]">
 							<tr>
 								<th className="px-6 py-5 font-semibold">User</th>
@@ -266,6 +308,7 @@ export function UserManagement() {
 								<th className="px-6 py-5 font-semibold">Role</th>
 								<th className="px-6 py-5 font-semibold">Team</th>
 								<th className="px-6 py-5 font-semibold">Status</th>
+								<th className="px-6 py-5 font-semibold">Availability</th>
 								<th className="px-6 py-5 font-semibold">Created On</th>
 								{management.isAdmin && (
 									<th className="px-6 py-5 font-semibold">Action</th>
@@ -277,7 +320,7 @@ export function UserManagement() {
 								<tr>
 									<td
 										className="px-6 py-10 text-center text-[#313957]"
-										colSpan={management.isAdmin ? 7 : 6}
+										colSpan={management.isAdmin ? 8 : 7}
 									>
 										Loading users...
 									</td>
@@ -286,7 +329,7 @@ export function UserManagement() {
 								<tr>
 									<td
 										className="px-6 py-10 text-center text-[#313957]"
-										colSpan={management.isAdmin ? 7 : 6}
+										colSpan={management.isAdmin ? 8 : 7}
 									>
 										No users found.
 									</td>
@@ -390,36 +433,6 @@ function AdminTeamSelect({
 	);
 }
 
-function AdminStatusSelect({
-	user,
-	management,
-	className,
-}: {
-	user: ManagedUser;
-	management: ManagementHook;
-	className: string;
-}) {
-	return (
-		<Select
-			value={user.status}
-			onValueChange={(value) =>
-				management.updateUser(user, { status: value as UserAccountStatus })
-			}
-		>
-			<SelectTrigger className={className} disabled={management.isSaving}>
-				<SelectValue />
-			</SelectTrigger>
-			<SelectContent>
-				{adminAccountStatuses.map((status) => (
-					<SelectItem key={status} value={status}>
-						{statusLabel(status)}
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
-	);
-}
-
 function AdminEditableFields({
 	user,
 	management,
@@ -450,11 +463,17 @@ function AdminEditableFields({
 			</div>
 			<div className="flex flex-col gap-2">
 				<span className="text-[12px] font-semibold text-black">Status</span>
-				<AdminStatusSelect
+				<StatusSelect
 					user={user}
 					management={management}
 					className={className}
 				/>
+			</div>
+			<div className="flex flex-col gap-2">
+				<span className="text-[12px] font-semibold text-black">
+					Availability
+				</span>
+				<AvailabilityToggle user={user} management={management} />
 			</div>
 		</>
 	);
@@ -478,17 +497,17 @@ function UserMobileCard({
 						{user.name}
 					</h2>
 					<p className="truncate text-[12px] font-medium text-black">
-						{user.email || '—'}
+						{user.email || 'N/A'}
 					</p>
 				</div>
 			</div>
 
 			{management.isAdmin ? (
-				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
+				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
 					<AdminEditableFields user={user} management={management} />
 				</div>
 			) : (
-				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-3">
+				<div className="grid grid-cols-1 gap-3 min-[390px]:grid-cols-2">
 					<ReadOnlyField label="Role" value={roleLabel(user.role)} />
 					<ReadOnlyField label="Team" value={user.team?.name || 'No Team'} />
 					<div className="flex flex-col gap-2">
@@ -499,6 +518,19 @@ function UserMobileCard({
 							className="w-full"
 						/>
 					</div>
+					{management.canManageAvailability ? (
+						<div className="flex flex-col gap-2">
+							<span className="text-[12px] font-semibold text-black">
+								Availability
+							</span>
+							<AvailabilityToggle user={user} management={management} />
+						</div>
+					) : (
+						<ReadOnlyField
+							label="Availability"
+							value={availabilityLabel(user.availabilityStatus)}
+						/>
+					)}
 				</div>
 			)}
 
@@ -597,7 +629,7 @@ function UserRow({
 						<span className="font-medium">{user.name}</span>
 					</div>
 				</td>
-				<td className="px-6 py-4">{user.email || '—'}</td>
+				<td className="px-6 py-4">{user.email || 'N/A'}</td>
 				<td className="px-6 py-4">
 					<AdminRoleSelect
 						user={user}
@@ -613,11 +645,14 @@ function UserRow({
 					/>
 				</td>
 				<td className="px-6 py-4">
-					<AdminStatusSelect
+					<StatusSelect
 						user={user}
 						management={management}
 						className="h-[40px] w-[135px] rounded-[8px] border-[#D4D7E3] bg-white text-[13px]"
 					/>
+				</td>
+				<td className="px-6 py-4">
+					<AvailabilityToggle user={user} management={management} />
 				</td>
 				<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
 				<td className="px-6 py-4">
@@ -637,7 +672,7 @@ function UserRow({
 					<span className="font-medium">{user.name}</span>
 				</div>
 			</td>
-			<td className="px-6 py-4">{user.email}</td>
+			<td className="px-6 py-4">{user.email || 'N/A'}</td>
 			<td className="px-6 py-4">{roleLabel(user.role)}</td>
 			<td className="px-6 py-4">{user.team?.name || 'No Team'}</td>
 			<td className="px-6 py-4">
@@ -646,6 +681,13 @@ function UserRow({
 					management={management}
 					className="w-[135px]"
 				/>
+			</td>
+			<td className="px-6 py-4">
+				{management.canManageAvailability ? (
+					<AvailabilityToggle user={user} management={management} />
+				) : (
+					availabilityLabel(user.availabilityStatus)
+				)}
 			</td>
 			<td className="px-6 py-4">{formatDate(user.createdAt)}</td>
 		</tr>

@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema(
 		},
 		role: {
 			type: String,
-			enum: ['agent', 'team_lead', 'quality_assurance', 'admin'],
+			enum: ['agent', 'team_lead', 'manager', 'quality_assurance', 'admin'],
 			required: true,
 		},
 		team_id: {
@@ -71,7 +71,11 @@ async function backfillUsernames() {
 	await mongoose.connect(process.env.MONGODB_URI, { bufferCommands: false });
 
 	const users = await Users.find({
-		$or: [{ username: { $exists: false } }, { username: null }, { username: '' }],
+		$or: [
+			{ username: { $exists: false } },
+			{ username: null },
+			{ username: '' },
+		],
 	});
 
 	if (users.length === 0) {
@@ -80,9 +84,11 @@ async function backfillUsernames() {
 	}
 
 	const takenUsernames = new Set(
-		(await Users.find({ username: { $exists: true, $nin: [null, ''] } }).select(
-			'username',
-		)).map((user) => user.username),
+		(
+			await Users.find({
+				username: { $exists: true, $nin: [null, ''] },
+			}).select('username')
+		).map((user) => user.username),
 	);
 
 	let updatedCount = 0;
@@ -108,7 +114,9 @@ async function backfillUsernames() {
 
 	console.log(`Backfill complete. Updated ${updatedCount} user(s).`);
 	if (collisionCount > 0) {
-		console.log(`Resolved ${collisionCount} username collision(s) with numeric suffixes.`);
+		console.log(
+			`Resolved ${collisionCount} username collision(s) with numeric suffixes.`,
+		);
 	}
 }
 

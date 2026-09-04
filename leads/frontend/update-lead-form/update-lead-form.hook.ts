@@ -130,6 +130,7 @@ export function useUpdateLeadFormHook(id: string) {
 		return userInfo?.currentUser.role as UserRole | undefined;
 	});
 	const isAdmin = currentRole === UserRole.ADMIN;
+	const isManager = currentRole === UserRole.MANAGER;
 	const isQualityAssurance = currentRole === UserRole.QUALITY_ASSURANCE;
 	const isLoanOfficer = currentRole === UserRole.LOAN_OFFICER;
 
@@ -180,8 +181,7 @@ export function useUpdateLeadFormHook(id: string) {
 					zip: data.callTransfer.zip || '',
 					email: data.callTransfer.email || '',
 					homeValue: data.callTransfer.homeValue?.toString() || '',
-					mortgageBalance:
-						data.callTransfer.mortgageBalance?.toString() || '',
+					mortgageBalance: data.callTransfer.mortgageBalance?.toString() || '',
 					mortgageRateType: data.callTransfer.mortgageRateType || '',
 					propertyType: data.callTransfer.propertyType || '',
 					multipleProperties:
@@ -239,7 +239,6 @@ export function useUpdateLeadFormHook(id: string) {
 		return () => clearTimeout(timeoutId);
 	}, [fetchLead]);
 
-
 	const handleSubmit = async (e?: React.FormEvent) => {
 		if (e) e.preventDefault();
 		setErrorMessage('');
@@ -251,6 +250,7 @@ export function useUpdateLeadFormHook(id: string) {
 			status,
 			statusReason:
 				status === LeadStatus.NON_BILLABLE ? statusReason : undefined,
+			...(isAdmin || isManager ? { paymentStatus } : {}),
 			...(isAdmin
 				? {
 						paymentStatus,
@@ -270,12 +270,8 @@ export function useUpdateLeadFormHook(id: string) {
 										mortgageBalance: toOptionalNumber(
 											callTransfer.mortgageBalance,
 										),
-										mortgageRate: toOptionalNumber(
-											callTransfer.mortgageRate,
-										),
-										cashOutAmount: toOptionalNumber(
-											callTransfer.cashOutAmount,
-										),
+										mortgageRate: toOptionalNumber(callTransfer.mortgageRate),
+										cashOutAmount: toOptionalNumber(callTransfer.cashOutAmount),
 									},
 								}
 							: {}),
@@ -337,6 +333,7 @@ export function useUpdateLeadFormHook(id: string) {
 			paymentStatus,
 			setPaymentStatus,
 			isAdmin,
+			isManager,
 			isQualityAssurance,
 			isLoanOfficer,
 		},
@@ -344,5 +341,3 @@ export function useUpdateLeadFormHook(id: string) {
 		handleCancel,
 	};
 }
-
-

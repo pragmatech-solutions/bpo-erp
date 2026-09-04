@@ -8,15 +8,18 @@ export type LeadStats = {
 	nonBillable: number;
 };
 
-export type TeamLeadOption = {
+export type TeamLeaderOption = {
 	id: string;
 	name: string;
 };
 
+export type TeamLeadOption = TeamLeaderOption;
+
 export type TeamOverviewItem = {
 	id: string;
 	name: string;
-	teamLeads: TeamLeadOption[];
+	teamLeads: TeamLeaderOption[];
+	managers: TeamLeaderOption[];
 	memberCount: number;
 	agentCount: number;
 	loanOfficerCount: number;
@@ -28,7 +31,8 @@ export type TeamOverviewItem = {
 export type TeamOverviewData = {
 	teams: TeamOverviewItem[];
 	stats: LeadStats;
-	teamLeads: TeamLeadOption[];
+	teamLeads: TeamLeaderOption[];
+	managers: TeamLeaderOption[];
 	total: number;
 	page: number;
 	limit: number;
@@ -46,7 +50,8 @@ export type TeamMemberPerformance = {
 export type TeamPerformanceData = {
 	id: string;
 	name: string;
-	teamLeads: TeamLeadOption[];
+	teamLeads: TeamLeaderOption[];
+	managers: TeamLeaderOption[];
 	memberCount: number;
 	agentCount: number;
 	loanOfficerCount: number;

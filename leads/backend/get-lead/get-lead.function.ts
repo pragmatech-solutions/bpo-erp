@@ -61,6 +61,7 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 	if (!currentUser) throw new Error('Unauthorized');
 	const canViewPaymentStatus =
 		currentUser.role === UserRole.ADMIN ||
+		currentUser.role === UserRole.MANAGER ||
 		currentUser.role === UserRole.TEAM_LEAD;
 
 	const lead = await Leads.findById(input.id)
@@ -80,19 +81,21 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		if (lead.loan_officer_id?._id.toString() !== currentUser.id) {
 			throw new Error('Lead not found');
 		}
-	} else if (currentUser.role === UserRole.TEAM_LEAD) {
+	} else if (
+		currentUser.role === UserRole.TEAM_LEAD ||
+		currentUser.role === UserRole.MANAGER
+	) {
 		if (!currentUser.teamId) {
-			throw new Error('Forbidden: Team lead is not assigned to a team');
+			throw new Error('Forbidden: Team-scoped user is not assigned to a team');
 		}
 
-		const { agentIds, loanOfficerIds } = await getTeamMemberIds(
+		const { leadCreatorIds, loanOfficerIds } = await getTeamMemberIds(
 			currentUser.teamId,
 		);
 		const loanOfficerId = lead.loan_officer_id?._id.toString();
 		const canReadLead =
-			lead.created_by._id.toString() === currentUser.id ||
-			agentIds.some(
-				(agentId) => agentId.toString() === lead.created_by._id.toString(),
+			leadCreatorIds.some(
+				(creatorId) => creatorId.toString() === lead.created_by._id.toString(),
 			) ||
 			loanOfficerIds.some(
 				(officerId) => officerId.toString() === loanOfficerId,

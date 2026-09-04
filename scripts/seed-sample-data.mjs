@@ -18,7 +18,12 @@ const CAMPAIGNS = [
 const LOAN_TYPES = ['Conventional', 'FHA', 'VA', 'VA eligible'];
 const LEAD_STATUSES = ['pending', 'billable', 'non billable'];
 const USER_AVAILABILITY_STATUSES = ['active', 'inactive'];
-const CALL_TRANSFER_LOAN_TYPES = ['Conventional', 'Veteran', 'FHA', 'Streamline'];
+const CALL_TRANSFER_LOAN_TYPES = [
+	'Conventional',
+	'Veteran',
+	'FHA',
+	'Streamline',
+];
 const CALL_TRANSFER_LOAN_PURPOSES = [
 	'Rate and Term',
 	'Cash Out',
@@ -72,7 +77,14 @@ const UserSchema = new mongoose.Schema(
 		},
 		role: {
 			type: String,
-			enum: ['agent', 'team_lead', 'admin', 'quality_assurance', 'loan_officer'],
+			enum: [
+				'agent',
+				'team_lead',
+				'manager',
+				'admin',
+				'quality_assurance',
+				'loan_officer',
+			],
 			required: true,
 		},
 		team_id: {
@@ -284,7 +296,9 @@ function buildCallTransferLead({ agent, loanOfficer, leadIndex }) {
 async function clearPreviousSeedData() {
 	const seedUsers = await Users.find({
 		$or: [
-			{ email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` } },
+			{
+				email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` },
+			},
 			{ username: { $regex: '\\.seed$' } },
 		],
 	}).select('_id');
@@ -297,7 +311,9 @@ async function clearPreviousSeedData() {
 
 	await Users.deleteMany({
 		$or: [
-			{ email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` } },
+			{
+				email: { $regex: `\\.seed@${SEED_EMAIL_DOMAIN.replace('.', '\\.')}$` },
+			},
 			{ username: { $regex: '\\.seed$' } },
 		],
 	});
@@ -357,21 +373,23 @@ async function seed() {
 
 		// The first team gets two leads to cover the multiple-leads-per-team case.
 		const teamLeadCount = teamIndex === 0 ? 2 : 1;
-		const teamLeadUsers = Array.from({ length: teamLeadCount }, (_, leadIndex) =>
-			buildSeedUser({
-				localPart:
-					leadIndex === 0
-						? `teamlead${teamNumber}`
-						: `teamlead${teamNumber}.${leadIndex + 1}`,
-				name:
-					leadIndex === 0
-						? `Seed Team Lead ${teamNumber}`
-						: `Seed Team Lead ${teamNumber}-${leadIndex + 1}`,
-				password: hashedPassword,
-				status: 'active',
-				role: 'team_lead',
-				team_id: teamId,
-			}),
+		const teamLeadUsers = Array.from(
+			{ length: teamLeadCount },
+			(_, leadIndex) =>
+				buildSeedUser({
+					localPart:
+						leadIndex === 0
+							? `teamlead${teamNumber}`
+							: `teamlead${teamNumber}.${leadIndex + 1}`,
+					name:
+						leadIndex === 0
+							? `Seed Team Lead ${teamNumber}`
+							: `Seed Team Lead ${teamNumber}-${leadIndex + 1}`,
+					password: hashedPassword,
+					status: 'active',
+					role: 'team_lead',
+					team_id: teamId,
+				}),
 		);
 		const teamLeadDocuments = await Users.insertMany(teamLeadUsers);
 

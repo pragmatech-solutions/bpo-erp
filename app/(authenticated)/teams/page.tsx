@@ -13,6 +13,7 @@ export default async function TeamsPage() {
 	if (
 		!currentUser ||
 		(currentUser.role !== UserRole.ADMIN &&
+			currentUser.role !== UserRole.MANAGER &&
 			currentUser.role !== UserRole.TEAM_LEAD)
 	) {
 		notFound();

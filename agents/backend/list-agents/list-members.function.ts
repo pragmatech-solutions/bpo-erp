@@ -5,6 +5,13 @@ import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import type { AgentListItem } from './list-agents.type';
 
+const TEAM_FILTERABLE_ROLES = [
+	UserRole.AGENT,
+	UserRole.TEAM_LEAD,
+	UserRole.MANAGER,
+	UserRole.LOAN_OFFICER,
+];
+
 export async function listMembers(): Promise<AgentListItem[]> {
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
@@ -15,20 +22,21 @@ export async function listMembers(): Promise<AgentListItem[]> {
 		role: UserRole.AGENT,
 	};
 
-	if (currentUser.role === UserRole.TEAM_LEAD) {
+	if (
+		currentUser.role === UserRole.TEAM_LEAD ||
+		currentUser.role === UserRole.MANAGER
+	) {
 		if (!currentUser.teamId) {
-			throw new Error('Forbidden: Team lead is not assigned to a team');
+			throw new Error('Forbidden: Team-scoped user is not assigned to a team');
 		}
 
-		// Team leads filter across every member of their team, and a team can hold
-		// both agents and loan officers.
-		agentFilter.role = { $in: [UserRole.AGENT, UserRole.LOAN_OFFICER] };
+		agentFilter.role = { $in: TEAM_FILTERABLE_ROLES };
 		agentFilter.team_id = new Types.ObjectId(currentUser.teamId);
 	} else if (
 		currentUser.role !== UserRole.ADMIN &&
 		currentUser.role !== UserRole.QUALITY_ASSURANCE
 	) {
-		throw new Error('Forbidden: Admin, QA, or team lead access only');
+		throw new Error('Forbidden: Admin, QA, manager, or team lead access only');
 	} else {
 		agentFilter.status = 'active';
 	}

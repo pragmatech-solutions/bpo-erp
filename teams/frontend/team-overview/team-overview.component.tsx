@@ -65,8 +65,13 @@ function teamLeadNames(team: TeamOverviewItem) {
 	return team.teamLeads.map((teamLead) => teamLead.name).join(', ');
 }
 
+function managerNames(team: TeamOverviewItem) {
+	if (team.managers.length === 0) return 'Unassigned';
+	return team.managers.map((manager) => manager.name).join(', ');
+}
+
 function memberBreakdown(team: TeamOverviewItem) {
-	return `${team.agentCount} agents · ${team.loanOfficerCount} loan officers`;
+	return `${team.agentCount} agents / ${team.loanOfficerCount} loan officers`;
 }
 
 function formatAccountStatus(status: string) {
@@ -430,6 +435,12 @@ function DesktopTeamSection({
 					<div className="text-[11px] text-black">
 						{team.teamLeads.length > 1 ? 'Team Leads' : 'Team Lead'}
 					</div>
+					<div
+						className="mt-1 truncate text-[11px] text-[#4B5563]"
+						title={managerNames(team)}
+					>
+						Manager: {managerNames(team)}
+					</div>
 				</div>
 				<DesktopSummaryStat
 					value={team.memberCount}
@@ -508,7 +519,12 @@ function DesktopTeamSection({
 									{String(member.stats.nonBillable).padStart(2, '0')}
 								</span>
 								<span className="flex items-center gap-2">
-									<span className={getAccountStatusDotClass(member.status) + ' size-2 rounded-full'} />
+									<span
+										className={
+											getAccountStatusDotClass(member.status) +
+											' size-2 rounded-full'
+										}
+									/>
 									{formatAccountStatus(member.status)}
 								</span>
 							</div>
@@ -587,6 +603,9 @@ function TeamMobileCard({
 							{team.teamLeads.length > 1 ? 'Team Leads' : 'Team Lead'}:{' '}
 							{teamLeadNames(team)}
 						</p>
+						<p className="truncate text-[12px] font-medium text-[#4B5563]">
+							Manager: {managerNames(team)}
+						</p>
 					</div>
 				</div>
 				{isExpanded ? (
@@ -661,7 +680,12 @@ function TeamMobileCard({
 										{String(member.stats.nonBillable).padStart(2, '0')}
 									</span>
 									<span className="flex items-center gap-1">
-										<span className={getAccountStatusDotClass(member.status) + ' size-1.5 rounded-full'} />
+										<span
+											className={
+												getAccountStatusDotClass(member.status) +
+												' size-1.5 rounded-full'
+											}
+										/>
 										{formatAccountStatus(member.status)}
 									</span>
 								</div>

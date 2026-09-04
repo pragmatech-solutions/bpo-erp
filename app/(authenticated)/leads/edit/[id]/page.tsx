@@ -15,6 +15,7 @@ export default async function EditLeadPage({
 	if (
 		!currentUser ||
 		(currentUser.role !== UserRole.ADMIN &&
+			currentUser.role !== UserRole.MANAGER &&
 			currentUser.role !== UserRole.QUALITY_ASSURANCE &&
 			currentUser.role !== UserRole.LOAN_OFFICER)
 	) {

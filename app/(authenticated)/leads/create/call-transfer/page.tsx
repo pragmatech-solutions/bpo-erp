@@ -11,6 +11,7 @@ export default async function CreateCallTransferLeadPage() {
 	if (
 		!currentUser ||
 		(currentUser.role !== UserRole.AGENT &&
+			currentUser.role !== UserRole.MANAGER &&
 			currentUser.role !== UserRole.TEAM_LEAD)
 	) {
 		notFound();

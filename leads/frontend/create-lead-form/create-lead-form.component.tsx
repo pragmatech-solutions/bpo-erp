@@ -61,7 +61,9 @@ export function CreateLeadForm() {
 		getServerRoleSnapshot,
 	);
 	const canCreateCallTransferLead =
-		currentRole === UserRole.AGENT || currentRole === UserRole.TEAM_LEAD;
+		currentRole === UserRole.AGENT ||
+		currentRole === UserRole.MANAGER ||
+		currentRole === UserRole.TEAM_LEAD;
 
 	return (
 		<div className="flex flex-col gap-8">
@@ -285,12 +287,3 @@ export function CreateLeadForm() {
 		</div>
 	);
 }
-
-
-
-
-
-
-
-
-
