@@ -146,12 +146,14 @@ export async function updateLead(input: UpdateLeadInput) {
 			throw new Error('Lead not found');
 		}
 
-		if (validatedInput.status !== editableLead.status) {
-			throw new Error('Forbidden: Managers can only update payment status');
-		}
-
-		if (validatedInput.paymentStatus === undefined) {
-			throw new Error('Payment status is required');
+		if (
+			validatedInput.status !== editableLead.status &&
+			validatedInput.status !== LeadStatus.BILLABLE &&
+			validatedInput.status !== LeadStatus.NON_BILLABLE
+		) {
+			throw new Error(
+				'Forbidden: Managers can only mark leads billable or non-billable',
+			);
 		}
 
 		if (editableLead.status === LeadStatus.BILLABLE) {
@@ -338,7 +340,9 @@ export async function updateLead(input: UpdateLeadInput) {
 			editableLead.payment_status = validatedInput.paymentStatus;
 		}
 	} else if (currentUser.role === UserRole.MANAGER) {
-		if (validatedInput.paymentStatus !== undefined) {
+		if (!isBillableLead && validatedInput.status === LeadStatus.BILLABLE) {
+			editableLead.payment_status = 'unpaid';
+		} else if (validatedInput.paymentStatus !== undefined) {
 			editableLead.payment_status = validatedInput.paymentStatus;
 		}
 	} else if (

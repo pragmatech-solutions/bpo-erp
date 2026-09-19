@@ -107,8 +107,7 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 	const isBillableCommentOnly = isBillableLead && form.isLoanOfficer;
 	const isReadOnlyBillableLead =
 		isBillableLead && !form.isAdmin && !isBillableCommentOnly;
-	const canUpdateLeadStatus =
-		!form.isManager && !isReadOnlyBillableLead && !isBillableCommentOnly;
+	const canUpdateLeadStatus = !isReadOnlyBillableLead && !isBillableCommentOnly;
 	const canUpdateStatusText =
 		(canUpdateLeadStatus &&
 			(form.status === LeadStatus.NON_BILLABLE ||
@@ -120,7 +119,7 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 	const formattedCurrentStatus =
 		form.status.charAt(0).toUpperCase() + form.status.slice(1);
 	const statusOptions =
-		form.isQualityAssurance || form.isLoanOfficer
+		form.isQualityAssurance || form.isLoanOfficer || form.isManager
 			? [LeadStatus.BILLABLE, LeadStatus.NON_BILLABLE]
 			: Object.values(LeadStatus);
 
@@ -139,7 +138,7 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 					{form.isAdmin
 						? 'Edit Lead'
 						: form.isManager
-							? 'Update Lead Payment'
+							? 'Update Lead'
 							: 'Update Lead Status'}
 				</h1>
 				{form.isAdmin ? (
@@ -150,8 +149,8 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 				) : null}
 				{form.isManager ? (
 					<p className="text-[14px] font-medium text-[#313957]">
-						Managers can update payment status for pending and non-billable team
-						leads.
+						Managers can mark team leads billable or non-billable and update
+						payment status for non-billable team leads.
 					</p>
 				) : null}
 				{isReadOnlyBillableLead ? (
@@ -550,7 +549,9 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 									icon={<Check size={16} />}
 								/>
 							) : null}
-							{form.isManager && form.status === LeadStatus.NON_BILLABLE ? (
+							{form.isManager &&
+							!canUpdateLeadStatus &&
+							form.status === LeadStatus.NON_BILLABLE ? (
 								<ReadOnlyField
 									label="Status Reason"
 									value={form.statusReason}
