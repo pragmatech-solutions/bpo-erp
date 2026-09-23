@@ -103,14 +103,23 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 		handleCancel,
 	} = useUpdateLeadFormHook(id);
 
-	const canUpdateLeadStatus = !form.isManager;
+	const isBillableLead = form.originalStatus === LeadStatus.BILLABLE;
+	const isBillableCommentOnly = isBillableLead && form.isLoanOfficer;
+	const isReadOnlyBillableLead =
+		isBillableLead && !form.isAdmin && !isBillableCommentOnly;
+	const canUpdateLeadStatus = !isReadOnlyBillableLead && !isBillableCommentOnly;
+	const canUpdateStatusText =
+		(canUpdateLeadStatus &&
+			(form.status === LeadStatus.NON_BILLABLE ||
+				form.status === LeadStatus.BILLABLE)) ||
+		isBillableCommentOnly;
 	const canUpdatePaymentStatus = form.isAdmin
 		? form.status === LeadStatus.BILLABLE
-		: form.isManager && form.status !== LeadStatus.BILLABLE;
+		: form.isManager && !isBillableLead;
 	const formattedCurrentStatus =
 		form.status.charAt(0).toUpperCase() + form.status.slice(1);
 	const statusOptions =
-		form.isQualityAssurance || form.isLoanOfficer
+		form.isQualityAssurance || form.isLoanOfficer || form.isManager
 			? [LeadStatus.BILLABLE, LeadStatus.NON_BILLABLE]
 			: Object.values(LeadStatus);
 
@@ -129,7 +138,7 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 					{form.isAdmin
 						? 'Edit Lead'
 						: form.isManager
-							? 'Update Lead Payment'
+							? 'Update Lead'
 							: 'Update Lead Status'}
 				</h1>
 				{form.isAdmin ? (
@@ -140,8 +149,13 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 				) : null}
 				{form.isManager ? (
 					<p className="text-[14px] font-medium text-[#313957]">
-						Managers can update payment status for pending and non-billable team
-						leads.
+						Managers can mark team leads billable or non-billable and update
+						payment status for non-billable team leads.
+					</p>
+				) : null}
+				{isReadOnlyBillableLead ? (
+					<p className="text-[14px] font-medium text-[#F43F5E]">
+						Billable leads can only be edited by admins.
 					</p>
 				) : null}
 			</div>
@@ -526,14 +540,18 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 								value={form.loanType}
 								icon={<Wallet size={16} />}
 							/>
-							{form.isManager ? (
+							{form.isManager ||
+							isBillableCommentOnly ||
+							isReadOnlyBillableLead ? (
 								<ReadOnlyField
 									label="Current Status"
 									value={formattedCurrentStatus}
 									icon={<Check size={16} />}
 								/>
 							) : null}
-							{form.isManager && form.status === LeadStatus.NON_BILLABLE ? (
+							{form.isManager &&
+							!canUpdateLeadStatus &&
+							form.status === LeadStatus.NON_BILLABLE ? (
 								<ReadOnlyField
 									label="Status Reason"
 									value={form.statusReason}
@@ -570,15 +588,21 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 						</div>
 					) : null}
 
-					{canUpdateLeadStatus && form.status === LeadStatus.NON_BILLABLE && (
+					{canUpdateStatusText && (
 						<div className="flex flex-col gap-2">
 							<label className="text-[16px] font-medium text-[#313957]">
-								Status Reason
+								{form.status === LeadStatus.BILLABLE
+									? 'Comments'
+									: 'Status Reason'}
 							</label>
 							<textarea
 								value={form.statusReason}
 								onChange={(event) => form.setStatusReason(event.target.value)}
-								placeholder="e.g. Insufficient credit history"
+								placeholder={
+									form.status === LeadStatus.BILLABLE
+										? 'Add comments about this billable lead'
+										: 'e.g. Insufficient credit history'
+								}
 								className="min-h-[117px] w-full rounded-[12px] border border-[#D4D7E3] p-4 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus:outline-none focus:ring-1 focus:ring-blue-500"
 							/>
 						</div>
@@ -635,10 +659,14 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 						</Button>
 						<Button
 							type="submit"
-							disabled={isSubmitting}
+							disabled={isSubmitting || isReadOnlyBillableLead}
 							className="h-[45px] rounded-[12px] bg-[#2563EB] text-[16px] font-medium text-white hover:bg-blue-700 lg:h-[54px] lg:w-[195px]"
 						>
-							{isSubmitting ? 'Updating...' : 'Update Lead'}
+							{isReadOnlyBillableLead
+								? 'View Only'
+								: isSubmitting
+									? 'Updating...'
+									: 'Update Lead'}
 						</Button>
 					</div>
 				</form>

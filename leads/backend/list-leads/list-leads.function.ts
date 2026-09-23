@@ -64,8 +64,7 @@ export async function listLeads(
 
 	const canViewPaymentStatus =
 		currentUser.role === UserRole.ADMIN ||
-		currentUser.role === UserRole.MANAGER ||
-		currentUser.role === UserRole.TEAM_LEAD;
+		currentUser.role === UserRole.MANAGER;
 
 	if (isAdmin) {
 		if (validatedInput.deletedFilter === 'active') {

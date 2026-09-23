@@ -112,9 +112,7 @@ export function useLeadListHook() {
 	);
 	const isAdmin = currentRole === UserRole.ADMIN;
 	const canViewPaymentStatus =
-		currentRole === UserRole.ADMIN ||
-		currentRole === UserRole.MANAGER ||
-		currentRole === UserRole.TEAM_LEAD;
+		currentRole === UserRole.ADMIN || currentRole === UserRole.MANAGER;
 	// Team leads filter across agents and loan officers; everyone else sees
 	// agents only.
 	const isTeamLead =

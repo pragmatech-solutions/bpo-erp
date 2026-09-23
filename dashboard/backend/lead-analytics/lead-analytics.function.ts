@@ -201,6 +201,36 @@ export async function getLeadAnalytics(
 					$sum: { $cond: [{ $eq: ['$status', LeadStatus.BILLABLE] }, 1, 0] },
 				},
 
+				billablePaid: {
+					$sum: {
+						$cond: [
+							{
+								$and: [
+									{ $eq: ['$status', LeadStatus.BILLABLE] },
+									{ $eq: ['$payment_status', 'paid'] },
+								],
+							},
+							1,
+							0,
+						],
+					},
+				},
+
+				billableUnpaid: {
+					$sum: {
+						$cond: [
+							{
+								$and: [
+									{ $eq: ['$status', LeadStatus.BILLABLE] },
+									{ $eq: ['$payment_status', 'unpaid'] },
+								],
+							},
+							1,
+							0,
+						],
+					},
+				},
+
 				nonBillable: {
 					$sum: {
 						$cond: [{ $eq: ['$status', LeadStatus.NON_BILLABLE] }, 1, 0],
@@ -217,6 +247,10 @@ export async function getLeadAnalytics(
 
 		billable: 0,
 
+		billablePaid: 0,
+
+		billableUnpaid: 0,
+
 		nonBillable: 0,
 	};
 
@@ -227,6 +261,10 @@ export async function getLeadAnalytics(
 			pending: analytics.pending,
 
 			billable: analytics.billable,
+
+			billablePaid: analytics.billablePaid,
+
+			billableUnpaid: analytics.billableUnpaid,
 
 			nonBillable: analytics.nonBillable,
 		},

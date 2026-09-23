@@ -107,6 +107,23 @@ export async function updateLead(input: UpdateLeadInput) {
 		throw new Error('Lead not found');
 	}
 
+	const isBillableLead = editableLead.status === LeadStatus.BILLABLE;
+	const isLoanOfficerBillableCommentUpdate =
+		isBillableLead &&
+		currentUser.role === UserRole.LOAN_OFFICER &&
+		editableLead.loan_officer_id?.toString() === currentUser.id &&
+		validatedInput.status === LeadStatus.BILLABLE &&
+		validatedInput.paymentStatus === undefined &&
+		!hasAdminOnlyEditFields(validatedInput);
+
+	if (
+		isBillableLead &&
+		currentUser.role !== UserRole.ADMIN &&
+		!isLoanOfficerBillableCommentUpdate
+	) {
+		throw new Error('Forbidden: Billable leads can only be edited by admins');
+	}
+
 	if (currentUser.role === UserRole.MANAGER) {
 		if (!currentUser.teamId) {
 			throw new Error('Forbidden: Manager is not assigned to a team');
@@ -129,12 +146,14 @@ export async function updateLead(input: UpdateLeadInput) {
 			throw new Error('Lead not found');
 		}
 
-		if (validatedInput.status !== editableLead.status) {
-			throw new Error('Forbidden: Managers can only update payment status');
-		}
-
-		if (validatedInput.paymentStatus === undefined) {
-			throw new Error('Payment status is required');
+		if (
+			validatedInput.status !== editableLead.status &&
+			validatedInput.status !== LeadStatus.BILLABLE &&
+			validatedInput.status !== LeadStatus.NON_BILLABLE
+		) {
+			throw new Error(
+				'Forbidden: Managers can only mark leads billable or non-billable',
+			);
 		}
 
 		if (editableLead.status === LeadStatus.BILLABLE) {
@@ -311,7 +330,8 @@ export async function updateLead(input: UpdateLeadInput) {
 
 	editableLead.status = validatedInput.status;
 	editableLead.status_reason =
-		validatedInput.status === LeadStatus.NON_BILLABLE
+		validatedInput.status === LeadStatus.NON_BILLABLE ||
+		validatedInput.status === LeadStatus.BILLABLE
 			? validatedInput.statusReason
 			: undefined;
 
@@ -320,7 +340,9 @@ export async function updateLead(input: UpdateLeadInput) {
 			editableLead.payment_status = validatedInput.paymentStatus;
 		}
 	} else if (currentUser.role === UserRole.MANAGER) {
-		if (validatedInput.paymentStatus !== undefined) {
+		if (!isBillableLead && validatedInput.status === LeadStatus.BILLABLE) {
+			editableLead.payment_status = 'unpaid';
+		} else if (validatedInput.paymentStatus !== undefined) {
 			editableLead.payment_status = validatedInput.paymentStatus;
 		}
 	} else if (

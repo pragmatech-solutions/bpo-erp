@@ -61,8 +61,7 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 	if (!currentUser) throw new Error('Unauthorized');
 	const canViewPaymentStatus =
 		currentUser.role === UserRole.ADMIN ||
-		currentUser.role === UserRole.MANAGER ||
-		currentUser.role === UserRole.TEAM_LEAD;
+		currentUser.role === UserRole.MANAGER;
 
 	const lead = await Leads.findById(input.id)
 		.populate('created_by', 'name')
