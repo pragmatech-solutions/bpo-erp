@@ -82,6 +82,9 @@ export function Overview() {
 	if (errorMessage) return <div className="text-red-500">{errorMessage}</div>;
 	if (!data) return <div className="text-[#313957]">No data available.</div>;
 
+	const shouldShowBillablePaymentCounts =
+		canViewPaymentStatus && filters.status === LeadStatus.BILLABLE;
+
 	const statCards = [
 		{
 			label: 'Total',
@@ -100,6 +103,12 @@ export function Overview() {
 			value: data.analytics.billable,
 			color: 'bg-[#E8FFF9]',
 			icon: <CheckCircle2 className="text-[#10B981]" />,
+			paymentBreakdown: shouldShowBillablePaymentCounts
+				? {
+						paid: data.analytics.billablePaid,
+						unpaid: data.analytics.billableUnpaid,
+					}
+				: undefined,
 		},
 		{
 			label: 'Non-Billable',
@@ -140,6 +149,12 @@ export function Overview() {
 									<div className="text-[14px] font-semibold text-[#313957] lg:text-[16px]">
 										{card.label === 'Total' ? 'Total Leads' : card.label}
 									</div>
+									{card.paymentBreakdown ? (
+										<div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold text-[#313957] lg:text-[12px]">
+											<span>Paid: {card.paymentBreakdown.paid}</span>
+											<span>Unpaid: {card.paymentBreakdown.unpaid}</span>
+										</div>
+									) : null}
 								</div>
 							</div>
 						</Card>
@@ -277,7 +292,10 @@ export function Overview() {
 						)}
 
 						{canFilterAgents && (
-							<Select value={filters.agentId} onValueChange={filters.setAgentId}>
+							<Select
+								value={filters.agentId}
+								onValueChange={filters.setAgentId}
+							>
 								<SelectTrigger className="h-[48px] w-full rounded-[12px] border-[#D4D7E3] bg-white px-4 lg:w-[214px]">
 									<SelectValue placeholder="All Agents" />
 								</SelectTrigger>

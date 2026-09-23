@@ -116,6 +116,9 @@ export function useUpdateLeadFormHook(id: string) {
 	const [callTransfer, setCallTransfer] = useState<CallTransferFormValues>(
 		initialCallTransferValues,
 	);
+	const [originalStatus, setOriginalStatus] = useState<LeadStatus>(
+		LeadStatus.PENDING,
+	);
 	const [status, setStatus] = useState<LeadStatus>(LeadStatus.PENDING);
 	const [statusReason, setStatusReason] = useState('');
 	const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid'>(
@@ -166,6 +169,7 @@ export function useUpdateLeadFormHook(id: string) {
 			setLoanOfficerId(data.loanOfficerId || '');
 			setLoanOfficerName(data.loanOfficerName || '');
 			setLoanOfficerPhoneNumber(data.loanOfficerPhoneNumber || '');
+			setOriginalStatus(data.status);
 			setStatus(data.status);
 			setStatusReason(data.statusReason || '');
 			setPaymentStatus(data.paymentStatus || 'unpaid');
@@ -243,13 +247,26 @@ export function useUpdateLeadFormHook(id: string) {
 		if (e) e.preventDefault();
 		setErrorMessage('');
 		setSuccessMessage('');
+
+		const isBillableCommentOnly =
+			originalStatus === LeadStatus.BILLABLE && isLoanOfficer;
+
+		if (originalStatus === LeadStatus.BILLABLE && !isAdmin) {
+			if (!isBillableCommentOnly || status !== LeadStatus.BILLABLE) {
+				setErrorMessage('Billable leads can only be edited by admins');
+				return;
+			}
+		}
+
 		setIsSubmitting(true);
+
+		const shouldSubmitStatusText =
+			status === LeadStatus.NON_BILLABLE || status === LeadStatus.BILLABLE;
 
 		const payload = {
 			id,
 			status,
-			statusReason:
-				status === LeadStatus.NON_BILLABLE ? statusReason : undefined,
+			statusReason: shouldSubmitStatusText ? statusReason : undefined,
 			...(isAdmin || isManager ? { paymentStatus } : {}),
 			...(isAdmin
 				? {
@@ -326,6 +343,7 @@ export function useUpdateLeadFormHook(id: string) {
 			updateCallTransferField,
 			campaignOptions,
 			loanOfficerOptions,
+			originalStatus,
 			status,
 			setStatus,
 			statusReason,

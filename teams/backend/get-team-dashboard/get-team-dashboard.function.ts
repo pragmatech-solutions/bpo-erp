@@ -37,6 +37,8 @@ type MemberStatsRow = {
 	total: number;
 	pending: number;
 	billable: number;
+	billablePaid: number;
+	billableUnpaid: number;
 	nonBillable: number;
 	campaigns: string[];
 };
@@ -66,7 +68,14 @@ function createLeadMatch(
 	return matchStage;
 }
 function getEmptyAnalytics() {
-	return { total: 0, pending: 0, billable: 0, nonBillable: 0 };
+	return {
+		total: 0,
+		pending: 0,
+		billable: 0,
+		billablePaid: 0,
+		billableUnpaid: 0,
+		nonBillable: 0,
+	};
 }
 function createStatsGroupStage(ownerField: 'created_by' | 'loan_officer_id') {
 	return {
@@ -78,6 +87,34 @@ function createStatsGroupStage(ownerField: 'created_by' | 'loan_officer_id') {
 			},
 			billable: {
 				$sum: { $cond: [{ $eq: ['$status', LeadStatus.BILLABLE] }, 1, 0] },
+			},
+			billablePaid: {
+				$sum: {
+					$cond: [
+						{
+							$and: [
+								{ $eq: ['$status', LeadStatus.BILLABLE] },
+								{ $eq: ['$payment_status', 'paid'] },
+							],
+						},
+						1,
+						0,
+					],
+				},
+			},
+			billableUnpaid: {
+				$sum: {
+					$cond: [
+						{
+							$and: [
+								{ $eq: ['$status', LeadStatus.BILLABLE] },
+								{ $eq: ['$payment_status', 'unpaid'] },
+							],
+						},
+						1,
+						0,
+					],
+				},
 			},
 			nonBillable: {
 				$sum: {
@@ -172,6 +209,8 @@ export async function getTeamDashboard(
 						total: stats.total,
 						pending: stats.pending,
 						billable: stats.billable,
+						billablePaid: stats.billablePaid,
+						billableUnpaid: stats.billableUnpaid,
 						nonBillable: stats.nonBillable,
 					}
 				: getEmptyAnalytics(),
@@ -183,6 +222,8 @@ export async function getTeamDashboard(
 			total: totals.total + row.total,
 			pending: totals.pending + row.pending,
 			billable: totals.billable + row.billable,
+			billablePaid: totals.billablePaid + row.billablePaid,
+			billableUnpaid: totals.billableUnpaid + row.billableUnpaid,
 			nonBillable: totals.nonBillable + row.nonBillable,
 		}),
 		getEmptyAnalytics(),

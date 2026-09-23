@@ -279,16 +279,19 @@ export function LeadCard({
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteError, setDeleteError] = useState('');
 	const isCallTransfer = lead.leadType === 'call_transfer';
+	const isBillable = lead.status === LeadStatus.BILLABLE;
+	const canCommentOnBillable =
+		isBillable && currentRole === UserRole.LOAN_OFFICER;
 	const canEdit =
 		currentRole === UserRole.ADMIN ||
-		currentRole === UserRole.MANAGER ||
-		currentRole === UserRole.QUALITY_ASSURANCE ||
-		currentRole === UserRole.LOAN_OFFICER;
+		canCommentOnBillable ||
+		(!isBillable &&
+			(currentRole === UserRole.MANAGER ||
+				currentRole === UserRole.QUALITY_ASSURANCE ||
+				currentRole === UserRole.LOAN_OFFICER));
 	const canSoftDelete = currentRole === UserRole.ADMIN && !lead.deletedAt;
 	const canViewPaymentStatus =
-		currentRole === UserRole.ADMIN ||
-		currentRole === UserRole.MANAGER ||
-		currentRole === UserRole.TEAM_LEAD;
+		currentRole === UserRole.ADMIN || currentRole === UserRole.MANAGER;
 
 	const handleClick = () => {
 		if (canEdit) {
@@ -439,16 +442,32 @@ export function LeadCard({
 
 			<CallTransferDetails lead={lead} />
 
-			{lead.status === LeadStatus.NON_BILLABLE && lead.statusReason && (
-				<div className="mt-4 -mx-6 bg-[#FFF1F2] px-6 py-2">
-					<span className="text-[12px] font-semibold text-[#F43F5E] lg:text-[14px]">
-						Reason:{' '}
+			{(lead.status === LeadStatus.NON_BILLABLE ||
+				lead.status === LeadStatus.BILLABLE) &&
+			lead.statusReason ? (
+				<div
+					className={cn(
+						'mt-4 -mx-6 px-6 py-2',
+						lead.status === LeadStatus.BILLABLE
+							? 'bg-[#ECFDF5]'
+							: 'bg-[#FFF1F2]',
+					)}
+				>
+					<span
+						className={cn(
+							'text-[12px] font-semibold lg:text-[14px]',
+							lead.status === LeadStatus.BILLABLE
+								? 'text-[#10B981]'
+								: 'text-[#F43F5E]',
+						)}
+					>
+						{lead.status === LeadStatus.BILLABLE ? 'Comments:' : 'Reason:'}{' '}
 					</span>
 					<span className="text-[12px] italic text-[#3E3E3E] lg:text-[14px]">
 						{lead.statusReason}
 					</span>
 				</div>
-			)}
+			) : null}
 		</Card>
 	);
 }

@@ -79,6 +79,9 @@ export function TeamDashboard() {
 		return <div className="text-[#313957]">No team data available.</div>;
 	}
 
+	const shouldShowBillablePaymentCounts =
+		filters.status === LeadStatus.BILLABLE;
+
 	const statCards = [
 		{
 			label: 'Total Leads',
@@ -97,6 +100,12 @@ export function TeamDashboard() {
 			value: data.analytics.billable,
 			color: 'bg-[#E8FFF9]',
 			icon: <CheckCircle2 className="text-[#10B981]" />,
+			paymentBreakdown: shouldShowBillablePaymentCounts
+				? {
+						paid: data.analytics.billablePaid,
+						unpaid: data.analytics.billableUnpaid,
+					}
+				: undefined,
 		},
 		{
 			label: 'Non-Billable',
@@ -134,6 +143,12 @@ export function TeamDashboard() {
 								<div className="text-[13px] font-semibold text-[#313957] lg:text-[15px]">
 									{card.label}
 								</div>
+								{card.paymentBreakdown ? (
+									<div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold text-[#313957] lg:text-[12px]">
+										<span>Paid: {card.paymentBreakdown.paid}</span>
+										<span>Unpaid: {card.paymentBreakdown.unpaid}</span>
+									</div>
+								) : null}
 							</div>
 						</div>
 					</Card>
