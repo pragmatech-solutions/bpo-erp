@@ -7,6 +7,7 @@ export type CreateLeadPayload = {
 	username: string;
 	customer_number: string;
 	campaign: string;
+	agent_comment?: string;
 	loan_type: string;
 	loan_balance?: number;
 	home_value?: number;
@@ -37,4 +38,3 @@ export async function createLeadApi(
 		};
 	}
 }
-

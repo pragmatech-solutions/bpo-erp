@@ -87,6 +87,7 @@ export async function createCallTransferLead(
 		customer_number_normalized: normalizedCustomerNumber,
 		username: buildUsername(validatedData),
 		campaign: 'Call Transfer',
+		agent_comment: validatedData.agent_comment?.trim() || undefined,
 		loan_type: loanTypeMap[validatedData.loan_type],
 		loan_officer_id: loanOfficer._id,
 		loan_officer_name: loanOfficer.name,

@@ -17,7 +17,12 @@ export const createCallTransferLeadInputSchema = z.object({
 	city: z.string().trim().min(1, 'City is required'),
 	state: z.string().trim().min(1, 'State is required'),
 	zip: z.string().trim().min(1, 'ZIP is required'),
-	email: z.string().trim().email('Invalid email address').optional().or(z.literal('')),
+	email: z
+		.string()
+		.trim()
+		.email('Invalid email address')
+		.optional()
+		.or(z.literal('')),
 	home_value: z.number().positive('Home value must be greater than zero'),
 	mortgage_balance: z
 		.number()
@@ -31,6 +36,7 @@ export const createCallTransferLeadInputSchema = z.object({
 	loan_purpose: z.enum(CALL_TRANSFER_LOAN_PURPOSES),
 	credit: z.enum(CALL_TRANSFER_CREDIT_RATINGS),
 	loan_officer_id: z.string().trim().min(1, 'Loan officer is required'),
+	agent_comment: z.string().trim().optional(),
 });
 
 export type CreateCallTransferLeadInput = z.infer<

@@ -92,6 +92,35 @@ function TextField({
 	);
 }
 
+function TextAreaField({
+	id,
+	label,
+	value,
+	onChange,
+	placeholder,
+}: {
+	id: string;
+	label: string;
+	value: string;
+	onChange: (value: string) => void;
+	placeholder?: string;
+}) {
+	return (
+		<div className="flex flex-col gap-2">
+			<Label htmlFor={id} className="text-[16px] font-medium text-[#313957]">
+				{label}
+			</Label>
+			<textarea
+				id={id}
+				value={value}
+				onChange={(event) => onChange(event.target.value)}
+				placeholder={placeholder}
+				className="min-h-[116px] w-full rounded-[12px] border border-[#D4D7E3] bg-white p-4 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus:outline-none focus:ring-1 focus:ring-blue-500"
+			/>
+		</div>
+	);
+}
+
 export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 	const {
 		isLoading,
@@ -268,6 +297,14 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 										{form.loanOfficerPhoneNumber || 'Select a loan officer'}
 									</p>
 								</div>
+
+								<TextAreaField
+									id="agentComment"
+									label="Agent Comments"
+									value={form.agentComment}
+									onChange={form.setAgentComment}
+									placeholder="Add any notes for this lead"
+								/>
 
 								<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
 									<TextField
@@ -540,6 +577,16 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 								value={form.loanType}
 								icon={<Wallet size={16} />}
 							/>
+							{form.agentComment ? (
+								<div className="rounded-[12px] border border-[#D4D7E3] bg-gray-50 p-4">
+									<div className="mb-2 text-[16px] font-medium text-[#313957]">
+										Agent Comments
+									</div>
+									<p className="whitespace-pre-wrap break-words text-[14px] text-[#313957]">
+										{form.agentComment}
+									</p>
+								</div>
+							) : null}
 							{form.isManager ||
 							isBillableCommentOnly ||
 							isReadOnlyBillableLead ? (

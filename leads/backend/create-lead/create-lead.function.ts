@@ -32,7 +32,7 @@ export async function createLead(input: CreateLeadInput) {
 	const normalizedCustomerNumber = await ensureLeadContactNumberIsUnique(
 		validatedData.customer_number,
 	);
-	const { loan_officer_id, ...leadData } = validatedData;
+	const { agent_comment, loan_officer_id, ...leadData } = validatedData;
 	let loanOfficerFields = {};
 
 	if (loan_officer_id) {
@@ -59,6 +59,7 @@ export async function createLead(input: CreateLeadInput) {
 	const newLead = new Leads({
 		...leadData,
 		...loanOfficerFields,
+		agent_comment: agent_comment?.trim() || undefined,
 		customer_number_normalized: normalizedCustomerNumber,
 		created_by: new Types.ObjectId(currentUser.id),
 		status: 'pending',

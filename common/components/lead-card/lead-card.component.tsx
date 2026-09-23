@@ -434,6 +434,17 @@ export function LeadCard({
 				</div>
 			) : null}
 
+			{lead.agentComment ? (
+				<div className="mt-5 rounded-[12px] border border-[#D4D7E3] bg-[#F8FAFC] px-4 py-3">
+					<div className="mb-1 text-[12px] font-semibold text-[#313957] lg:text-[14px]">
+						Agent Comments
+					</div>
+					<p className="whitespace-pre-wrap break-words text-[12px] text-[#3E3E3E] lg:text-[14px]">
+						{lead.agentComment}
+					</p>
+				</div>
+			) : null}
+
 			{deleteError ? (
 				<div className="mt-4 text-[12px] font-medium text-red-500 lg:text-[14px]">
 					{deleteError}

@@ -2,7 +2,14 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Briefcase, Calculator, Home, Phone, User } from 'lucide-react';
+import {
+	ArrowLeft,
+	Briefcase,
+	Calculator,
+	Home,
+	Phone,
+	User,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -121,6 +128,35 @@ function SelectField({
 	);
 }
 
+function TextAreaField({
+	id,
+	label,
+	value,
+	placeholder,
+	onChange,
+}: {
+	id: string;
+	label: string;
+	value: string;
+	placeholder?: string;
+	onChange: (value: string) => void;
+}) {
+	return (
+		<div className="flex flex-col gap-2">
+			<Label htmlFor={id} className="text-[14px] font-medium text-[#313957]">
+				{label}
+			</Label>
+			<textarea
+				id={id}
+				value={value}
+				onChange={(event) => onChange(event.target.value)}
+				placeholder={placeholder}
+				className="min-h-[116px] w-full rounded-[12px] border border-[#D4D7E3] bg-white p-4 text-[15px] text-[#313957] placeholder:text-[#8897AD] focus:outline-none focus:ring-1 focus:ring-blue-500"
+			/>
+		</div>
+	);
+}
+
 function ScriptPanel({ loanOfficerPhone }: { loanOfficerPhone?: string }) {
 	return (
 		<div className="flex flex-col gap-5 rounded-[18px] bg-[#FFF6CC] p-5 text-[14px] leading-6 text-[#0C1421] shadow-sm lg:sticky lg:top-6">
@@ -134,9 +170,9 @@ function ScriptPanel({ loanOfficerPhone }: { loanOfficerPhone?: string }) {
 						<h3 className="font-semibold">Eligible States</h3>
 						<ul className="mt-2 list-disc space-y-1 pl-5">
 							<li>
-								Available nationwide except: Delaware (DE), Hawaii (HI),
-								Indiana (IN), Massachusetts (MA), Missouri (MO), Nevada
-								(NV), and Utah (UT).
+								Available nationwide except: Delaware (DE), Hawaii (HI), Indiana
+								(IN), Massachusetts (MA), Missouri (MO), Nevada (NV), and Utah
+								(UT).
 							</li>
 						</ul>
 					</section>
@@ -163,12 +199,12 @@ function ScriptPanel({ loanOfficerPhone }: { loanOfficerPhone?: string }) {
 						<h3 className="font-semibold">Payment & Credit History</h3>
 						<ul className="mt-2 list-disc space-y-1 pl-5">
 							<li>
-								Mortgage Late Payments: Zero late payments in the last
-								12 months.
+								Mortgage Late Payments: Zero late payments in the last 12
+								months.
 							</li>
 							<li>
-								Bankruptcy & Foreclosure: No bankruptcy or foreclosure
-								within the last 2 years.
+								Bankruptcy & Foreclosure: No bankruptcy or foreclosure within
+								the last 2 years.
 							</li>
 						</ul>
 					</section>
@@ -464,6 +500,15 @@ export function CallTransferLeadForm() {
 									placeholder="Select a loan officer"
 									disabled
 									icon={<Briefcase className="size-4" />}
+								/>
+							</div>
+							<div className="mt-5">
+								<TextAreaField
+									id="agentComment"
+									label="Agent Comments"
+									value={values.agent_comment || ''}
+									placeholder="Add any notes for this lead"
+									onChange={(value) => updateField('agent_comment', value)}
 								/>
 							</div>
 						</section>

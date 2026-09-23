@@ -12,6 +12,7 @@ type LeadDocument = {
 	customer_name: string;
 	username: string;
 	customer_number: string;
+	agent_comment?: string;
 	campaign: string;
 	loan_type: LeadDetails['loanType'];
 	loan_balance?: number;
@@ -117,6 +118,7 @@ export async function getLead(input: GetLeadInput): Promise<LeadDetails> {
 		customerName: lead.customer_name,
 		username: lead.username,
 		customerNumber: lead.customer_number,
+		agentComment: lead.agent_comment,
 		campaign: lead.campaign,
 		loanType: lead.loan_type,
 		loanBalance: lead.loan_balance,
