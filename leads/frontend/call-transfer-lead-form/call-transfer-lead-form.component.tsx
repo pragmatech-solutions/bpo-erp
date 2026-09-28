@@ -502,7 +502,15 @@ export function CallTransferLeadForm() {
 									icon={<Briefcase className="size-4" />}
 								/>
 							</div>
-							<div className="mt-5">
+							<div className="mt-5 grid grid-cols-1 gap-5">
+								<Field
+									id="recordingLink"
+									label="Recording Link"
+									type="url"
+									placeholder="https://example.com/recording"
+									value={values.recording_link || ''}
+									onChange={(value) => updateField('recording_link', value)}
+								/>
 								<TextAreaField
 									id="agentComment"
 									label="Agent Comments"

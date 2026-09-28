@@ -8,6 +8,7 @@ export type CreateLeadPayload = {
 	customer_number: string;
 	campaign: string;
 	agent_comment?: string;
+	recording_link?: string;
 	loan_type: string;
 	loan_balance?: number;
 	home_value?: number;

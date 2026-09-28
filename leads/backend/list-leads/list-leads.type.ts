@@ -45,6 +45,7 @@ export type ListedLead = {
 	username?: string;
 	customerNumber: string;
 	agentComment?: string;
+	recordingLink?: string;
 	loanType: string;
 	loanOfficerName?: string;
 	loanOfficerPhoneNumber?: string;

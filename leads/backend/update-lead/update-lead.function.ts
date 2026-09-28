@@ -25,6 +25,7 @@ type LeadDocumentWithOfficer = {
 	customer_number_normalized?: string;
 	campaign: string;
 	agent_comment?: string;
+	recording_link?: string;
 	loan_type: string;
 	loan_balance?: number;
 	home_value?: number;
@@ -71,6 +72,7 @@ function hasAdminOnlyEditFields(input: UpdateLeadInput) {
 		input.customerNumber !== undefined ||
 		input.campaign !== undefined ||
 		input.agentComment !== undefined ||
+		input.recordingLink !== undefined ||
 		input.loanType !== undefined ||
 		input.loanBalance !== undefined ||
 		input.homeValue !== undefined ||
@@ -223,6 +225,9 @@ export async function updateLead(input: UpdateLeadInput) {
 		});
 		setIfDefined(validatedInput.agentComment, (value) => {
 			editableLead.agent_comment = value.trim() || undefined;
+		});
+		setIfDefined(validatedInput.recordingLink, (value) => {
+			editableLead.recording_link = value.trim() || undefined;
 		});
 		setIfDefined(validatedInput.loanType, (value) => {
 			editableLead.loan_type = value;

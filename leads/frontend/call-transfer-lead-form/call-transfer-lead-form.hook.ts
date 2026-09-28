@@ -39,6 +39,7 @@ const initialFormValues: FormValues = {
 	credit: 'Good',
 	loan_officer_id: '',
 	agent_comment: '',
+	recording_link: '',
 };
 
 function toNumber(value: string) {

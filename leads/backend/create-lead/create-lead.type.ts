@@ -6,6 +6,7 @@ export interface LeadResponse {
 	username: string;
 	customer_number: string;
 	agent_comment?: string;
+	recording_link?: string;
 	loan_type: LoanType;
 	loan_balance?: number;
 	home_value?: number;
@@ -23,6 +24,7 @@ export interface CreateLeadInput {
 	username: string;
 	customer_number: string;
 	agent_comment?: string;
+	recording_link?: string;
 	loan_type: LoanType;
 	loan_officer_id?: string;
 	loan_balance?: number;

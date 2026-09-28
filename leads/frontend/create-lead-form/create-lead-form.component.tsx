@@ -44,6 +44,8 @@ export function CreateLeadForm() {
 		setCampaign,
 		agentComment,
 		setAgentComment,
+		recordingLink,
+		setRecordingLink,
 		loanType,
 		setLoanType,
 		loanBalance,
@@ -201,6 +203,23 @@ export function CreateLeadForm() {
 							value={agentComment}
 							onChange={(event) => setAgentComment(event.target.value)}
 							className="min-h-[116px] w-full rounded-[12px] border border-[#D4D7E3] bg-white p-4 text-[16px] text-[#313957] placeholder:text-[#8897AD] focus:outline-none focus:ring-1 focus:ring-blue-500"
+						/>
+					</div>
+
+					<div className="flex flex-col gap-3">
+						<Label
+							htmlFor="recordingLink"
+							className="text-[16px] font-medium text-[#313957]"
+						>
+							Recording Link
+						</Label>
+						<Input
+							id="recordingLink"
+							type="url"
+							placeholder="https://example.com/recording"
+							value={recordingLink}
+							onChange={(event) => setRecordingLink(event.target.value)}
+							className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white text-[16px] text-[#313957] placeholder:text-[#8897AD] focus-visible:ring-blue-500"
 						/>
 					</div>
 

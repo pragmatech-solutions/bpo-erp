@@ -13,6 +13,7 @@ import {
 	Megaphone,
 	Percent,
 	Phone,
+	Scale,
 	Trash2,
 	User,
 	Wallet,
@@ -25,6 +26,7 @@ import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/ge
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { cn } from '@/lib/utils';
+import { createDisputeApi } from '@/disputes/frontend/create-dispute.api';
 import { softDeleteLeadApi } from './soft-delete-lead.api';
 
 interface LeadCardProps {
@@ -277,7 +279,9 @@ export function LeadCard({
 	const userInfo = getCurrentLoggedInUserInformation();
 	const currentRole = userInfo?.currentUser.role;
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [isCreatingDispute, setIsCreatingDispute] = useState(false);
 	const [deleteError, setDeleteError] = useState('');
+	const [disputeError, setDisputeError] = useState('');
 	const isCallTransfer = lead.leadType === 'call_transfer';
 	const isBillable = lead.status === LeadStatus.BILLABLE;
 	const canCommentOnBillable =
@@ -290,6 +294,10 @@ export function LeadCard({
 				currentRole === UserRole.QUALITY_ASSURANCE ||
 				currentRole === UserRole.LOAN_OFFICER));
 	const canSoftDelete = currentRole === UserRole.ADMIN && !lead.deletedAt;
+	const canCreateDispute =
+		currentRole === UserRole.QUALITY_ASSURANCE &&
+		!lead.deletedAt &&
+		Boolean(lead.loanOfficerName);
 	const canViewPaymentStatus =
 		currentRole === UserRole.ADMIN || currentRole === UserRole.MANAGER;
 
@@ -298,6 +306,24 @@ export function LeadCard({
 			router.push(`/leads/edit/${lead.id}`);
 		}
 	};
+
+	async function handleCreateDispute(event: React.MouseEvent<HTMLButtonElement>) {
+		event.stopPropagation();
+
+		setIsCreatingDispute(true);
+		setDisputeError('');
+		const result = await createDisputeApi({
+			leadId: lead.id,
+		});
+
+		if (result.success && result.id) {
+			router.push('/disputes/' + result.id);
+		} else {
+			setDisputeError(result.error || 'Failed to create dispute');
+		}
+
+		setIsCreatingDispute(false);
+	}
 
 	async function handleSoftDelete(event: React.MouseEvent<HTMLButtonElement>) {
 		event.stopPropagation();
@@ -363,6 +389,18 @@ export function LeadCard({
 
 				<div className="flex flex-col items-end gap-2">
 					<LeadBadges lead={lead} canViewPaymentStatus={canViewPaymentStatus} />
+					{canCreateDispute ? (
+						<Button
+							type="button"
+							variant="outline"
+							className="h-8 gap-2 rounded-[8px] border-[#93C5FD] px-3 text-[12px] text-[#2563EB] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]"
+							disabled={isCreatingDispute}
+							onClick={handleCreateDispute}
+						>
+							<Scale size={14} />
+							{isCreatingDispute ? 'Creating...' : 'Create Dispute'}
+						</Button>
+					) : null}
 					{canSoftDelete ? (
 						<Button
 							type="button"
@@ -442,6 +480,29 @@ export function LeadCard({
 					<p className="whitespace-pre-wrap break-words text-[12px] text-[#3E3E3E] lg:text-[14px]">
 						{lead.agentComment}
 					</p>
+				</div>
+			) : null}
+
+			{disputeError ? (
+				<div className="mt-4 text-[12px] font-medium text-red-500 lg:text-[14px]">
+					{disputeError}
+				</div>
+			) : null}
+
+			{lead.recordingLink ? (
+				<div className="mt-5 rounded-[12px] border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
+					<div className="mb-1 text-[12px] font-semibold text-[#1D4ED8] lg:text-[14px]">
+						Recording Link
+					</div>
+					<a
+						href={lead.recordingLink}
+						target="_blank"
+						rel="noreferrer"
+						onClick={(event) => event.stopPropagation()}
+						className="break-all text-[12px] font-medium text-[#2563EB] underline lg:text-[14px]"
+					>
+						{lead.recordingLink}
+					</a>
 				</div>
 			) : null}
 

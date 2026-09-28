@@ -280,6 +280,8 @@ export async function listLeads(
 
 				agentComment: '$agent_comment',
 
+				recordingLink: '$recording_link',
+
 				loanType: '$loan_type',
 
 				loanOfficerName: {

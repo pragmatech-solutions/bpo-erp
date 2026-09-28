@@ -37,6 +37,12 @@ export const createCallTransferLeadInputSchema = z.object({
 	credit: z.enum(CALL_TRANSFER_CREDIT_RATINGS),
 	loan_officer_id: z.string().trim().min(1, 'Loan officer is required'),
 	agent_comment: z.string().trim().optional(),
+	recording_link: z
+		.union([
+			z.string().trim().url('Recording link must be a valid URL'),
+			z.string().trim().length(0),
+		])
+		.optional(),
 });
 
 export type CreateCallTransferLeadInput = z.infer<

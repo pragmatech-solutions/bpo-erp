@@ -15,6 +15,7 @@ export function useCreateLeadFormHook() {
 	const [customerNumber, setCustomerNumber] = useState('');
 	const [campaign, setCampaign] = useState('');
 	const [agentComment, setAgentComment] = useState('');
+	const [recordingLink, setRecordingLink] = useState('');
 	const [loanType, setLoanType] = useState('');
 	const [loanBalance, setLoanBalance] = useState('');
 	const [homeValue, setHomeValue] = useState('');
@@ -59,6 +60,7 @@ export function useCreateLeadFormHook() {
 				customer_number: customerNumber,
 				campaign,
 				agent_comment: agentComment,
+				recording_link: recordingLink,
 				loan_type: loanType,
 				loan_balance: loanBalance ? Number(loanBalance) : undefined,
 				home_value: homeValue ? Number(homeValue) : undefined,
@@ -71,6 +73,7 @@ export function useCreateLeadFormHook() {
 				setCustomerNumber('');
 				setCampaign('');
 				setAgentComment('');
+				setRecordingLink('');
 				setLoanType('');
 				setLoanBalance('');
 				setHomeValue('');
@@ -99,6 +102,8 @@ export function useCreateLeadFormHook() {
 		setCampaign,
 		agentComment,
 		setAgentComment,
+		recordingLink,
+		setRecordingLink,
 		loanType,
 		setLoanType,
 		loanBalance,

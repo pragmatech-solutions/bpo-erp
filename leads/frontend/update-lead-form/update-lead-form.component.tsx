@@ -298,6 +298,14 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 									</p>
 								</div>
 
+								<TextField
+									id="recordingLink"
+									label="Recording Link"
+									type="url"
+									value={form.recordingLink}
+									onChange={form.setRecordingLink}
+								/>
+
 								<TextAreaField
 									id="agentComment"
 									label="Agent Comments"
@@ -577,6 +585,13 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 								value={form.loanType}
 								icon={<Wallet size={16} />}
 							/>
+							{form.recordingLink ? (
+								<ReadOnlyField
+									label="Recording Link"
+									value={form.recordingLink}
+									icon={<Wallet size={16} />}
+								/>
+							) : null}
 							{form.agentComment ? (
 								<div className="rounded-[12px] border border-[#D4D7E3] bg-gray-50 p-4">
 									<div className="mb-2 text-[16px] font-medium text-[#313957]">
