@@ -278,6 +278,10 @@ export async function listLeads(
 
 				customerNumber: '$customer_number',
 
+				agentComment: '$agent_comment',
+
+				recordingLink: '$recording_link',
+
 				loanType: '$loan_type',
 
 				loanOfficerName: {

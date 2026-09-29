@@ -38,6 +38,8 @@ const initialFormValues: FormValues = {
 	loan_purpose: 'Cash Out',
 	credit: 'Good',
 	loan_officer_id: '',
+	agent_comment: '',
+	recording_link: '',
 };
 
 function toNumber(value: string) {
@@ -150,5 +152,3 @@ export function useCallTransferLeadFormHook() {
 		handleCancel,
 	};
 }
-
-

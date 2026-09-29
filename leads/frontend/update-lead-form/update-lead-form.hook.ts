@@ -105,6 +105,8 @@ export function useUpdateLeadFormHook(id: string) {
 	const [username, setUsername] = useState('');
 	const [customerNumber, setCustomerNumber] = useState('');
 	const [campaign, setCampaign] = useState('');
+	const [agentComment, setAgentComment] = useState('');
+	const [recordingLink, setRecordingLink] = useState('');
 	const [loanTypeValue, setLoanTypeValue] = useState<LoanType>(
 		LoanType.CONVENTIONAL,
 	);
@@ -163,6 +165,8 @@ export function useUpdateLeadFormHook(id: string) {
 			setUsername(data.username);
 			setCustomerNumber(data.customerNumber);
 			setCampaign(data.campaign);
+			setAgentComment(data.agentComment || '');
+			setRecordingLink(data.recordingLink || '');
 			setLoanTypeValue(data.loanType);
 			setLoanBalance(data.loanBalance?.toString() || '');
 			setHomeValue(data.homeValue?.toString() || '');
@@ -275,6 +279,8 @@ export function useUpdateLeadFormHook(id: string) {
 						username,
 						customerNumber,
 						campaign,
+						agentComment,
+						recordingLink,
 						loanType: loanTypeValue,
 						loanBalance: toOptionalNumber(loanBalance),
 						homeValue: toOptionalNumber(homeValue),
@@ -328,6 +334,10 @@ export function useUpdateLeadFormHook(id: string) {
 			setCustomerNumber,
 			campaign,
 			setCampaign,
+			agentComment,
+			setAgentComment,
+			recordingLink,
+			setRecordingLink,
 			loanType: loanTypeValue,
 			setLoanType: setLoanTypeValue,
 			loanBalance,

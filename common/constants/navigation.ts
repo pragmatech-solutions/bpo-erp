@@ -7,6 +7,7 @@ import {
 	Megaphone,
 	UserCog,
 	UsersRound,
+	Scale,
 } from 'lucide-react';
 import { UserRole } from './user-roles.enum';
 
@@ -63,6 +64,19 @@ export const NAVIGATION_LINKS = [
 		href: '/campaigns',
 		icon: Megaphone,
 		roles: [UserRole.ADMIN],
+	},
+	{
+		label: 'Disputes',
+		href: '/disputes',
+		icon: Scale,
+		roles: [
+			UserRole.ADMIN,
+			UserRole.MANAGER,
+			UserRole.TEAM_LEAD,
+			UserRole.QUALITY_ASSURANCE,
+			UserRole.AGENT,
+			UserRole.LOAN_OFFICER,
+		],
 	},
 ];
 
