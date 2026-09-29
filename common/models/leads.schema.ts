@@ -30,6 +30,8 @@ const LeadSchema = new Schema(
 		customer_name: { type: String, required: true },
 		username: { type: String, required: true },
 		campaign: { type: String, required: true },
+		agent_comment: { type: String, required: false },
+		recording_link: { type: String, required: false },
 		loan_officer_id: {
 			type: Schema.Types.ObjectId,
 			ref: 'users',
@@ -85,5 +87,3 @@ const LeadSchema = new Schema(
 );
 
 export const Leads = models.leads || model('leads', LeadSchema);
-
-

@@ -12,6 +12,8 @@ export type LeadDetails = {
 	customerName: string;
 	username: string;
 	customerNumber: string;
+	agentComment?: string;
+	recordingLink?: string;
 	campaign: string;
 	loanType: LoanType;
 	loanBalance?: number;

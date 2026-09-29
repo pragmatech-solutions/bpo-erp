@@ -24,6 +24,13 @@ export const updateLeadInputSchema = z
 			.regex(/^[0-9\s()+-]+$/, 'Invalid number format')
 			.optional(),
 		campaign: z.string().trim().min(1).optional(),
+		agentComment: z.string().trim().optional(),
+		recordingLink: z
+			.union([
+				z.string().trim().url('Recording link must be a valid URL'),
+				z.string().trim().length(0),
+			])
+			.optional(),
 		loanType: z.nativeEnum(LoanType).optional(),
 		loanBalance: optionalNumberSchema,
 		homeValue: optionalNumberSchema,
