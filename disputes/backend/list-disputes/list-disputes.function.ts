@@ -4,7 +4,10 @@ import { connectToDatabase } from '@/common/database';
 import { DisputeStatus } from '@/common/constants/dispute-status.enum';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { Disputes } from '@/common/models/disputes.schema';
-import { listDisputesInputSchema, type ListDisputesInput } from './list-disputes.input-schema';
+import {
+	listDisputesInputSchema,
+	type ListDisputesInput,
+} from './list-disputes.input-schema';
 import type { ListedDispute, ListDisputesResult } from './list-disputes.type';
 
 function getScopedMatchStages(currentUser: {
@@ -12,11 +15,17 @@ function getScopedMatchStages(currentUser: {
 	role: UserRole;
 	teamId?: string;
 }): PipelineStage[] {
-	if (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.QUALITY_ASSURANCE) {
+	if (
+		currentUser.role === UserRole.ADMIN ||
+		currentUser.role === UserRole.QUALITY_ASSURANCE
+	) {
 		return [];
 	}
 
-	if (currentUser.role === UserRole.MANAGER || currentUser.role === UserRole.TEAM_LEAD) {
+	if (
+		currentUser.role === UserRole.MANAGER ||
+		currentUser.role === UserRole.TEAM_LEAD
+	) {
 		if (!currentUser.teamId) {
 			throw new Error('Forbidden: Team-scoped user is not assigned to a team');
 		}
@@ -35,11 +44,17 @@ function getScopedMatchStages(currentUser: {
 	}
 
 	if (currentUser.role === UserRole.AGENT) {
-		return [{ $match: { 'lead.created_by': new Types.ObjectId(currentUser.id) } }];
+		return [
+			{ $match: { 'lead.created_by': new Types.ObjectId(currentUser.id) } },
+		];
 	}
 
 	if (currentUser.role === UserRole.LOAN_OFFICER) {
-		return [{ $match: { 'lead.loan_officer_id': new Types.ObjectId(currentUser.id) } }];
+		return [
+			{
+				$match: { 'lead.loan_officer_id': new Types.ObjectId(currentUser.id) },
+			},
+		];
 	}
 
 	throw new Error('Forbidden');
@@ -52,8 +67,12 @@ function getDateMatch(startDate?: Date, endDate?: Date) {
 	return Object.keys(dateFilter).length > 0 ? { created_at: dateFilter } : {};
 }
 
-function createLeadVisibilityStages(currentUser: { role: UserRole }): PipelineStage[] {
-	const stages: PipelineStage[] = [{ $match: { 'lead._id': { $exists: true } } }];
+function createLeadVisibilityStages(currentUser: {
+	role: UserRole;
+}): PipelineStage[] {
+	const stages: PipelineStage[] = [
+		{ $match: { 'lead._id': { $exists: true } } },
+	];
 	if (currentUser.role !== UserRole.ADMIN) {
 		stages.push({ $match: { 'lead.deleted_at': { $exists: false } } });
 	}
@@ -152,12 +171,24 @@ const projectStage: PipelineStage = {
 		id: { $toString: '$_id' },
 		status: '$status',
 		decisionNotes: '$decision_notes',
-		createdAt: { $dateToString: { date: '$created_at', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
-		updatedAt: { $dateToString: { date: '$updated_at', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+		recordingLink: '$recording_link',
+		qaNotes: '$qa_notes',
+		loanOfficerNotes: '$loan_officer_notes',
+		createdAt: {
+			$dateToString: { date: '$created_at', format: '%Y-%m-%dT%H:%M:%S.%LZ' },
+		},
+		updatedAt: {
+			$dateToString: { date: '$updated_at', format: '%Y-%m-%dT%H:%M:%S.%LZ' },
+		},
 		deletedAt: {
 			$cond: [
 				{ $ifNull: ['$deleted_at', false] },
-				{ $dateToString: { date: '$deleted_at', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+				{
+					$dateToString: {
+						date: '$deleted_at',
+						format: '%Y-%m-%dT%H:%M:%S.%LZ',
+					},
+				},
 				undefined,
 			],
 		},
@@ -169,7 +200,12 @@ const projectStage: PipelineStage = {
 			campaign: '$lead.campaign',
 			recordingLink: '$lead.recording_link',
 			status: '$lead.status',
-			updatedAt: { $dateToString: { date: '$lead.updated_at', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+			updatedAt: {
+				$dateToString: {
+					date: '$lead.updated_at',
+					format: '%Y-%m-%dT%H:%M:%S.%LZ',
+				},
+			},
 		},
 		agent: {
 			id: { $ifNull: [{ $toString: '$agent._id' }, ''] },
@@ -186,14 +222,20 @@ const projectStage: PipelineStage = {
 		updatedBy: {
 			$cond: [
 				{ $ifNull: ['$updated_by_user._id', false] },
-				{ id: { $toString: '$updated_by_user._id' }, name: { $ifNull: ['$updated_by_user.name', 'Unknown'] } },
+				{
+					id: { $toString: '$updated_by_user._id' },
+					name: { $ifNull: ['$updated_by_user.name', 'Unknown'] },
+				},
 				undefined,
 			],
 		},
 		deletedBy: {
 			$cond: [
 				{ $ifNull: ['$deleted_by_user._id', false] },
-				{ id: { $toString: '$deleted_by_user._id' }, name: { $ifNull: ['$deleted_by_user.name', 'Unknown'] } },
+				{
+					id: { $toString: '$deleted_by_user._id' },
+					name: { $ifNull: ['$deleted_by_user.name', 'Unknown'] },
+				},
 				undefined,
 			],
 		},
@@ -201,7 +243,9 @@ const projectStage: PipelineStage = {
 	},
 };
 
-export async function listDisputes(input: Partial<ListDisputesInput> = {}): Promise<ListDisputesResult> {
+export async function listDisputes(
+	input: Partial<ListDisputesInput> = {},
+): Promise<ListDisputesResult> {
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 	if (!currentUser) throw new Error('Unauthorized');
@@ -222,7 +266,9 @@ export async function listDisputes(input: Partial<ListDisputesInput> = {}): Prom
 	const lookupStages = createLookupStages();
 	const leadVisibilityStages = createLeadVisibilityStages(currentUser);
 	const scopedStages = getScopedMatchStages(currentUser);
-	const createdByStages = createCreatedByFilterMatch(validatedInput.createdById);
+	const createdByStages = createCreatedByFilterMatch(
+		validatedInput.createdById,
+	);
 	const searchStages = createSearchMatch(validatedInput.search);
 	const filteredPipeline: PipelineStage[] = [
 		{ $match: filterMatch },
@@ -259,7 +305,10 @@ export async function listDisputes(input: Partial<ListDisputesInput> = {}): Prom
 		resolved: 0,
 	};
 
-	for (const item of statsResult as Array<{ _id: DisputeStatus; count: number }>) {
+	for (const item of statsResult as Array<{
+		_id: DisputeStatus;
+		count: number;
+	}>) {
 		stats.total += item.count;
 		if (item._id === DisputeStatus.UNRESOLVED) stats.unresolved = item.count;
 		if (item._id === DisputeStatus.RESOLVED) stats.resolved = item.count;

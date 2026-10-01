@@ -9,6 +9,9 @@ const DisputeSchema = new Schema(
 			enum: Object.values(DisputeStatus),
 			default: DisputeStatus.UNRESOLVED,
 		},
+		recording_link: { type: String, required: false },
+		qa_notes: { type: String, required: false },
+		loan_officer_notes: { type: String, required: false },
 		decision_notes: { type: String, required: false },
 		created_by: { type: Schema.Types.ObjectId, ref: 'users', required: true },
 		deleted_at: { type: Date, required: false },
@@ -37,5 +40,4 @@ DisputeSchema.index({ created_at: -1 });
 DisputeSchema.index({ created_by: 1, created_at: -1 });
 DisputeSchema.index({ deleted_at: 1 });
 
-export const Disputes =
-	models.disputes || model('disputes', DisputeSchema);
+export const Disputes = models.disputes || model('disputes', DisputeSchema);

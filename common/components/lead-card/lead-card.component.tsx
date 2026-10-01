@@ -26,7 +26,8 @@ import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/ge
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 import { cn } from '@/lib/utils';
-import { createDisputeApi } from '@/disputes/frontend/create-dispute.api';
+import { CreateDisputeDialog } from '@/disputes/frontend/create-dispute-dialog';
+import { DisputeStatus } from '@/common/constants/dispute-status.enum';
 import { softDeleteLeadApi } from './soft-delete-lead.api';
 
 interface LeadCardProps {
@@ -114,6 +115,21 @@ function LeadBadges({
 			{isCallTransfer ? (
 				<span className="rounded-full bg-[#DBEAFE] px-3 py-1 text-[10px] font-medium text-[#2563EB] lg:text-[12px]">
 					{getLeadTypeLabel(lead.leadType)}
+				</span>
+			) : null}
+
+			{lead.disputeStatus ? (
+				<span
+					className={cn(
+						'rounded-full px-3 py-1 text-[10px] font-medium lg:text-[12px]',
+						lead.disputeStatus === DisputeStatus.RESOLVED
+							? 'bg-[#D1FAE5] text-[#10B981]'
+							: 'bg-[#FEF3C7] text-[#F59E0B]',
+					)}
+				>
+					{lead.disputeStatus === DisputeStatus.RESOLVED
+						? 'Dispute Resolved'
+						: 'Dispute Unresolved'}
 				</span>
 			) : null}
 
@@ -279,9 +295,8 @@ export function LeadCard({
 	const userInfo = getCurrentLoggedInUserInformation();
 	const currentRole = userInfo?.currentUser.role;
 	const [isDeleting, setIsDeleting] = useState(false);
-	const [isCreatingDispute, setIsCreatingDispute] = useState(false);
+	const [isDisputeDialogOpen, setIsDisputeDialogOpen] = useState(false);
 	const [deleteError, setDeleteError] = useState('');
-	const [disputeError, setDisputeError] = useState('');
 	const isCallTransfer = lead.leadType === 'call_transfer';
 	const isBillable = lead.status === LeadStatus.BILLABLE;
 	const canCommentOnBillable =
@@ -295,8 +310,10 @@ export function LeadCard({
 				currentRole === UserRole.LOAN_OFFICER));
 	const canSoftDelete = currentRole === UserRole.ADMIN && !lead.deletedAt;
 	const canCreateDispute =
-		currentRole === UserRole.QUALITY_ASSURANCE &&
+		(currentRole === UserRole.QUALITY_ASSURANCE ||
+			currentRole === UserRole.ADMIN) &&
 		!lead.deletedAt &&
+		lead.disputeStatus !== DisputeStatus.UNRESOLVED &&
 		Boolean(lead.loanOfficerName);
 	const canViewPaymentStatus =
 		currentRole === UserRole.ADMIN || currentRole === UserRole.MANAGER;
@@ -307,22 +324,9 @@ export function LeadCard({
 		}
 	};
 
-	async function handleCreateDispute(event: React.MouseEvent<HTMLButtonElement>) {
+	function handleOpenDisputeDialog(event: React.MouseEvent<HTMLButtonElement>) {
 		event.stopPropagation();
-
-		setIsCreatingDispute(true);
-		setDisputeError('');
-		const result = await createDisputeApi({
-			leadId: lead.id,
-		});
-
-		if (result.success && result.id) {
-			router.push('/disputes/' + result.id);
-		} else {
-			setDisputeError(result.error || 'Failed to create dispute');
-		}
-
-		setIsCreatingDispute(false);
+		setIsDisputeDialogOpen(true);
 	}
 
 	async function handleSoftDelete(event: React.MouseEvent<HTMLButtonElement>) {
@@ -394,11 +398,10 @@ export function LeadCard({
 							type="button"
 							variant="outline"
 							className="h-8 gap-2 rounded-[8px] border-[#93C5FD] px-3 text-[12px] text-[#2563EB] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]"
-							disabled={isCreatingDispute}
-							onClick={handleCreateDispute}
+							onClick={handleOpenDisputeDialog}
 						>
 							<Scale size={14} />
-							{isCreatingDispute ? 'Creating...' : 'Create Dispute'}
+							Create Dispute
 						</Button>
 					) : null}
 					{canSoftDelete ? (
@@ -483,10 +486,12 @@ export function LeadCard({
 				</div>
 			) : null}
 
-			{disputeError ? (
-				<div className="mt-4 text-[12px] font-medium text-red-500 lg:text-[14px]">
-					{disputeError}
-				</div>
+			{isDisputeDialogOpen ? (
+				<CreateDisputeDialog
+					leadId={lead.id}
+					onClose={() => setIsDisputeDialogOpen(false)}
+					onCreated={(disputeId) => router.push('/disputes/' + disputeId)}
+				/>
 			) : null}
 
 			{lead.recordingLink ? (

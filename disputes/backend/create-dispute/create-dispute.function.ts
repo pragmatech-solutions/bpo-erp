@@ -5,7 +5,10 @@ import { DisputeStatus } from '@/common/constants/dispute-status.enum';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { Disputes } from '@/common/models/disputes.schema';
 import { Leads } from '@/common/models/leads.schema';
-import { createDisputeInputSchema, type CreateDisputeInput } from './create-dispute.input-schema';
+import {
+	createDisputeInputSchema,
+	type CreateDisputeInput,
+} from './create-dispute.input-schema';
 
 type LeadDocument = {
 	_id: Types.ObjectId;
@@ -26,8 +29,11 @@ export async function createDispute(input: CreateDisputeInput) {
 	await connectToDatabase();
 	const currentUser = await getCurrentAuthenticatedUser();
 	if (!currentUser) throw new Error('Unauthorized');
-	if (currentUser.role !== UserRole.QUALITY_ASSURANCE) {
-		throw new Error('Forbidden: Only QA can create disputes');
+	if (
+		currentUser.role !== UserRole.QUALITY_ASSURANCE &&
+		currentUser.role !== UserRole.ADMIN
+	) {
+		throw new Error('Forbidden: Only QA and admins can create disputes');
 	}
 
 	const validatedInput = createDisputeInputSchema.parse(input);
@@ -57,6 +63,8 @@ export async function createDispute(input: CreateDisputeInput) {
 		dispute = await Disputes.create({
 			lead_id: lead._id,
 			created_by: new Types.ObjectId(currentUser.id),
+			recording_link: validatedInput.recordingLink,
+			qa_notes: validatedInput.qaNotes,
 			status: DisputeStatus.UNRESOLVED,
 		});
 	} catch (error: unknown) {
