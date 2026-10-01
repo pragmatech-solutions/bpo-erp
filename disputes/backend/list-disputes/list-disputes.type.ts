@@ -10,6 +10,9 @@ export type ListedDispute = {
 	id: string;
 	status: DisputeStatus;
 	decisionNotes?: string;
+	recordingLink?: string;
+	qaNotes?: string;
+	loanOfficerNotes?: string;
 	createdAt: string;
 	updatedAt: string;
 	deletedAt?: string;

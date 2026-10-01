@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
 	ArrowLeft,
 	Briefcase,
@@ -20,7 +21,11 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import { cn } from '@/lib/utils';
 import type { ListedDispute } from '@/disputes/backend/list-disputes/list-disputes.type';
-import { getDisputeApi, resolveDisputeApi } from './dispute-details.api';
+import {
+	getDisputeApi,
+	resolveDisputeApi,
+	saveLoanOfficerNotesApi,
+} from './dispute-details.api';
 
 type DetailItemProps = {
 	label: string;
@@ -30,25 +35,10 @@ type DetailItemProps = {
 
 type FinalDecision = LeadStatus.BILLABLE | LeadStatus.NON_BILLABLE;
 
-const DECISION_OPTIONS: Array<{
-	value: FinalDecision;
-	title: string;
-	subtitle: string;
-}> = [
-	{
-		value: LeadStatus.BILLABLE,
-		title: 'Mark as Billable',
-		subtitle: 'Final decision favors billing the lead',
-	},
-	{
-		value: LeadStatus.NON_BILLABLE,
-		title: 'Mark as Non-Billable',
-		subtitle: 'Final decision rejects billing the lead',
-	},
-];
-
 function formatDate(value?: string) {
-	return value ? new Intl.DateTimeFormat('en-US').format(new Date(value)) : 'N/A';
+	return value
+		? new Intl.DateTimeFormat('en-US').format(new Date(value))
+		: 'N/A';
 }
 
 function getInitials(name?: string) {
@@ -91,28 +81,25 @@ function DetailItem({ label, value, icon }: DetailItemProps) {
 
 export function DisputeDetails({ id }: { id: string }) {
 	const [dispute, setDispute] = useState<ListedDispute | null>(null);
-	const [decision, setDecision] = useState<FinalDecision | ''>('');
+	const router = useRouter();
+	const [loanOfficerNotes, setLoanOfficerNotes] = useState('');
+	const [isSavingNotes, setIsSavingNotes] = useState(false);
 	const [decisionNotes, setDecisionNotes] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [message, setMessage] = useState('');
 	const [error, setError] = useState('');
 	const currentRole = getCurrentLoggedInUserInformation()?.currentUser.role as
-		| UserRole
-		| undefined;
-	const canResolve = currentRole === UserRole.ADMIN || currentRole === UserRole.MANAGER;
+		UserRole | undefined;
+	const canResolve =
+		currentRole === UserRole.ADMIN || currentRole === UserRole.MANAGER;
 
 	const loadDispute = useCallback(async () => {
 		const response = await getDisputeApi(id);
 
 		if (response.success && response.data) {
 			setDispute(response.data);
-			setDecision(
-				response.data.lead.status === LeadStatus.BILLABLE ||
-					response.data.lead.status === LeadStatus.NON_BILLABLE
-					? response.data.lead.status
-					: '',
-			);
+			setLoanOfficerNotes(response.data.loanOfficerNotes || '');
 			setDecisionNotes(response.data.decisionNotes || '');
 			setError('');
 		} else {
@@ -130,9 +117,9 @@ export function DisputeDetails({ id }: { id: string }) {
 		return () => window.clearTimeout(timeoutId);
 	}, [loadDispute]);
 
-	async function submitDecision() {
-		if (!decision) {
-			setError('Select a final decision before submitting');
+	async function submitDecision(decision: FinalDecision) {
+		if (!decisionNotes.trim()) {
+			setError('Decision notes are required to resolve a dispute');
 			return;
 		}
 
@@ -151,15 +138,44 @@ export function DisputeDetails({ id }: { id: string }) {
 		setIsSubmitting(false);
 	}
 
+	async function saveLoanOfficerNotes() {
+		if (!loanOfficerNotes.trim()) {
+			setError('Loan officer notes cannot be empty');
+			return;
+		}
+
+		setIsSavingNotes(true);
+		setError('');
+		setMessage('');
+
+		const response = await saveLoanOfficerNotesApi(id, loanOfficerNotes);
+		if (response.success) {
+			setMessage(response.message || 'Notes saved successfully');
+			await loadDispute();
+		} else {
+			setError(response.error || 'Failed to save notes');
+		}
+
+		setIsSavingNotes(false);
+	}
+
 	if (isLoading) {
-		return <div className="py-10 text-[#313957]">Loading dispute details...</div>;
+		return (
+			<div className="py-10 text-[#313957]">Loading dispute details...</div>
+		);
 	}
 
 	if (!dispute) {
-		return <div className="py-10 text-red-500">{error || 'Dispute not found'}</div>;
+		return (
+			<div className="py-10 text-red-500">{error || 'Dispute not found'}</div>
+		);
 	}
 
 	const isUnresolved = dispute.status === DisputeStatus.UNRESOLVED;
+	const recordingLink = dispute.recordingLink || dispute.lead.recordingLink;
+	// Loan officers only ever load their own disputes (see get-dispute scoping).
+	const canEditLoanOfficerNotes =
+		currentRole === UserRole.LOAN_OFFICER && isUnresolved;
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -189,24 +205,60 @@ export function DisputeDetails({ id }: { id: string }) {
 								</div>
 							</div>
 						</div>
-						<span className={cn('rounded-full px-3 py-1 text-[12px] font-medium', statusClass(dispute.status))}>
+						<span
+							className={cn(
+								'rounded-full px-3 py-1 text-[12px] font-medium',
+								statusClass(dispute.status),
+							)}
+						>
 							{statusLabel(dispute.status)}
 						</span>
 					</div>
 
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<DetailItem label="Number" value={dispute.lead.customerNumber} icon={<Phone size={14} />} />
-						<DetailItem label="Loan Type" value={dispute.lead.loanType} icon={<Wallet size={14} />} />
-						<DetailItem label="Created By" value={dispute.agent.name} icon={<User size={14} />} />
-						<DetailItem label="Updated At" value={formatDate(dispute.lead.updatedAt)} icon={<Calendar size={14} />} />
-						<DetailItem label="Loan Officer" value={dispute.loanOfficer.name} icon={<Briefcase size={14} />} />
-						<DetailItem label="Campaign" value={dispute.lead.campaign} icon={<Megaphone size={14} />} />
-						<DetailItem label="Current Lead Status" value={leadStatusLabel(dispute.lead.status)} icon={<Wallet size={14} />} />
+						<DetailItem
+							label="Number"
+							value={dispute.lead.customerNumber}
+							icon={<Phone size={14} />}
+						/>
+						<DetailItem
+							label="Loan Type"
+							value={dispute.lead.loanType}
+							icon={<Wallet size={14} />}
+						/>
+						<DetailItem
+							label="Created By"
+							value={dispute.agent.name}
+							icon={<User size={14} />}
+						/>
+						<DetailItem
+							label="Updated At"
+							value={formatDate(dispute.lead.updatedAt)}
+							icon={<Calendar size={14} />}
+						/>
+						<DetailItem
+							label="Loan Officer"
+							value={dispute.loanOfficer.name}
+							icon={<Briefcase size={14} />}
+						/>
+						<DetailItem
+							label="Campaign"
+							value={dispute.lead.campaign}
+							icon={<Megaphone size={14} />}
+						/>
+						<DetailItem
+							label="Current Lead Status"
+							value={leadStatusLabel(dispute.lead.status)}
+							icon={<Wallet size={14} />}
+						/>
 					</div>
 
-					{dispute.lead.recordingLink ? (
-						<Button asChild className="mt-5 h-[42px] rounded-[10px] bg-[#2563EB] text-white">
-							<a href={dispute.lead.recordingLink} target="_blank" rel="noreferrer">
+					{recordingLink ? (
+						<Button
+							asChild
+							className="mt-5 h-[42px] rounded-[10px] bg-[#2563EB] text-white"
+						>
+							<a href={recordingLink} target="_blank" rel="noreferrer">
 								<ExternalLink className="mr-2 size-4" /> Open Recording
 							</a>
 						</Button>
@@ -220,16 +272,62 @@ export function DisputeDetails({ id }: { id: string }) {
 					<div className="flex flex-col gap-4">
 						<div className="rounded-[12px] border border-[#D4D7E3] p-4">
 							<div className="text-[12px] text-[#8897AD]">Agent</div>
-							<div className="font-semibold text-[#0C1421]">{dispute.agent.name}</div>
+							<div className="font-semibold text-[#0C1421]">
+								{dispute.agent.name}
+							</div>
 						</div>
 
 						<div className="rounded-[12px] border border-[#D4D7E3] p-4">
 							<div className="text-[12px] text-[#8897AD]">Loan Officer</div>
-							<div className="font-semibold text-[#0C1421]">{dispute.loanOfficer.name}</div>
+							<div className="font-semibold text-[#0C1421]">
+								{dispute.loanOfficer.name}
+							</div>
 						</div>
 					</div>
 				</Card>
 			</div>
+
+			<Card className="rounded-[16px] border-none bg-white p-6 shadow-sm">
+				<h2 className="mb-3 text-[18px] font-semibold text-[#0C1421]">
+					QA Notes
+				</h2>
+				<p className="whitespace-pre-wrap text-[14px] text-[#313957]">
+					{dispute.qaNotes || 'N/A'}
+				</p>
+			</Card>
+
+			{canEditLoanOfficerNotes ? (
+				<Card className="rounded-[16px] border-none bg-white p-6 shadow-sm">
+					<h2 className="mb-3 text-[18px] font-semibold text-[#0C1421]">
+						Loan Officer Notes
+					</h2>
+					<textarea
+						value={loanOfficerNotes}
+						onChange={(event) => setLoanOfficerNotes(event.target.value)}
+						placeholder="Add your notes about this dispute..."
+						className="min-h-[90px] w-full rounded-[12px] border border-[#D4D7E3] p-4 text-[14px] text-[#313957] placeholder:text-[#8897AD] focus:outline-none focus:ring-1 focus:ring-blue-500"
+					/>
+					<div className="mt-4 flex justify-end">
+						<Button
+							type="button"
+							onClick={saveLoanOfficerNotes}
+							disabled={isSavingNotes}
+							className="h-[42px] rounded-[8px] bg-[#2563EB] px-6 text-white"
+						>
+							{isSavingNotes ? 'Saving...' : 'Save Notes'}
+						</Button>
+					</div>
+				</Card>
+			) : (
+				<Card className="rounded-[16px] border-none bg-white p-6 shadow-sm">
+					<h2 className="mb-3 text-[18px] font-semibold text-[#0C1421]">
+						Loan Officer Notes
+					</h2>
+					<p className="whitespace-pre-wrap text-[14px] text-[#313957]">
+						{dispute.loanOfficerNotes || 'No notes added yet.'}
+					</p>
+				</Card>
+			)}
 
 			{dispute.decisionNotes ? (
 				<Card className="rounded-[16px] border-none bg-[#FFFDF0] p-6 shadow-sm">
@@ -249,47 +347,24 @@ export function DisputeDetails({ id }: { id: string }) {
 							Resolve Dispute
 						</h2>
 						<p className="text-[14px] text-[#313957]">
-							Listen to the recording, then choose the final lead billing status.
+							Listen to the recording, add decision notes, then choose the final
+							lead billing status.
 						</p>
 					</div>
-					<span className={cn('rounded-full px-3 py-1 text-[12px] font-medium', statusClass(dispute.status))}>
+					<span
+						className={cn(
+							'rounded-full px-3 py-1 text-[12px] font-medium',
+							statusClass(dispute.status),
+						)}
+					>
 						{statusLabel(dispute.status)}
 					</span>
 				</div>
 
 				<div className="flex flex-col gap-5">
 					<div>
-						<div className="mb-2 text-[14px] font-medium text-[#313957]">
-							Final Decision
-						</div>
-						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-							{DECISION_OPTIONS.map((option) => (
-								<label
-									key={option.value}
-									className={cn(
-										'flex cursor-pointer items-center gap-3 rounded-[12px] border border-[#D4D7E3] p-5',
-										decision === option.value && 'border-[#2563EB] bg-[#EFF6FF]',
-										(!canResolve || !isUnresolved) && 'cursor-default opacity-80',
-									)}
-								>
-									<input
-										type="radio"
-										checked={decision === option.value}
-										disabled={!canResolve || !isUnresolved}
-										onChange={() => setDecision(option.value)}
-									/>
-									<span>
-										<span className="block font-medium text-[#0C1421]">{option.title}</span>
-										<span className="text-[13px] text-[#8897AD]">{option.subtitle}</span>
-									</span>
-								</label>
-							))}
-						</div>
-					</div>
-
-					<div>
 						<label className="mb-2 block text-[14px] font-medium text-[#313957]">
-							Decision Notes
+							Decision Notes <span className="text-red-500">*</span>
 						</label>
 						<textarea
 							value={decisionNotes}
@@ -300,18 +375,39 @@ export function DisputeDetails({ id }: { id: string }) {
 						/>
 					</div>
 
-					{error ? <p className="text-sm font-medium text-red-500">{error}</p> : null}
-					{message ? <p className="text-sm font-medium text-green-600">{message}</p> : null}
+					{error ? (
+						<p className="text-sm font-medium text-red-500">{error}</p>
+					) : null}
+					{message ? (
+						<p className="text-sm font-medium text-green-600">{message}</p>
+					) : null}
 
 					{canResolve && isUnresolved ? (
-						<div className="flex justify-end">
+						<div className="flex flex-col justify-end gap-3 sm:flex-row">
 							<Button
 								type="button"
-								onClick={submitDecision}
+								variant="outline"
+								onClick={() => router.push('/disputes')}
 								disabled={isSubmitting}
-								className="h-[48px] rounded-[8px] bg-[#2563EB] px-8 text-white"
+								className="h-[48px] rounded-[8px] border-[#D4D7E3] px-6 text-[#313957]"
 							>
-								{isSubmitting ? 'Submitting...' : 'Submit Decision'}
+								Leave without resolving
+							</Button>
+							<Button
+								type="button"
+								onClick={() => submitDecision(LeadStatus.BILLABLE)}
+								disabled={isSubmitting}
+								className="h-[48px] rounded-[8px] bg-[#10B981] px-6 text-white hover:bg-[#059669]"
+							>
+								Mark as Billable
+							</Button>
+							<Button
+								type="button"
+								onClick={() => submitDecision(LeadStatus.NON_BILLABLE)}
+								disabled={isSubmitting}
+								className="h-[48px] rounded-[8px] bg-[#F43F5E] px-6 text-white hover:bg-[#E11D48]"
+							>
+								Mark as Non-Billable
 							</Button>
 						</div>
 					) : null}

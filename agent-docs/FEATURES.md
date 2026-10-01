@@ -12,6 +12,7 @@
 8. User management: admin-managed role/status/team assignment for all users
 9. Campaign management: admin-managed create/enable/disable
 10. Quality Assurance (QA) role and workflow
+11. Disputes: QA or admin opens a dispute on a lead (required QA notes, optional recording link); the assigned loan officer can add notes while it is unresolved; admin/manager resolves it as billable or non-billable with required decision notes (updates the lead status). The lead card shows a "Dispute Unresolved" / "Dispute Resolved" pill.
 
 ## CURRENT WORK TO BE DONE
 
