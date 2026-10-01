@@ -42,7 +42,25 @@ export async function resolveDisputeApi(
 	} catch (error: unknown) {
 		return {
 			success: false,
-			error: error instanceof Error ? error.message : 'Failed to resolve dispute',
+			error:
+				error instanceof Error ? error.message : 'Failed to resolve dispute',
+		};
+	}
+}
+
+export async function saveLoanOfficerNotesApi(
+	id: string,
+	loanOfficerNotes: string,
+): Promise<ResolveDisputeResponse> {
+	try {
+		return await apiClient<ResolveDisputeResponse>('/disputes/' + id + '/api', {
+			method: 'PATCH',
+			body: JSON.stringify({ action: 'loan_officer_notes', loanOfficerNotes }),
+		});
+	} catch (error: unknown) {
+		return {
+			success: false,
+			error: error instanceof Error ? error.message : 'Failed to save notes',
 		};
 	}
 }
