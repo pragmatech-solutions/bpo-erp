@@ -8,6 +8,7 @@ import {
 	UserCog,
 	UsersRound,
 	Scale,
+	FileText,
 } from 'lucide-react';
 import { UserRole } from './user-roles.enum';
 
@@ -76,6 +77,17 @@ export const NAVIGATION_LINKS = [
 			UserRole.QUALITY_ASSURANCE,
 			UserRole.AGENT,
 			UserRole.LOAN_OFFICER,
+		],
+	},
+	{
+		label: 'Report',
+		href: '/reports',
+		icon: FileText,
+		roles: [
+			UserRole.ADMIN,
+			UserRole.MANAGER,
+			UserRole.TEAM_LEAD,
+			UserRole.AGENT,
 		],
 	},
 ];

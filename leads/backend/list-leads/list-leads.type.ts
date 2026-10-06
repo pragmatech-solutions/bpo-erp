@@ -53,6 +53,7 @@ export type ListedLead = {
 	status: LeadStatus;
 	statusReason?: string;
 	paymentStatus?: 'paid' | 'unpaid';
+	createdAt: string;
 	disputeStatus?: DisputeStatus;
 	updatedAt: string;
 	deletedAt?: string;

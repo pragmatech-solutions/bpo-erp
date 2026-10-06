@@ -27,11 +27,12 @@ import { cn } from '@/lib/utils';
 import type { ListedDispute } from '@/disputes/backend/list-disputes/list-disputes.type';
 import { getDisputesApi } from './dispute-list.api';
 
-const STATUSES: Array<{ label: string; value: DisputeStatus | 'All Status' }> = [
-	{ label: 'All Status', value: 'All Status' },
-	{ label: 'Unresolved', value: DisputeStatus.UNRESOLVED },
-	{ label: 'Resolved', value: DisputeStatus.RESOLVED },
-];
+const STATUSES: Array<{ label: string; value: DisputeStatus | 'All Status' }> =
+	[
+		{ label: 'All Status', value: 'All Status' },
+		{ label: 'Unresolved', value: DisputeStatus.UNRESOLVED },
+		{ label: 'Resolved', value: DisputeStatus.RESOLVED },
+	];
 
 function formatDate(value: string) {
 	return new Intl.DateTimeFormat('en-US').format(new Date(value));
@@ -60,7 +61,8 @@ function StatCard({
 		unresolved: 'bg-[#FFF7E8] text-[#F59E0B]',
 		resolved: 'bg-[#E7FFF7] text-[#10B981]',
 	}[variant];
-	const Icon = variant === 'total' ? User : variant === 'unresolved' ? Clock : CheckCircle;
+	const Icon =
+		variant === 'total' ? User : variant === 'unresolved' ? Clock : CheckCircle;
 
 	return (
 		<div
@@ -118,6 +120,7 @@ export function DisputeList() {
 	}, []);
 
 	const fetchDisputes = useCallback(async () => {
+		setIsLoading(true);
 		let startDate: Date | undefined;
 		let endDate: Date | undefined;
 
@@ -182,12 +185,21 @@ export function DisputeList() {
 
 			<div className="grid grid-cols-1 gap-4 rounded-[20px] bg-white/70 p-6 md:grid-cols-3">
 				<StatCard label="Total Disputes" value={stats.total} variant="total" />
-				<StatCard label="Unresolved" value={stats.unresolved} variant="unresolved" />
+				<StatCard
+					label="Unresolved"
+					value={stats.unresolved}
+					variant="unresolved"
+				/>
 				<StatCard label="Resolved" value={stats.resolved} variant="resolved" />
 			</div>
 
 			<div className="flex justify-end gap-3">
-				<Button type="button" variant="ghost" onClick={resetFilters} className="text-[#2563EB]">
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={resetFilters}
+					className="text-[#2563EB]"
+				>
 					Reset All
 				</Button>
 				<Button
@@ -200,7 +212,9 @@ export function DisputeList() {
 			</div>
 
 			<div className="grid grid-cols-1 gap-4 rounded-[19px] bg-white p-5 lg:grid-cols-[auto_1fr_auto_1fr] lg:items-center">
-				<label className="text-[14px] font-medium text-[#313957]">Duration:</label>
+				<label className="text-[14px] font-medium text-[#313957]">
+					Duration:
+				</label>
 				<DurationFilter
 					value={duration}
 					customDateRange={customDateRange}
@@ -214,7 +228,9 @@ export function DisputeList() {
 					}}
 				/>
 
-				<label className="text-[14px] font-medium text-[#313957]">Status:</label>
+				<label className="text-[14px] font-medium text-[#313957]">
+					Status:
+				</label>
 				<Select
 					value={status}
 					onValueChange={(value) => {
@@ -293,7 +309,12 @@ export function DisputeList() {
 											{dispute.loanOfficer.name}
 										</td>
 										<td className="px-8 py-4">
-											<span className={cn('rounded-full px-3 py-1 text-[12px] font-medium', statusClass(dispute.status))}>
+											<span
+												className={cn(
+													'rounded-full px-3 py-1 text-[12px] font-medium',
+													statusClass(dispute.status),
+												)}
+											>
 												{statusLabel(dispute.status)}
 											</span>
 										</td>
