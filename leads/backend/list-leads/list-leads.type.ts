@@ -1,3 +1,4 @@
+import type { DisputeStatus } from '@/common/constants/dispute-status.enum';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 
 export type LeadTypeFilter = 'standard' | 'call_transfer';
@@ -53,6 +54,7 @@ export type ListedLead = {
 	statusReason?: string;
 	paymentStatus?: 'paid' | 'unpaid';
 	createdAt: string;
+	disputeStatus?: DisputeStatus;
 	updatedAt: string;
 	deletedAt?: string;
 	deletedBy?: {

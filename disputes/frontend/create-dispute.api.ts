@@ -4,6 +4,8 @@ import { apiClient } from '@/lib/api-client';
 
 export type CreateDisputePayload = {
 	leadId: string;
+	recordingLink?: string;
+	qaNotes: string;
 };
 
 export type CreateDisputeResponse = {
@@ -24,7 +26,8 @@ export async function createDisputeApi(
 	} catch (error: unknown) {
 		return {
 			success: false,
-			error: error instanceof Error ? error.message : 'Failed to create dispute',
+			error:
+				error instanceof Error ? error.message : 'Failed to create dispute',
 		};
 	}
 }

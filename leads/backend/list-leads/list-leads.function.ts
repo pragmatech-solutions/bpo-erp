@@ -267,6 +267,32 @@ export async function listLeads(
 		{ $unwind: { path: '$deleted_by', preserveNullAndEmptyArrays: true } },
 
 		{
+			$lookup: {
+				from: 'disputes',
+
+				let: { leadId: '$_id' },
+
+				pipeline: [
+					{
+						$match: {
+							$expr: { $eq: ['$lead_id', '$$leadId'] },
+
+							deleted_at: { $exists: false },
+						},
+					},
+
+					{ $sort: { created_at: -1 } },
+
+					{ $limit: 1 },
+
+					{ $project: { _id: 0, status: 1 } },
+				],
+
+				as: 'latest_dispute',
+			},
+		},
+
+		{
 			$project: {
 				id: { $toString: '$_id' },
 
@@ -297,6 +323,8 @@ export async function listLeads(
 				statusReason: '$status_reason',
 
 				paymentStatus: '$payment_status',
+
+				disputeStatus: { $arrayElemAt: ['$latest_dispute.status', 0] },
 
 				campaign: '$campaign',
 
