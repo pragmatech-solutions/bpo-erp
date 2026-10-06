@@ -172,7 +172,7 @@ async function buildDashboardMatchStage(
 		});
 	}
 
-	if (Object.keys(dateFilter).length > 0) matchStage.updated_at = dateFilter;
+	if (Object.keys(dateFilter).length > 0) matchStage.created_at = dateFilter;
 
 	return matchStage;
 }

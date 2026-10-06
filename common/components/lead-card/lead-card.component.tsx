@@ -462,6 +462,11 @@ export function LeadCard({
 					icon={<User size={14} />}
 				/>
 				<DetailItem
+					label="Created At"
+					value={formatDate(lead.createdAt)}
+					icon={<Calendar size={14} />}
+				/>
+				<DetailItem
 					label="Updated At"
 					value={formatDate(lead.updatedAt)}
 					icon={<Calendar size={14} />}
