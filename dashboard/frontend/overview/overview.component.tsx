@@ -103,13 +103,23 @@ export function Overview() {
 			value: data.analytics.billable,
 			color: 'bg-[#E8FFF9]',
 			icon: <CheckCircle2 className="text-[#10B981]" />,
-			paymentBreakdown: shouldShowBillablePaymentCounts
-				? {
-						paid: data.analytics.billablePaid,
-						unpaid: data.analytics.billableUnpaid,
-					}
-				: undefined,
 		},
+		...(shouldShowBillablePaymentCounts
+			? [
+					{
+						label: 'Paid',
+						value: data.analytics.billablePaid,
+						color: 'bg-[#DFFCF1]',
+						icon: <CheckCircle2 className="text-[#10B981]" />,
+					},
+					{
+						label: 'Unpaid',
+						value: data.analytics.billableUnpaid,
+						color: 'bg-[#FFE8EF]',
+						icon: <AlertCircle className="text-[#F43F5E]" />,
+					},
+				]
+			: []),
 		{
 			label: 'Non-Billable',
 			value: data.analytics.nonBillable,
@@ -132,7 +142,13 @@ export function Overview() {
 						Here&apos;s an overview of your performance.
 					</p>
 				</div>
-				<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+				<div
+					className={`grid grid-cols-2 gap-4 ${
+						shouldShowBillablePaymentCounts
+							? 'lg:grid-cols-3 xl:grid-cols-6'
+							: 'lg:grid-cols-4'
+					}`}
+				>
 					{statCards.map((card) => (
 						<Card
 							key={card.label}
@@ -149,12 +165,6 @@ export function Overview() {
 									<div className="text-[14px] font-semibold text-[#313957] lg:text-[16px]">
 										{card.label === 'Total' ? 'Total Leads' : card.label}
 									</div>
-									{card.paymentBreakdown ? (
-										<div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold text-[#313957] lg:text-[12px]">
-											<span>Paid: {card.paymentBreakdown.paid}</span>
-											<span>Unpaid: {card.paymentBreakdown.unpaid}</span>
-										</div>
-									) : null}
 								</div>
 							</div>
 						</Card>

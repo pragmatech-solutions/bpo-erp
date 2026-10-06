@@ -53,7 +53,7 @@ function createLeadMatch(
 	const dateFilter: Record<string, Date> = {};
 	if (input.startDate) dateFilter.$gte = input.startDate;
 	if (input.endDate) dateFilter.$lte = input.endDate;
-	if (Object.keys(dateFilter).length > 0) matchStage.updated_at = dateFilter;
+	if (Object.keys(dateFilter).length > 0) matchStage.created_at = dateFilter;
 	if (input.status) matchStage.status = input.status;
 	if (input.paymentStatus) matchStage.payment_status = input.paymentStatus;
 	if (input.campaign) matchStage.campaign = input.campaign;

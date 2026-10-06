@@ -206,7 +206,7 @@ export async function listLeads(
 	}
 
 	if (Object.keys(dateFilter).length > 0) {
-		matchStage.updated_at = dateFilter;
+		matchStage.created_at = dateFilter;
 	}
 
 	const skip = (validatedInput.page - 1) * validatedInput.limit;
@@ -218,7 +218,7 @@ export async function listLeads(
 	const leadsPipeline: PipelineStage[] = [
 		{ $match: matchStage },
 
-		{ $sort: { updated_at: -1 } },
+		{ $sort: { created_at: -1, _id: -1 } },
 
 		{ $skip: skip },
 
@@ -371,6 +371,14 @@ export async function listLeads(
 				updatedAt: {
 					$dateToString: {
 						date: '$updated_at',
+
+						format: '%Y-%m-%dT%H:%M:%S.%LZ',
+					},
+				},
+
+				createdAt: {
+					$dateToString: {
+						date: '$created_at',
 
 						format: '%Y-%m-%dT%H:%M:%S.%LZ',
 					},

@@ -307,7 +307,9 @@ export function LeadCard({
 		}
 	};
 
-	async function handleCreateDispute(event: React.MouseEvent<HTMLButtonElement>) {
+	async function handleCreateDispute(
+		event: React.MouseEvent<HTMLButtonElement>,
+	) {
 		event.stopPropagation();
 
 		setIsCreatingDispute(true);
@@ -457,6 +459,11 @@ export function LeadCard({
 					label="Username"
 					value={lead.username}
 					icon={<User size={14} />}
+				/>
+				<DetailItem
+					label="Created At"
+					value={formatDate(lead.createdAt)}
+					icon={<Calendar size={14} />}
 				/>
 				<DetailItem
 					label="Updated At"
