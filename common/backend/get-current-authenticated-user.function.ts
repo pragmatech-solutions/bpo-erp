@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { connectToDatabase } from '@/common/database';
 import { Users } from '@/common/models/users.schema';
 import { UserRole } from '@/common/constants/user-roles.enum';
 import { UserAvailabilityStatus } from '@/common/constants/user-availability-status.enum';
@@ -38,6 +39,8 @@ export async function getCurrentAuthenticatedUser(): Promise<CurrentAuthenticate
 		return null;
 	}
 
+	await connectToDatabase();
+
 	const user = await Users.findById(currentUserId)
 		.select('_id name email role status team_id availability_status')
 		.lean<CurrentUserDocument>();
@@ -52,6 +55,7 @@ export async function getCurrentAuthenticatedUser(): Promise<CurrentAuthenticate
 		email: user.email,
 		role: user.role,
 		teamId: getOptionalObjectId(user.team_id),
-		availabilityStatus: user.availability_status || UserAvailabilityStatus.INACTIVE,
+		availabilityStatus:
+			user.availability_status || UserAvailabilityStatus.INACTIVE,
 	};
 }
