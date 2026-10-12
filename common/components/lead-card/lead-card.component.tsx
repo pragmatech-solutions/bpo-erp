@@ -73,7 +73,9 @@ function getTitleCase(value: string) {
 }
 
 function getLeadTypeLabel(leadType?: ListedLead['leadType']) {
-	return leadType === 'call_transfer' ? 'Call Transfer' : 'Standard';
+	if (leadType === 'call_transfer') return 'Call Transfer';
+	if (leadType === 'insellerate') return 'Insellerate Lead';
+	return 'Standard';
 }
 
 function formatOptionalValue(value?: string | number | null) {

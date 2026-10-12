@@ -76,12 +76,20 @@ export function CreateLeadForm() {
 					Create Lead
 				</h1>
 				{canCreateCallTransferLead ? (
-					<Button
-						asChild
-						className="h-[44px] rounded-[12px] bg-[#2563EB] text-white hover:bg-blue-700 lg:w-[220px]"
-					>
-						<Link href="/leads/create/call-transfer">Call Transfer Lead</Link>
-					</Button>
+					<div className="flex flex-col gap-3 lg:flex-row">
+						<Button
+							asChild
+							className="h-[44px] rounded-[12px] bg-[#2563EB] text-white hover:bg-blue-700 lg:w-[220px]"
+						>
+							<Link href="/leads/create/call-transfer">Call Transfer Lead</Link>
+						</Button>
+						<Button
+							asChild
+							className="h-[44px] rounded-[12px] bg-[#2563EB] text-white hover:bg-blue-700 lg:w-[220px]"
+						>
+							<Link href="/leads/create/insellerate">Insellerate Lead</Link>
+						</Button>
+					</div>
 				) : null}
 			</div>
 

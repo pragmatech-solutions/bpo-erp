@@ -158,8 +158,11 @@ async function buildDashboardMatchStage(
 
 	if (validatedInput.campaign) matchStage.campaign = validatedInput.campaign;
 
-	if (validatedInput.leadType === 'call_transfer') {
-		matchStage.lead_type = 'call_transfer';
+	if (
+		validatedInput.leadType === 'call_transfer' ||
+		validatedInput.leadType === 'insellerate'
+	) {
+		matchStage.lead_type = validatedInput.leadType;
 	} else if (validatedInput.leadType === 'standard') {
 		addAndCondition(matchStage, {
 			$or: [

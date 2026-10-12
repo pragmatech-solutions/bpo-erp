@@ -1,7 +1,7 @@
 import type { DisputeStatus } from '@/common/constants/dispute-status.enum';
 import { LeadStatus } from '@/common/constants/lead-status.enum';
 
-export type LeadTypeFilter = 'standard' | 'call_transfer';
+export type LeadTypeFilter = 'standard' | 'call_transfer' | 'insellerate';
 
 export type ListLeadsInput = {
 	page?: number;
@@ -41,7 +41,7 @@ export type ListedCallTransferLeadDetails = {
 
 export type ListedLead = {
 	id: string;
-	leadType?: 'standard' | 'call_transfer';
+	leadType?: LeadTypeFilter;
 	customerName: string;
 	username?: string;
 	customerNumber: string;

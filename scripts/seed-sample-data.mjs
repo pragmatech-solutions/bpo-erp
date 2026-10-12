@@ -124,7 +124,7 @@ const LeadSchema = new mongoose.Schema(
 		lead_type: {
 			type: String,
 			default: 'standard',
-			enum: ['standard', 'call_transfer'],
+			enum: ['standard', 'call_transfer', 'insellerate'],
 		},
 		status: {
 			type: String,

@@ -36,13 +36,9 @@ export type DashboardDurationPreset =
 
 export type DashboardLeadStatusFilter = LeadStatus | 'All Status';
 export type DashboardPaymentStatusFilter =
-	| 'paid'
-	| 'unpaid'
-	| 'All Payment Status';
+	'paid' | 'unpaid' | 'All Payment Status';
 export type DashboardLeadTypeFilter =
-	| 'All Lead Types'
-	| 'standard'
-	| 'call_transfer';
+	'All Lead Types' | 'standard' | 'call_transfer' | 'insellerate';
 export type DashboardDeletedLeadFilter = 'active' | 'deleted' | 'all';
 
 function subscribeToCurrentUser(callback: () => void) {
@@ -95,8 +91,7 @@ export function useOverviewHook() {
 	});
 	const [isLoading, setIsLoading] = useState(true);
 	const [errorMessage, setErrorMessage] = useState('');
-	const [status, setStatus] =
-		useState<DashboardLeadStatusFilter>('All Status');
+	const [status, setStatus] = useState<DashboardLeadStatusFilter>('All Status');
 	const [paymentStatus, setPaymentStatus] =
 		useState<DashboardPaymentStatusFilter>('All Payment Status');
 	const [duration, setDuration] = useState<DashboardDurationPreset>('All');

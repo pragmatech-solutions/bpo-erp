@@ -43,6 +43,7 @@ const PAYMENT_STATUSES: PaymentStatusFilter[] = [
 const LEAD_TYPES: Array<{ label: string; value: LeadTypeFilter }> = [
 	{ label: 'All Lead Types', value: 'All Lead Types' },
 	{ label: 'Call Transfer', value: 'call_transfer' },
+	{ label: 'Insellerate Leads', value: 'insellerate' },
 	{ label: 'Standard Leads', value: 'standard' },
 ];
 const DELETED_FILTERS: Array<{ label: string; value: DeletedLeadFilter }> = [
