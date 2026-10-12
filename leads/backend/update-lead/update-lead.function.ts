@@ -17,7 +17,7 @@ import {
 } from './update-lead.input-schema';
 
 type LeadDocumentWithOfficer = {
-	lead_type?: 'standard' | 'call_transfer';
+	lead_type?: 'standard' | 'call_transfer' | 'insellerate';
 	created_by?: Types.ObjectId;
 	customer_name: string;
 	username: string;

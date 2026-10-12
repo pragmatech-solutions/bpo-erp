@@ -8,7 +8,7 @@ import type { GetLeadInput, LeadDetails } from './get-lead.type';
 
 type LeadDocument = {
 	_id: Types.ObjectId;
-	lead_type?: 'standard' | 'call_transfer';
+	lead_type?: 'standard' | 'call_transfer' | 'insellerate';
 	customer_name: string;
 	username: string;
 	customer_number: string;

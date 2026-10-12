@@ -98,9 +98,9 @@ export function useUpdateLeadFormHook(id: string) {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
 
-	const [leadType, setLeadType] = useState<'standard' | 'call_transfer'>(
-		'standard',
-	);
+	const [leadType, setLeadType] = useState<
+		'standard' | 'call_transfer' | 'insellerate'
+	>('standard');
 	const [customerName, setCustomerName] = useState('');
 	const [username, setUsername] = useState('');
 	const [customerNumber, setCustomerNumber] = useState('');

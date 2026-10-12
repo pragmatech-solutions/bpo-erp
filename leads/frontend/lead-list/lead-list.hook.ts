@@ -42,7 +42,8 @@ export type DurationPreset =
 
 export type LeadStatusFilter = LeadStatus | 'All Status';
 export type PaymentStatusFilter = 'paid' | 'unpaid' | 'All Payment Status';
-export type LeadTypeFilter = 'All Lead Types' | 'standard' | 'call_transfer';
+export type LeadTypeFilter =
+	'All Lead Types' | 'standard' | 'call_transfer' | 'insellerate';
 export type DeletedLeadFilter = 'active' | 'deleted' | 'all';
 
 function subscribeToCurrentUser(callback: () => void) {

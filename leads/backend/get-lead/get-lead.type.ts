@@ -8,7 +8,7 @@ export type GetLeadInput = {
 
 export type LeadDetails = {
 	id: string;
-	leadType?: 'standard' | 'call_transfer';
+	leadType?: 'standard' | 'call_transfer' | 'insellerate';
 	customerName: string;
 	username: string;
 	customerNumber: string;
