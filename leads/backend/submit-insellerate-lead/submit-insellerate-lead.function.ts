@@ -4,7 +4,7 @@ import type {
 } from './submit-insellerate-lead.type';
 
 const INSELLERATE_PORTAL_URL = 'https://socialupmedia.dev/Mortgage_Form/';
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 30000;
 const SUCCESS_MARKER = 'Lead Submitted Successfully';
 
 export const INSELLERATE_PORTAL_ERROR =
