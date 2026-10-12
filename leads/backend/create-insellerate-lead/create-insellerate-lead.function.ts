@@ -8,7 +8,8 @@ import {
 	ensureLeadContactNumberIsUnique,
 	isDuplicateLeadContactNumberError,
 } from '@/leads/backend/lead-contact-number';
-import submitInsellerateLead from '@/leads/backend/submit-insellerate-lead';
+// TODO: re-enable the client portal call before production.
+// import submitInsellerateLead from '@/leads/backend/submit-insellerate-lead';
 import {
 	createInsellerateLeadInputSchema,
 	type CreateInsellerateLeadInput,
@@ -46,7 +47,10 @@ export async function createInsellerateLead(input: CreateInsellerateLeadInput) {
 		validatedData.mobile,
 	);
 
-	const { prospectId } = await submitInsellerateLead(validatedData);
+	// TODO: re-enable before production. Disabled so the local save can be
+	// tested without sending the lead to the client portal.
+	// const { prospectId } = await submitInsellerateLead(validatedData);
+	const prospectId: string | undefined = undefined;
 
 	const newLead = new Leads({
 		lead_type: 'insellerate',
