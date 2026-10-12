@@ -39,6 +39,26 @@ export type ListedCallTransferLeadDetails = {
 	credit?: string;
 };
 
+export type ListedInsellerateLeadDetails = {
+	clientCampaign?: string;
+	firstName?: string;
+	lastName?: string;
+	address?: string;
+	city?: string;
+	state?: string;
+	zip?: string;
+	email?: string;
+	mobile?: string;
+	mortgageBalance?: number;
+	loanAmount?: number;
+	interestRate?: number;
+	creditScore?: number;
+	veteran?: string;
+	loanType?: string;
+	employmentStatus?: string;
+	prospectId?: string;
+};
+
 export type ListedLead = {
 	id: string;
 	leadType?: LeadTypeFilter;
@@ -63,6 +83,7 @@ export type ListedLead = {
 	};
 	campaign: string;
 	callTransfer?: ListedCallTransferLeadDetails;
+	insellerate?: ListedInsellerateLeadDetails;
 	created_by: {
 		id: string;
 		name: string;

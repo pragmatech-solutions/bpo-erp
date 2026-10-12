@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { CreateDisputeDialog } from '@/disputes/frontend/create-dispute-dialog';
 import { DisputeStatus } from '@/common/constants/dispute-status.enum';
 import { softDeleteLeadApi } from './soft-delete-lead.api';
+import { InsellerateDetails } from './insellerate-details.component';
 
 interface LeadCardProps {
 	lead: ListedLead;
@@ -114,7 +115,7 @@ function LeadBadges({
 				</span>
 			) : null}
 
-			{isCallTransfer ? (
+			{isCallTransfer || lead.leadType === 'insellerate' ? (
 				<span className="rounded-full bg-[#DBEAFE] px-3 py-1 text-[10px] font-medium text-[#2563EB] lg:text-[12px]">
 					{getLeadTypeLabel(lead.leadType)}
 				</span>
@@ -525,6 +526,7 @@ export function LeadCard({
 			) : null}
 
 			<CallTransferDetails lead={lead} />
+			<InsellerateDetails lead={lead} />
 
 			{(lead.status === LeadStatus.NON_BILLABLE ||
 				lead.status === LeadStatus.BILLABLE) &&

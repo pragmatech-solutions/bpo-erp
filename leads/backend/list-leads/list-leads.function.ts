@@ -369,6 +369,42 @@ export async function listLeads(
 					credit: '$call_transfer.credit',
 				},
 
+				insellerate: {
+					clientCampaign: '$insellerate.client_campaign',
+
+					firstName: '$insellerate.first_name',
+
+					lastName: '$insellerate.last_name',
+
+					address: '$insellerate.address',
+
+					city: '$insellerate.city',
+
+					state: '$insellerate.state',
+
+					zip: '$insellerate.zip',
+
+					email: '$insellerate.email',
+
+					mobile: '$insellerate.mobile',
+
+					mortgageBalance: '$insellerate.mortgage_balance',
+
+					loanAmount: '$insellerate.loan_amount',
+
+					interestRate: '$insellerate.interest_rate',
+
+					creditScore: '$insellerate.credit_score',
+
+					veteran: '$insellerate.veteran',
+
+					loanType: '$insellerate.loan_type',
+
+					employmentStatus: '$insellerate.employment_status',
+
+					prospectId: '$insellerate.prospect_id',
+				},
+
 				deletedAt: {
 					$cond: [
 						{ $ifNull: ['$deleted_at', false] },
