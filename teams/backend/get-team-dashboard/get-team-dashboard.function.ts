@@ -49,6 +49,7 @@ function createLeadMatch(
 ): Record<string, unknown> {
 	const matchStage: Record<string, unknown> = {
 		[ownerField]: { $in: memberIds },
+		deleted_at: { $exists: false },
 	};
 	const dateFilter: Record<string, Date> = {};
 	if (input.startDate) dateFilter.$gte = input.startDate;
@@ -233,6 +234,7 @@ export async function getTeamDashboard(
 		.filter((member) => TEAM_LEAD_CREATOR_ROLES.includes(member.role))
 		.map((member) => member._id);
 	const campaigns = await Leads.distinct('campaign', {
+		deleted_at: { $exists: false },
 		$or: [
 			{ created_by: { $in: creatorIds } },
 			{ loan_officer_id: { $in: memberObjectIds } },
