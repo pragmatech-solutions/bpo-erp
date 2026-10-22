@@ -15,6 +15,8 @@ import { UserRole } from '@/common/constants/user-roles.enum';
 import { getCurrentLoggedInUserInformation } from '@/auth/frontend/login-form/get-current-logged-in-user-information.function';
 import { getLoanOfficerOptionsApi } from '@/loan-officers/frontend/loan-officer-options';
 import type { LoanOfficerOption } from '@/loan-officers/backend/list-loan-officers';
+import { getAgentsApi } from '@/agents/frontend/list-agents';
+import type { AgentListItem } from '@/agents/backend/list-agents';
 import { getLeadApi } from './get-lead.api';
 import { updateLeadApi } from './update-lead.api';
 
@@ -112,6 +114,9 @@ export function useUpdateLeadFormHook(id: string) {
 	);
 	const [loanBalance, setLoanBalance] = useState('');
 	const [homeValue, setHomeValue] = useState('');
+	const [createdById, setCreatedById] = useState('');
+	const [originalCreatedById, setOriginalCreatedById] = useState('');
+	const [createdByName, setCreatedByName] = useState('');
 	const [loanOfficerId, setLoanOfficerId] = useState('');
 	const [loanOfficerName, setLoanOfficerName] = useState('');
 	const [loanOfficerPhoneNumber, setLoanOfficerPhoneNumber] = useState('');
@@ -130,6 +135,7 @@ export function useUpdateLeadFormHook(id: string) {
 	const [loanOfficerOptions, setLoanOfficerOptions] = useState<
 		LoanOfficerOption[]
 	>([]);
+	const [agentOptions, setAgentOptions] = useState<AgentListItem[]>([]);
 	const [currentRole] = useState(() => {
 		const userInfo = getCurrentLoggedInUserInformation();
 		return userInfo?.currentUser.role as UserRole | undefined;
@@ -170,6 +176,9 @@ export function useUpdateLeadFormHook(id: string) {
 			setLoanTypeValue(data.loanType);
 			setLoanBalance(data.loanBalance?.toString() || '');
 			setHomeValue(data.homeValue?.toString() || '');
+			setCreatedById(data.created_by.id);
+			setOriginalCreatedById(data.created_by.id);
+			setCreatedByName(data.created_by.name);
 			setLoanOfficerId(data.loanOfficerId || '');
 			setLoanOfficerName(data.loanOfficerName || '');
 			setLoanOfficerPhoneNumber(data.loanOfficerPhoneNumber || '');
@@ -222,10 +231,12 @@ export function useUpdateLeadFormHook(id: string) {
 		async function loadOptions() {
 			if (!isAdmin) return;
 
-			const [campaignResponse, loanOfficerResponse] = await Promise.all([
-				getCampaignOptionsApi(),
-				getLoanOfficerOptionsApi(),
-			]);
+			const [campaignResponse, loanOfficerResponse, agentResponse] =
+				await Promise.all([
+					getCampaignOptionsApi(),
+					getLoanOfficerOptionsApi(),
+					getAgentsApi(),
+				]);
 
 			if (campaignResponse.campaigns.length > 0) {
 				setCampaignOptions(campaignResponse.campaigns);
@@ -233,6 +244,10 @@ export function useUpdateLeadFormHook(id: string) {
 
 			if (loanOfficerResponse.success && loanOfficerResponse.data) {
 				setLoanOfficerOptions(loanOfficerResponse.data);
+			}
+
+			if (agentResponse.success && agentResponse.data) {
+				setAgentOptions(agentResponse.data);
 			}
 		}
 
@@ -284,6 +299,7 @@ export function useUpdateLeadFormHook(id: string) {
 						loanType: loanTypeValue,
 						loanBalance: toOptionalNumber(loanBalance),
 						homeValue: toOptionalNumber(homeValue),
+						...(createdById !== originalCreatedById ? { createdById } : {}),
 						loanOfficerId,
 						...(leadType === 'call_transfer'
 							? {
@@ -344,6 +360,9 @@ export function useUpdateLeadFormHook(id: string) {
 			setLoanBalance,
 			homeValue,
 			setHomeValue,
+			createdById,
+			setCreatedById,
+			createdByName,
 			loanOfficerId,
 			setLoanOfficerId,
 			loanOfficerName: selectedLoanOfficer?.name || loanOfficerName,
@@ -353,6 +372,7 @@ export function useUpdateLeadFormHook(id: string) {
 			updateCallTransferField,
 			campaignOptions,
 			loanOfficerOptions,
+			agentOptions,
 			originalStatus,
 			status,
 			setStatus,

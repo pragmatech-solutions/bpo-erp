@@ -34,6 +34,7 @@ export const updateLeadInputSchema = z
 		loanType: z.nativeEnum(LoanType).optional(),
 		loanBalance: optionalNumberSchema,
 		homeValue: optionalNumberSchema,
+		createdById: z.string().trim().min(1).optional(),
 		loanOfficerId: z.string().trim().optional(),
 		callTransfer: z
 			.object({
