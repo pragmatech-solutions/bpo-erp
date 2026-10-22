@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist_Mono, Inter, Poppins } from 'next/font/google';
 import { SerwistProvider } from '@serwist/next/react';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 
@@ -59,6 +60,7 @@ export default function RootLayout({
 				) : (
 					children
 				)}
+				<Analytics />
 			</body>
 		</html>
 	);
