@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getLoanOfficerOptionsApi } from '@/loan-officers/frontend/loan-officer-options';
 import type { LoanOfficerOption } from '@/loan-officers/backend/list-loan-officers';
+import { DEFAULT_CALL_TRANSFER_SHEET_CONTENT } from '@/common/constants/call-transfer-sheet-content';
+import { getCallTransferSheetApi } from '@/configurations/frontend/call-transfer-sheet';
 import type { CreateCallTransferLeadInput } from '@/leads/backend/create-call-transfer-lead/create-call-transfer-lead.input-schema';
 import { createCallTransferLeadApi } from './call-transfer-lead.api';
 
@@ -61,6 +63,9 @@ export function useCallTransferLeadFormHook() {
 	const [error, setError] = useState<CallTransferError>('');
 	const [success, setSuccess] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+	const [callTransferSheetContent, setCallTransferSheetContent] = useState(
+		DEFAULT_CALL_TRANSFER_SHEET_CONTENT,
+	);
 
 	useEffect(() => {
 		async function loadLoanOfficers() {
@@ -71,6 +76,21 @@ export function useCallTransferLeadFormHook() {
 		}
 
 		loadLoanOfficers();
+	}, []);
+
+	useEffect(() => {
+		async function loadCallTransferSheet() {
+			try {
+				const response = await getCallTransferSheetApi();
+				if (response.success && response.data) {
+					setCallTransferSheetContent(response.data.value);
+				}
+			} catch {
+				// Keep the built-in content available if the configuration cannot load.
+			}
+		}
+
+		loadCallTransferSheet();
 	}, []);
 
 	const selectedLoanOfficer = useMemo(
@@ -145,6 +165,7 @@ export function useCallTransferLeadFormHook() {
 		selectedLoanOfficer,
 		existingLtv,
 		cashOutLtv,
+		callTransferSheetContent,
 		errorMessage: formatError(error),
 		success,
 		isLoading,
