@@ -171,8 +171,8 @@ function ScriptPanel({ loanOfficerPhone }: { loanOfficerPhone?: string }) {
 						<ul className="mt-2 list-disc space-y-1 pl-5">
 							<li>
 								Available nationwide except: Delaware (DE), Hawaii (HI), Indiana
-								(IN), Massachusetts (MA), Missouri (MO), Nevada (NV), and Utah
-								(UT).
+								(IN), Massachusetts (MA), Missouri (MO), Nevada (NV), New York
+								(NY), and Utah (UT).
 							</li>
 						</ul>
 					</section>
