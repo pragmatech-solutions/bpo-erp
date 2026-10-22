@@ -9,6 +9,7 @@ import {
 	UsersRound,
 	Scale,
 	FileText,
+	PanelTop,
 } from 'lucide-react';
 import { UserRole } from './user-roles.enum';
 
@@ -64,6 +65,12 @@ export const NAVIGATION_LINKS = [
 		label: 'Campaign',
 		href: '/campaigns',
 		icon: Megaphone,
+		roles: [UserRole.ADMIN],
+	},
+	{
+		label: 'Portal Settings',
+		href: '/portal-settings',
+		icon: PanelTop,
 		roles: [UserRole.ADMIN],
 	},
 	{
