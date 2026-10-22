@@ -172,8 +172,8 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 				</h1>
 				{form.isAdmin ? (
 					<p className="text-[14px] font-medium text-[#313957]">
-						Admin can correct lead information and reassign active loan
-						officers.
+						Admin can correct lead information and reassign active agents and
+						loan officers.
 					</p>
 				) : null}
 				{form.isManager ? (
@@ -222,6 +222,38 @@ export function UpdateLeadForm({ id }: UpdateLeadFormProps) {
 							/>
 
 							<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+								<div className="flex flex-col gap-2">
+									<Label className="text-[16px] font-medium text-[#313957]">
+										Created By (Agent)
+									</Label>
+									<Select
+										value={form.createdById}
+										onValueChange={form.setCreatedById}
+									>
+										<SelectTrigger className="h-[58px] rounded-[12px] border-[#D4D7E3] bg-white text-[16px] text-[#313957]">
+											<SelectValue placeholder="Select Agent" />
+										</SelectTrigger>
+										<SelectContent>
+											{form.createdById &&
+											!form.agentOptions.some(
+												(agent) => agent.id === form.createdById,
+											) ? (
+												<SelectItem value={form.createdById} disabled>
+													{form.createdByName} (current)
+												</SelectItem>
+											) : null}
+											{form.agentOptions.map((agent) => (
+												<SelectItem key={agent.id} value={agent.id}>
+													{agent.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<p className="text-[12px] text-[#6B7A99]">
+										Only active agents can be assigned to a lead.
+									</p>
+								</div>
+
 								<div className="flex flex-col gap-2">
 									<Label className="text-[16px] font-medium text-[#313957]">
 										Campaign

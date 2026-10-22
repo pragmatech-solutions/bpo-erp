@@ -65,6 +65,10 @@ type LoanOfficerDocument = {
 	phone_number?: string;
 };
 
+type ActiveAgentDocument = {
+	_id: Types.ObjectId;
+};
+
 function hasAdminOnlyEditFields(input: UpdateLeadInput) {
 	return Boolean(
 		input.customerName !== undefined ||
@@ -76,6 +80,7 @@ function hasAdminOnlyEditFields(input: UpdateLeadInput) {
 		input.loanType !== undefined ||
 		input.loanBalance !== undefined ||
 		input.homeValue !== undefined ||
+		input.createdById !== undefined ||
 		input.loanOfficerId !== undefined ||
 		input.callTransfer !== undefined,
 	);
@@ -238,6 +243,26 @@ export async function updateLead(input: UpdateLeadInput) {
 		setIfDefined(validatedInput.homeValue, (value) => {
 			editableLead.home_value = value;
 		});
+
+		if (validatedInput.createdById !== undefined) {
+			if (!Types.ObjectId.isValid(validatedInput.createdById)) {
+				throw new Error('Invalid agent selected');
+			}
+
+			const agent = await Users.findOne({
+				_id: validatedInput.createdById,
+				role: UserRole.AGENT,
+				status: 'active',
+			})
+				.select('_id')
+				.lean<ActiveAgentDocument>();
+
+			if (!agent) {
+				throw new Error('Selected agent is not active');
+			}
+
+			editableLead.created_by = agent._id;
+		}
 
 		if (validatedInput.loanOfficerId !== undefined) {
 			if (!validatedInput.loanOfficerId) {
