@@ -2,14 +2,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import {
-	ArrowLeft,
-	Briefcase,
-	Calculator,
-	Home,
-	Phone,
-	User,
-} from 'lucide-react';
+import { ArrowLeft, Briefcase, Home, Phone, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -87,6 +80,7 @@ function SelectField({
 	options,
 	required,
 	onChange,
+	onClear,
 }: {
 	id: string;
 	label: string;
@@ -95,6 +89,7 @@ function SelectField({
 	options: readonly (string | { value: string; label: string })[];
 	required?: boolean;
 	onChange: (value: string) => void;
+	onClear?: () => void;
 }) {
 	return (
 		<div className="flex flex-col gap-2">
@@ -102,28 +97,43 @@ function SelectField({
 				{label}
 				{required ? ' *' : ''}
 			</Label>
-			<Select value={value} onValueChange={onChange}>
-				<SelectTrigger
-					id={id}
-					className="h-[52px] rounded-[12px] border-[#D4D7E3] bg-white px-4 text-[15px] text-[#313957]"
-				>
-					<SelectValue placeholder={placeholder} />
-				</SelectTrigger>
-				<SelectContent>
-					{options.map((option) => {
-						const item =
-							typeof option === 'string'
-								? { value: option, label: option }
-								: option;
+			<div className="flex items-center gap-2">
+				<Select value={value} onValueChange={onChange}>
+					<SelectTrigger
+						id={id}
+						className="h-[52px] flex-1 rounded-[12px] border-[#D4D7E3] bg-white px-4 text-[15px] text-[#313957]"
+					>
+						<SelectValue placeholder={placeholder} />
+					</SelectTrigger>
+					<SelectContent>
+						{options.map((option) => {
+							const item =
+								typeof option === 'string'
+									? { value: option, label: option }
+									: option;
 
-						return (
-							<SelectItem key={item.value} value={item.value}>
-								{item.label}
-							</SelectItem>
-						);
-					})}
-				</SelectContent>
-			</Select>
+							return (
+								<SelectItem key={item.value} value={item.value}>
+									{item.label}
+								</SelectItem>
+							);
+						})}
+					</SelectContent>
+				</Select>
+				{onClear && value ? (
+					<Button
+						type="button"
+						variant="outline"
+						size="icon"
+						title={`Clear ${label.toLowerCase()}`}
+						aria-label={`Clear ${label.toLowerCase()}`}
+						onClick={onClear}
+						className="size-[52px] shrink-0 rounded-[12px] border-[#D4D7E3] text-[#6B7A99] hover:bg-[#F8FBFF] hover:text-[#26395C]"
+					>
+						<X className="size-4" />
+					</Button>
+				) : null}
+			</div>
 		</div>
 	);
 }
@@ -157,117 +167,43 @@ function TextAreaField({
 	);
 }
 
-function ScriptPanel({ loanOfficerPhone }: { loanOfficerPhone?: string }) {
+function ScriptPanel({
+	loanOfficerPhone,
+	loanOfficerCriteria,
+	hasSelectedLoanOfficer,
+	content,
+}: {
+	loanOfficerPhone?: string;
+	loanOfficerCriteria?: string;
+	hasSelectedLoanOfficer: boolean;
+	content: string;
+}) {
 	return (
 		<div className="flex flex-col gap-5 rounded-[18px] bg-[#FFF6CC] p-5 text-[14px] leading-6 text-[#0C1421] shadow-sm lg:sticky lg:top-6">
 			<div className="rounded-[12px] bg-white/70 p-4">
-				<h2 className="text-[22px] font-bold leading-tight tracking-wide">
-					Mortgage Prequalification Guidelines
-				</h2>
-
-				<div className="mt-5 space-y-5">
-					<section>
-						<h3 className="font-semibold">Eligible States</h3>
-						<ul className="mt-2 list-disc space-y-1 pl-5">
-							<li>
-								Available nationwide except: Delaware (DE), Hawaii (HI), Indiana
-								(IN), Massachusetts (MA), Missouri (MO), Nevada (NV), New York
-								(NY), and Utah (UT).
-							</li>
-						</ul>
-					</section>
-
-					<section>
-						<h3 className="font-semibold">Loan & Cash-Out Minimums</h3>
-						<ul className="mt-2 list-disc space-y-1 pl-5">
-							<li>Minimum Cash-Out Amount: $20,000</li>
-							<li>Minimum Loan Amount (VA): $150,000</li>
-							<li>Minimum Loan Amount (FHA & Conventional): $200,000</li>
-						</ul>
-					</section>
-
-					<section>
-						<h3 className="font-semibold">Credit & Income Requirements</h3>
-						<ul className="mt-2 list-disc space-y-1 pl-5">
-							<li>Minimum Credit Score (VA / FHA): 600</li>
-							<li>Minimum Credit Score (Conventional): 640</li>
-							<li>Income: Must have a verifiable source of income.</li>
-						</ul>
-					</section>
-
-					<section>
-						<h3 className="font-semibold">Payment & Credit History</h3>
-						<ul className="mt-2 list-disc space-y-1 pl-5">
-							<li>
-								Mortgage Late Payments: Zero late payments in the last 12
-								months.
-							</li>
-							<li>
-								Bankruptcy & Foreclosure: No bankruptcy or foreclosure within
-								the last 2 years.
-							</li>
-						</ul>
-					</section>
-				</div>
+				<p className="mb-3 font-semibold">Call Sheet Information</p>
+				<div
+					className="[&_h2]:mb-4 [&_h2]:text-[22px] [&_h2]:font-bold [&_h2]:leading-tight [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_p]:my-3 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"
+					dangerouslySetInnerHTML={{ __html: content }}
+				/>
 			</div>
 
 			<div className="rounded-[12px] bg-white/70 p-4">
-				<p className="font-semibold">
-					Loan Officer Number:{' '}
-					<span className="text-[#2563EB]">
-						{loanOfficerPhone || 'Select a loan officer'}
-					</span>
+				<p className="font-semibold">Criteria</p>
+				<p className="mt-1 whitespace-pre-wrap break-words text-[#26395C]">
+					{hasSelectedLoanOfficer
+						? loanOfficerCriteria || 'No criteria set'
+						: 'Select a loan officer'}
+				</p>
+			</div>
+
+			<div className="rounded-[12px] bg-white/70 p-4">
+				<p className="font-semibold">Loan Officer Number</p>
+				<p className="mt-1 break-words text-[#2563EB]">
+					{loanOfficerPhone || 'Select a loan officer'}
 				</p>
 			</div>
 		</div>
-	);
-}
-function LtvPanel({
-	homeValue,
-	loanBalance,
-	cashOutAmount,
-	existingLtv,
-	cashOutLtv,
-}: {
-	homeValue: string;
-	loanBalance: string;
-	cashOutAmount: string;
-	existingLtv: number;
-	cashOutLtv: number;
-}) {
-	return (
-		<Card className="rounded-[18px] border-none bg-[#F1F5FB] p-5 shadow-sm">
-			<div className="mb-5 flex items-center gap-2 text-[#313957]">
-				<Calculator className="size-5" />
-				<h2 className="text-[22px] font-semibold">LTV Calculator</h2>
-			</div>
-			<div className="space-y-4 text-[14px] text-[#313957]">
-				<div>
-					<span className="font-medium">Home Value</span>
-					<p className="mt-1 rounded-[10px] bg-white px-3 py-2">
-						{homeValue || '0'}
-					</p>
-				</div>
-				<div>
-					<span className="font-medium">Loan Balance</span>
-					<p className="mt-1 rounded-[10px] bg-white px-3 py-2">
-						{loanBalance || '0'}
-					</p>
-				</div>
-				<div>
-					<span className="font-medium">Cash Out</span>
-					<p className="mt-1 rounded-[10px] bg-white px-3 py-2">
-						{cashOutAmount || '0'}
-					</p>
-				</div>
-				<div className="rounded-[12px] bg-[#1E9AB0] p-4 text-center font-semibold text-white">
-					LTV: {existingLtv.toFixed(1)}%
-				</div>
-				<div className="rounded-[12px] bg-[#16A34A] p-4 text-center font-semibold text-white">
-					LTV w/ Cash Out: {cashOutLtv.toFixed(1)}%
-				</div>
-			</div>
-		</Card>
 	);
 }
 
@@ -292,8 +228,13 @@ export function CallTransferLeadForm() {
 				</p>
 			</div>
 
-			<div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)_240px]">
-				<ScriptPanel loanOfficerPhone={form.selectedLoanOfficer?.phoneNumber} />
+			<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+				<ScriptPanel
+					loanOfficerPhone={form.selectedLoanOfficer?.phoneNumber}
+					loanOfficerCriteria={form.selectedLoanOfficer?.criteria}
+					hasSelectedLoanOfficer={Boolean(form.selectedLoanOfficer)}
+					content={form.callTransferSheetContent}
+				/>
 
 				<Card className="rounded-[24px] border-none bg-white p-6 shadow-[0px_4px_4px_-3px_rgba(0,0,0,0.25)] lg:p-8">
 					<form onSubmit={form.handleSubmit} className="flex flex-col gap-8">
@@ -428,6 +369,22 @@ export function CallTransferLeadForm() {
 									value={values.cash_out_amount}
 									onChange={(value) => updateField('cash_out_amount', value)}
 								/>
+								<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:col-span-2">
+									<button
+										type="button"
+										disabled
+										className="flex h-[52px] items-center justify-center rounded-[12px] bg-[#1E9AB0] px-4 text-center text-[15px] font-semibold text-white disabled:opacity-100"
+									>
+										LTV: {form.existingLtv.toFixed(1)}%
+									</button>
+									<button
+										type="button"
+										disabled
+										className="flex h-[52px] items-center justify-center rounded-[12px] bg-[#16A34A] px-4 text-center text-[15px] font-semibold text-white disabled:opacity-100"
+									>
+										LTV w/ Cash Out: {form.cashOutLtv.toFixed(1)}%
+									</button>
+								</div>
 							</div>
 						</section>
 
@@ -483,6 +440,7 @@ export function CallTransferLeadForm() {
 									label="Loan Officer Name"
 									value={values.loan_officer_id}
 									onChange={(value) => updateField('loan_officer_id', value)}
+									onClear={() => updateField('loan_officer_id', '')}
 									placeholder="Select loan officer"
 									options={form.loanOfficerOptions.map((loanOfficer) => ({
 										value: loanOfficer.id,
@@ -551,14 +509,6 @@ export function CallTransferLeadForm() {
 						</div>
 					</form>
 				</Card>
-
-				<LtvPanel
-					homeValue={values.home_value}
-					loanBalance={values.mortgage_balance}
-					cashOutAmount={values.cash_out_amount}
-					existingLtv={form.existingLtv}
-					cashOutLtv={form.cashOutLtv}
-				/>
 			</div>
 		</div>
 	);

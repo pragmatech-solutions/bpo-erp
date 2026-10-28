@@ -9,6 +9,7 @@ type LoanOfficerDocument = {
 	_id: { toString(): string };
 	name: string;
 	phone_number?: string;
+	criteria?: string;
 };
 
 const allowedLeadCreatorRoles = [
@@ -32,7 +33,7 @@ export async function listLoanOfficers(): Promise<LoanOfficerOption[]> {
 		status: 'active',
 		availability_status: UserAvailabilityStatus.ACTIVE,
 	})
-		.select('_id name phone_number')
+		.select('_id name phone_number criteria')
 		.sort({ name: 1 })
 		.lean<LoanOfficerDocument[]>();
 
@@ -40,5 +41,6 @@ export async function listLoanOfficers(): Promise<LoanOfficerOption[]> {
 		id: loanOfficer._id.toString(),
 		name: loanOfficer.name,
 		phoneNumber: loanOfficer.phone_number,
+		criteria: loanOfficer.criteria || '',
 	}));
 }
