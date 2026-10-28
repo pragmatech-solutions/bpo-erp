@@ -18,9 +18,12 @@ export function useAccountSettingsHook() {
 	const [savedEmail, setSavedEmail] = useState('');
 	const [phoneNumber, setPhoneNumber] = useState('');
 	const [savedPhoneNumber, setSavedPhoneNumber] = useState('');
+	const [criteria, setCriteria] = useState('');
+	const [savedCriteria, setSavedCriteria] = useState('');
 	const [currentPassword, setCurrentPassword] = useState('');
 	const [newPassword, setNewPassword] = useState('');
-	const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false);
+	const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] =
+		useState(false);
 	const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +48,8 @@ export function useAccountSettingsHook() {
 				setSavedEmail(account.email || '');
 				setPhoneNumber(account.phoneNumber || '');
 				setSavedPhoneNumber(account.phoneNumber || '');
+				setCriteria(account.criteria || '');
+				setSavedCriteria(account.criteria || '');
 			} catch (error) {
 				if (!isMounted) return;
 				setErrorMessage(
@@ -66,6 +71,7 @@ export function useAccountSettingsHook() {
 		setName(savedName);
 		setEmail(savedEmail);
 		setPhoneNumber(savedPhoneNumber);
+		setCriteria(savedCriteria);
 		setCurrentPassword('');
 		setNewPassword('');
 		setErrorMessage('');
@@ -83,6 +89,7 @@ export function useAccountSettingsHook() {
 				name,
 				email,
 				phoneNumber,
+				criteria,
 				currentPassword,
 				newPassword,
 			});
@@ -93,6 +100,8 @@ export function useAccountSettingsHook() {
 			setSavedEmail(account.email || '');
 			setPhoneNumber(account.phoneNumber || '');
 			setSavedPhoneNumber(account.phoneNumber || '');
+			setCriteria(account.criteria || '');
+			setSavedCriteria(account.criteria || '');
 			setCurrentPassword('');
 			setNewPassword('');
 
@@ -120,6 +129,8 @@ export function useAccountSettingsHook() {
 		setEmail,
 		phoneNumber,
 		setPhoneNumber,
+		criteria,
+		setCriteria,
 		currentPassword,
 		setCurrentPassword,
 		newPassword,

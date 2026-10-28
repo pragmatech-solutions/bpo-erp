@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Briefcase, Home, Phone, User } from 'lucide-react';
+import { ArrowLeft, Briefcase, Home, Phone, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -80,6 +80,7 @@ function SelectField({
 	options,
 	required,
 	onChange,
+	onClear,
 }: {
 	id: string;
 	label: string;
@@ -88,6 +89,7 @@ function SelectField({
 	options: readonly (string | { value: string; label: string })[];
 	required?: boolean;
 	onChange: (value: string) => void;
+	onClear?: () => void;
 }) {
 	return (
 		<div className="flex flex-col gap-2">
@@ -95,28 +97,43 @@ function SelectField({
 				{label}
 				{required ? ' *' : ''}
 			</Label>
-			<Select value={value} onValueChange={onChange}>
-				<SelectTrigger
-					id={id}
-					className="h-[52px] rounded-[12px] border-[#D4D7E3] bg-white px-4 text-[15px] text-[#313957]"
-				>
-					<SelectValue placeholder={placeholder} />
-				</SelectTrigger>
-				<SelectContent>
-					{options.map((option) => {
-						const item =
-							typeof option === 'string'
-								? { value: option, label: option }
-								: option;
+			<div className="flex items-center gap-2">
+				<Select value={value} onValueChange={onChange}>
+					<SelectTrigger
+						id={id}
+						className="h-[52px] flex-1 rounded-[12px] border-[#D4D7E3] bg-white px-4 text-[15px] text-[#313957]"
+					>
+						<SelectValue placeholder={placeholder} />
+					</SelectTrigger>
+					<SelectContent>
+						{options.map((option) => {
+							const item =
+								typeof option === 'string'
+									? { value: option, label: option }
+									: option;
 
-						return (
-							<SelectItem key={item.value} value={item.value}>
-								{item.label}
-							</SelectItem>
-						);
-					})}
-				</SelectContent>
-			</Select>
+							return (
+								<SelectItem key={item.value} value={item.value}>
+									{item.label}
+								</SelectItem>
+							);
+						})}
+					</SelectContent>
+				</Select>
+				{onClear && value ? (
+					<Button
+						type="button"
+						variant="outline"
+						size="icon"
+						title={`Clear ${label.toLowerCase()}`}
+						aria-label={`Clear ${label.toLowerCase()}`}
+						onClick={onClear}
+						className="size-[52px] shrink-0 rounded-[12px] border-[#D4D7E3] text-[#6B7A99] hover:bg-[#F8FBFF] hover:text-[#26395C]"
+					>
+						<X className="size-4" />
+					</Button>
+				) : null}
+			</div>
 		</div>
 	);
 }
@@ -152,24 +169,38 @@ function TextAreaField({
 
 function ScriptPanel({
 	loanOfficerPhone,
+	loanOfficerCriteria,
+	hasSelectedLoanOfficer,
 	content,
 }: {
 	loanOfficerPhone?: string;
+	loanOfficerCriteria?: string;
+	hasSelectedLoanOfficer: boolean;
 	content: string;
 }) {
 	return (
 		<div className="flex flex-col gap-5 rounded-[18px] bg-[#FFF6CC] p-5 text-[14px] leading-6 text-[#0C1421] shadow-sm lg:sticky lg:top-6">
-			<div
-				className="rounded-[12px] bg-white/70 p-4 [&_h2]:mb-4 [&_h2]:text-[22px] [&_h2]:font-bold [&_h2]:leading-tight [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_p]:my-3 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"
-				dangerouslySetInnerHTML={{ __html: content }}
-			/>
+			<div className="rounded-[12px] bg-white/70 p-4">
+				<p className="mb-3 font-semibold">Call Sheet Information</p>
+				<div
+					className="[&_h2]:mb-4 [&_h2]:text-[22px] [&_h2]:font-bold [&_h2]:leading-tight [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_p]:my-3 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5"
+					dangerouslySetInnerHTML={{ __html: content }}
+				/>
+			</div>
 
 			<div className="rounded-[12px] bg-white/70 p-4">
-				<p className="font-semibold">
-					Loan Officer Number:{' '}
-					<span className="text-[#2563EB]">
-						{loanOfficerPhone || 'Select a loan officer'}
-					</span>
+				<p className="font-semibold">Criteria</p>
+				<p className="mt-1 whitespace-pre-wrap break-words text-[#26395C]">
+					{hasSelectedLoanOfficer
+						? loanOfficerCriteria || 'No criteria set'
+						: 'Select a loan officer'}
+				</p>
+			</div>
+
+			<div className="rounded-[12px] bg-white/70 p-4">
+				<p className="font-semibold">Loan Officer Number</p>
+				<p className="mt-1 break-words text-[#2563EB]">
+					{loanOfficerPhone || 'Select a loan officer'}
 				</p>
 			</div>
 		</div>
@@ -200,6 +231,8 @@ export function CallTransferLeadForm() {
 			<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
 				<ScriptPanel
 					loanOfficerPhone={form.selectedLoanOfficer?.phoneNumber}
+					loanOfficerCriteria={form.selectedLoanOfficer?.criteria}
+					hasSelectedLoanOfficer={Boolean(form.selectedLoanOfficer)}
 					content={form.callTransferSheetContent}
 				/>
 
@@ -407,6 +440,7 @@ export function CallTransferLeadForm() {
 									label="Loan Officer Name"
 									value={values.loan_officer_id}
 									onChange={(value) => updateField('loan_officer_id', value)}
+									onClear={() => updateField('loan_officer_id', '')}
 									placeholder="Select loan officer"
 									options={form.loanOfficerOptions.map((loanOfficer) => ({
 										value: loanOfficer.id,

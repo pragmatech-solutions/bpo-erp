@@ -16,6 +16,11 @@ export const updateAccountInputSchema = z.object({
 		.optional()
 		.or(z.literal(''))
 		.transform((value) => (value ? value : undefined)),
+	criteria: z
+		.string()
+		.trim()
+		.max(5000, 'Criteria must be 5,000 characters or less')
+		.optional(),
 	currentPassword: z.string().min(1, 'Old password is required'),
 	newPassword: z
 		.string()
