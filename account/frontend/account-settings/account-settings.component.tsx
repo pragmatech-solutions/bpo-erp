@@ -103,7 +103,9 @@ function AvailabilityStatusCard() {
 					<span
 						className={cn(
 							'absolute top-[3px] size-5 rounded-full bg-white shadow transition-transform',
-							availability.isActive ? 'translate-x-[29px]' : 'translate-x-[3px]' ,
+							availability.isActive
+								? 'translate-x-[29px]'
+								: 'translate-x-[3px]',
 						)}
 					/>
 				</button>
@@ -157,7 +159,9 @@ export function AccountSettings() {
 									id="profilePhone"
 									type="tel"
 									value={account.phoneNumber}
-									onChange={(event) => account.setPhoneNumber(event.target.value)}
+									onChange={(event) =>
+										account.setPhoneNumber(event.target.value)
+									}
 									placeholder="e.g. +1 123 456 7890"
 									className="h-[52px] rounded-[10px] border-[#D4D7E3] bg-white pl-14 text-[15px] placeholder:text-[#8897AD]"
 								/>
@@ -178,6 +182,23 @@ export function AccountSettings() {
 									className="h-[52px] rounded-[10px] border-[#D4D7E3] bg-white pl-14 text-[15px] placeholder:text-[#8897AD]"
 								/>
 							</ProfileInput>
+
+							<div className="flex flex-col gap-2 lg:col-span-2">
+								<Label
+									htmlFor="profileCriteria"
+									className="text-[14px] font-medium text-[#26395C]"
+								>
+									Criteria
+								</Label>
+								<textarea
+									id="profileCriteria"
+									value={account.criteria}
+									onChange={(event) => account.setCriteria(event.target.value)}
+									placeholder="Add your lead criteria"
+									maxLength={5000}
+									className="min-h-[120px] w-full resize-y rounded-[10px] border border-[#D4D7E3] bg-white p-4 text-[15px] text-[#26395C] placeholder:text-[#8897AD] focus:outline-none focus:ring-1 focus:ring-blue-500"
+								/>
+							</div>
 						</div>
 
 						<div className="border-t border-[#D4D7E3] px-6 py-5 lg:px-8">
@@ -206,13 +227,16 @@ export function AccountSettings() {
 									onChange={account.setNewPassword}
 									isVisible={account.isNewPasswordVisible}
 									onToggleVisibility={() =>
-										account.setIsNewPasswordVisible(!account.isNewPasswordVisible)
+										account.setIsNewPasswordVisible(
+											!account.isNewPasswordVisible,
+										)
 									}
 									placeholder="********"
 								/>
 							</div>
 							<p className="mt-3 text-[13px] text-[#8897AD]">
-								New password must contain uppercase, number, and special character.
+								New password must contain uppercase, number, and special
+								character.
 							</p>
 						</div>
 
@@ -253,4 +277,3 @@ export function AccountSettings() {
 		</div>
 	);
 }
-

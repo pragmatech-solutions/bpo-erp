@@ -14,6 +14,7 @@ type AccountDocument = {
 	username: string;
 	email?: string;
 	phone_number?: string;
+	criteria?: string;
 };
 
 type AccountWithPasswordDocument = AccountDocument & {
@@ -27,6 +28,7 @@ function mapAccount(user: AccountDocument) {
 		username: user.username,
 		email: user.email || '',
 		phoneNumber: user.phone_number || '',
+		criteria: user.criteria || '',
 	};
 }
 
@@ -35,7 +37,7 @@ export async function getAccount() {
 	const currentUser = await requireAuthenticatedUser();
 
 	const user = await Users.findById(currentUser.id)
-		.select('_id name username email phone_number')
+		.select('_id name username email phone_number criteria')
 		.lean<AccountDocument>();
 
 	if (!user) throw new Error('User not found');
@@ -49,7 +51,7 @@ export async function updateAccount(input: UpdateAccountInput) {
 	const validatedInput = updateAccountInputSchema.parse(input);
 
 	const currentAccount = await Users.findById(currentUser.id)
-		.select('_id name username email phone_number password')
+		.select('_id name username email phone_number criteria password')
 		.lean<AccountWithPasswordDocument>();
 
 	if (!currentAccount) throw new Error('User not found');
@@ -84,11 +86,12 @@ export async function updateAccount(input: UpdateAccountInput) {
 			name: validatedInput.name,
 			email: validatedInput.email,
 			phone_number: validatedInput.phoneNumber,
+			criteria: validatedInput.criteria ?? currentAccount.criteria ?? '',
 			password: hashedPassword,
 		},
 		{ new: true },
 	)
-		.select('_id name username email phone_number')
+		.select('_id name username email phone_number criteria')
 		.lean<AccountDocument>();
 
 	if (!user) throw new Error('User not found');

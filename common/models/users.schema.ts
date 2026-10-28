@@ -9,6 +9,7 @@ const UserSchema = new Schema(
 		email: { type: String, unique: true, sparse: true, trim: true },
 		password: { type: String, required: true },
 		phone_number: { type: String, required: false },
+		criteria: { type: String, required: false, default: '' },
 		status: {
 			type: String,
 			default: 'inactive',

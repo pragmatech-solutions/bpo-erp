@@ -8,12 +8,14 @@ export type AccountSettingsData = {
 	username: string;
 	email: string;
 	phoneNumber: string;
+	criteria: string;
 };
 
 export type UpdateAccountPayload = {
 	name: string;
 	email?: string;
 	phoneNumber?: string;
+	criteria?: string;
 	currentPassword: string;
 	newPassword: string;
 };
